@@ -1,0 +1,45 @@
+# rahasia — jangan pernah di-commit
+.env
+.env.*
+!.env.example
+!.env.mcp.example
+*.key
+secrets/
+
+# aset besar & hasil kerja — config proyek tetap ikut, isinya tidak
+node_modules/
+kerja/
+proyek/*/src/
+proyek/*/aset/
+proyek/*/stem/
+proyek/*/cuplikan/
+proyek/*/timeline.json
+*.mp4
+*.wav
+*.mp3
+*.zip
+frames-*/
+stem/
+assets/vo/
+assets/sfx/
+assets/*.mp3
+render.log
+.DS_Store
+.worktrees/
+# proyek bertingkat (satu basis, beberapa video): proyek/<nama>/<varian>/
+proyek/*/*/aset/
+proyek/*/*/stem/
+proyek/*/*/cuplikan/
+proyek/*/*/timeline.json
+proyek/*/sfx/
+
+# hasil render dan gambar kerja: sampul dicuplik dari video, thumbnail final ada di CDN
+proyek/**/*-sampul.jpg
+thumb-tutorial/
+
+# lockfile hasil npm install di mesin render, log kerja, dan lembar kontak
+package-lock.json
+*.log
+proyek/**/lembar*.jpg
+proyek/**/lembar/
+data/

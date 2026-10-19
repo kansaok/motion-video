@@ -1,0 +1,73 @@
+1
+00:00:00,400 --> 00:00:01,583
+Google Ads cuma tahu klik.
+
+2
+00:00:01,583 --> 00:00:02,493
+Closing di WhatsApp?
+
+3
+00:00:02,493 --> 00:00:03,631
+Google nggak pernah tahu.
+
+4
+00:00:05,200 --> 00:00:08,934
+Pertama, hubungkan akun Google
+Ads di Kelola Koneksi.
+
+5
+00:00:08,934 --> 00:00:10,484
+Statusnya harus Aktif.
+
+6
+00:00:11,400 --> 00:00:16,395
+Di Google Ads, buka Sasaran, Konversi,
+lalu pilih tindakan konversinya.
+
+7
+00:00:17,200 --> 00:00:19,580
+Salin ID jenis konversi.
+
+8
+00:00:19,580 --> 00:00:23,645
+Angka yang sama ada di URL, setelah ctId.
+
+9
+00:00:24,500 --> 00:00:28,198
+Di Tracking Website, pilih
+mode Google Ads API.
+
+10
+00:00:28,198 --> 00:00:31,346
+Pilih integrasinya, lalu tempel ID tadi.
+
+11
+00:00:32,500 --> 00:00:35,710
+Begitu deal, ubah lead jadi
+Closing, dan isi nilainya.
+
+12
+00:00:37,700 --> 00:00:40,611
+Konektor kirim closing itu ke Google Ads.
+
+13
+00:00:40,611 --> 00:00:41,250
+Terkirim!
+
+14
+00:00:43,500 --> 00:00:44,958
+Statusnya Merekam konversi.
+
+15
+00:00:44,958 --> 00:00:47,928
+Google belajar dari pembeli asli,
+bukan cuma dari klik.
+
+16
+00:00:49,100 --> 00:00:54,943
+Aktifkan Auto-tagging, supaya
+gclid ikut tercatat.
+
+17
+00:00:56,350 --> 00:00:58,476
+Panduannya, di konektor.id.

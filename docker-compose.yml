@@ -1,0 +1,28 @@
+# motion-mcp di VPS. Jalankan: cp .env.mcp.example .env.mcp && docker compose up -d --build
+# Port hanya dibuka ke localhost; pasang reverse proxy HTTPS (nginx/caddy) di depannya.
+services:
+  motion-mcp:
+    build: .
+    image: motion-mcp:latest
+    container_name: motion-mcp
+    restart: unless-stopped
+    env_file: .env.mcp
+    ports:
+      - "127.0.0.1:8420:8420"
+    volumes:
+      - motion-data:/data
+    # Chromium memakai /dev/shm untuk tab; 64 MB bawaan Docker membuat tab render crash.
+    shm_size: "1gb"
+    # Kalau bimp jalan di VPS yang sama dalam network docker lain, sambungkan ke sini
+    # dan isi BIMP_API_URL dengan nama service-nya (misal http://bimp-api:8401/api).
+    # networks: [default, bimp]
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "3"}
+
+volumes:
+  motion-data:
+
+# networks:
+#   bimp:
+#     external: true

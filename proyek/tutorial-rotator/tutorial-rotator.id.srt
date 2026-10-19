@@ -1,0 +1,64 @@
+1
+00:00:00,400 --> 00:00:02,813
+Chat WhatsApp dari iklan
+sering hilang jejak.
+
+2
+00:00:02,813 --> 00:00:04,583
+Kode pengunjung menyambungkannya.
+
+3
+00:00:06,900 --> 00:00:09,026
+Buka Link WhatsApp, lalu klik Buat Link.
+
+4
+00:00:10,900 --> 00:00:13,592
+Isi nama dan slug, lalu
+tulis pesan pembuka.
+
+5
+00:00:16,000 --> 00:00:17,365
+Klik tag uniquecode.
+
+6
+00:00:17,365 --> 00:00:19,687
+Di situlah kode pengunjung muncul.
+
+7
+00:00:22,100 --> 00:00:25,844
+Tambah nomor tim, atur porsinya,
+lalu klik Buat Rotator.
+
+8
+00:00:28,200 --> 00:00:30,045
+Salin link, lalu pasang di iklan.
+
+9
+00:00:32,600 --> 00:00:33,763
+Pelanggan klik iklan.
+
+10
+00:00:33,763 --> 00:00:35,314
+Pesannya sudah membawa kode.
+
+11
+00:00:37,900 --> 00:00:40,615
+Chat masuk, Konektor mencocokkan kodenya.
+
+12
+00:00:40,615 --> 00:00:41,343
+Tersambung!
+
+13
+00:00:43,600 --> 00:00:47,692
+Kamu tahu chat ini dari iklan mana, dan
+closing-nya bisa dikirim balik ke iklan.
+
+14
+00:00:49,600 --> 00:00:53,173
+Supaya kode terbaca, hubungkan
+nomor tim ke Konektor.
+
+15
+00:00:55,200 --> 00:00:57,410
+Panduannya, di konektor.id.

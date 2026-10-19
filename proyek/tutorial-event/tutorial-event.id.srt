@@ -1,0 +1,86 @@
+1
+00:00:00,400 --> 00:00:03,065
+Konektor sudah dipasang, tapi
+Events Manager masih kosong.
+
+2
+00:00:03,065 --> 00:00:03,984
+Nyambung atau belum?
+
+3
+00:00:06,600 --> 00:00:09,781
+Pertama, pastikan nomor WhatsApp
+sudah terhubung di Konektor.
+
+4
+00:00:12,200 --> 00:00:14,323
+Di Tracking Website, tambah platform Meta.
+
+5
+00:00:15,300 --> 00:00:18,541
+Isi Pixel ID, Access Token, dan
+WhatsApp Business Account ID.
+
+6
+00:00:19,700 --> 00:00:20,386
+Simpan.
+
+7
+00:00:21,600 --> 00:00:25,375
+Klik Uji kirim, masukkan Test Event
+Code dari Events Manager.
+
+8
+00:00:25,375 --> 00:00:27,665
+Terkirim artinya kredensialnya benar.
+
+9
+00:00:29,600 --> 00:00:32,011
+Sekarang kirim satu chat uji lewat iklan.
+
+10
+00:00:32,011 --> 00:00:33,540
+Lead masuk, sumbernya ads.
+
+11
+00:00:35,800 --> 00:00:37,518
+Ubah status jadi Dihubungi.
+
+12
+00:00:37,518 --> 00:00:40,573
+Konektor kirim ke Meta:
+LeadSubmitted, diterima.
+
+13
+00:00:43,000 --> 00:00:44,036
+Buka Events Manager.
+
+14
+00:00:44,036 --> 00:00:45,123
+LeadSubmitted muncul!
+
+15
+00:00:45,123 --> 00:00:46,004
+Pipanya nyambung.
+
+16
+00:00:50,000 --> 00:00:53,698
+Mulai besok, setiap lead dari iklan tercatat
+di Meta, bukan cuma jumlah chat.
+
+17
+00:00:55,800 --> 00:00:56,616
+Belum muncul?
+
+18
+00:00:56,616 --> 00:00:58,060
+Cek Pixel ID dan token.
+
+19
+00:00:58,060 --> 00:01:01,199
+Kalau gagal, alasannya tertulis
+di Log pengiriman.
+
+20
+00:01:04,000 --> 00:01:06,070
+Panduannya, di konektor.id.

@@ -1,0 +1,63 @@
+1
+00:00:00,400 --> 00:00:03,839
+Closing di chat, status lupa
+diubah, iklan tidak tahu.
+
+2
+00:00:03,839 --> 00:00:05,368
+Solusinya: satu kalimat.
+
+3
+00:00:06,500 --> 00:00:11,549
+Buka Aturan Otomatisasi, lalu
+buat aturan baru.
+
+4
+00:00:12,350 --> 00:00:16,698
+Syaratnya: pesan dari CS mengandung
+terima kasih atas konfirmasinya.
+
+5
+00:00:19,550 --> 00:00:25,670
+Aksinya: ambil nominal setelah kata Total,
+lalu ubah status jadi Closing.
+
+6
+00:00:26,550 --> 00:00:26,974
+Simpan.
+
+7
+00:00:26,974 --> 00:00:28,490
+Aturannya langsung aktif.
+
+8
+00:00:29,950 --> 00:00:33,977
+CS tinggal menulis: terima kasih atas
+konfirmasinya, lalu totalnya.
+
+9
+00:00:35,950 --> 00:00:38,564
+Status jadi Closing, nilainya
+terisi sendiri.
+
+10
+00:00:38,564 --> 00:00:38,912
+Beres!
+
+11
+00:00:41,950 --> 00:00:45,060
+Lalu Purchase terkirim ke Meta,
+tanpa klik apa pun.
+
+12
+00:00:46,750 --> 00:00:51,158
+Catatan: balasan dari Kotak Masuk resmi
+tidak menjalankan aturan.
+
+13
+00:00:51,158 --> 00:00:53,193
+Di sana, ubah status di Leads.
+
+14
+00:00:54,600 --> 00:00:56,810
+Panduannya, di konektor.id.

@@ -1,0 +1,72 @@
+1
+00:00:00,400 --> 00:00:01,829
+Lead sudah closing.
+
+2
+00:00:01,829 --> 00:00:03,635
+Tapi iklanmu tahu nggak?
+
+3
+00:00:04,900 --> 00:00:08,631
+Di Leads, satu klik status
+mengirim hasilnya ke iklan.
+
+4
+00:00:10,400 --> 00:00:13,405
+Buka Pelacakan dan Iklan, lalu Leads.
+
+5
+00:00:13,405 --> 00:00:18,117
+Empat kartu di atas: total, lead
+baru, closing, dan nilai.
+
+6
+00:00:18,950 --> 00:00:20,069
+Klik tab Aktif.
+
+7
+00:00:20,069 --> 00:00:25,143
+Cari pakai nama atau nomor lengkap, lalu
+saring Sumber dan Platform.
+
+8
+00:00:26,450 --> 00:00:28,083
+Pelanggan sudah bayar?
+
+9
+00:00:28,083 --> 00:00:30,310
+Klik statusnya, pilih Closing.
+
+10
+00:00:31,950 --> 00:00:34,980
+Isi Jumlah Nilai, klik Konfirmasi Update.
+
+11
+00:00:36,950 --> 00:00:40,940
+Closing tercatat sebagai pendapatan,
+dan terkirim ke iklan!
+
+12
+00:00:43,450 --> 00:00:45,237
+Mau tahu dari iklan mana?
+
+13
+00:00:45,237 --> 00:00:48,026
+Buka Lihat Detail, cek Identifier Klik.
+
+14
+00:00:49,450 --> 00:00:50,715
+Lead nggak muncul?
+
+15
+00:00:50,715 --> 00:00:54,440
+Hapus filternya, lalu matikan
+Sembunyikan Pengunjung.
+
+16
+00:00:56,050 --> 00:00:58,801
+Ubah status, iklan ikut belajar.
+
+17
+00:00:58,801 --> 00:01:01,381
+Panduannya di konektor dot id.

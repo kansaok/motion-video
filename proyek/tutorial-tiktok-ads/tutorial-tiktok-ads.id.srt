@@ -1,0 +1,80 @@
+1
+00:00:00,400 --> 00:00:02,150
+Closing dari iklan TikTok?
+
+2
+00:00:02,150 --> 00:00:03,631
+Kirim balik ke TikTok!
+
+3
+00:00:05,000 --> 00:00:09,990
+Konektor mengirim closing lewat server,
+jadi iklan belajar dari pembeli.
+
+4
+00:00:11,200 --> 00:00:15,653
+Di TikTok Ads Manager, buka Tools,
+lalu Events Manager.
+
+5
+00:00:15,653 --> 00:00:17,030
+Pilih pixel kamu.
+
+6
+00:00:17,850 --> 00:00:22,842
+Masuk Settings, cari Events API,
+klik Generate Access Token.
+
+7
+00:00:22,842 --> 00:00:26,170
+Salin, karena TikTok tidak menyimpannya.
+
+8
+00:00:27,000 --> 00:00:32,801
+Di Konektor, buka Tracking Website, klik
+Tambah platform iklan, pilih TikTok.
+
+9
+00:00:33,650 --> 00:00:38,582
+Isi nama, tempel Pixel Code dan
+Access Token, lalu Simpan.
+
+10
+00:00:39,400 --> 00:00:43,585
+Salin template link iklan, tempel di
+kolom URL iklan TikTok.
+
+11
+00:00:43,585 --> 00:00:46,585
+Jadi nama campaign dan iklan
+ikut tercatat.
+
+12
+00:00:47,400 --> 00:00:48,221
+Lead closing?
+
+13
+00:00:48,221 --> 00:00:51,570
+Langsung terkirim ke TikTok
+sebagai Complete Payment!
+
+14
+00:00:54,200 --> 00:00:55,512
+Event dilewati?
+
+15
+00:00:55,512 --> 00:00:57,787
+Data pencocokannya kurang.
+
+16
+00:00:57,787 --> 00:01:03,300
+Pasang kode tracking di landing page,
+supaya ttclid tertangkap.
+
+17
+00:01:04,700 --> 00:01:06,528
+Closing balik ke TikTok.
+
+18
+00:01:06,528 --> 00:01:08,814
+Panduannya di konektor dot id.

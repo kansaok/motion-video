@@ -1,0 +1,51 @@
+{
+ "c1": {
+  "Kode": 0,
+  "Pasang": 9.8,
+  "Developer": 19.8,
+  "Uji": 26,
+  "Hasil": 32.6
+ },
+ "c2": {
+  "Buat": 0,
+  "Form": 4,
+  "Kode": 9.2,
+  "Nomor": 15.4,
+  "Salin": 21.4,
+  "Uji": 25.8,
+  "Cocok": 31.2,
+  "Hasil": 36.8
+ },
+ "c3": {
+  "Nomor": 0,
+  "Iklan": 5.6,
+  "Chat": 14.2,
+  "Lead": 21,
+  "Kirim": 29,
+  "Hasil": 36.2
+ },
+ "c4": {
+  "Pixel": 0,
+  "Token": 6.4,
+  "Konektor": 16,
+  "Form": 25,
+  "Uji": 34.8,
+  "Hasil": 42
+ },
+ "c5": {
+  "Atur": 0,
+  "Lead": 9.6,
+  "Ubah": 15.2,
+  "Kirim": 22,
+  "Hasil": 28.6
+ },
+ "c6": {
+  "Buka": 0,
+  "Syarat": 5.4,
+  "Aksi": 11.8,
+  "Simpan": 18.4,
+  "Chat": 21.8,
+  "Hasil": 26.2,
+  "Kirim": 32.2
+ }
+}

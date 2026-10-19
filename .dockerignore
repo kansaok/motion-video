@@ -1,0 +1,13 @@
+node_modules
+proyek
+docs
+data
+kerja
+.env
+.env.*
+*.docx
+*.mp4
+*.wav
+*.log
+.DS_Store
+.git

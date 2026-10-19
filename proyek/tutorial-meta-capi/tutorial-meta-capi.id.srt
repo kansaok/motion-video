@@ -1,0 +1,70 @@
+1
+00:00:00,400 --> 00:00:03,560
+Kirim closing ke Meta lewat
+server, bukan cuma pixel.
+
+2
+00:00:05,600 --> 00:00:09,854
+Buka Events Manager, pilih pixel
+kamu, salin Pixel ID.
+
+3
+00:00:11,900 --> 00:00:16,133
+Masuk Settings, cari Conversions API,
+klik Generate access token.
+
+4
+00:00:16,900 --> 00:00:17,937
+Salin tokennya.
+
+5
+00:00:17,937 --> 00:00:20,150
+Meta cuma menampilkannya sekali.
+
+6
+00:00:21,500 --> 00:00:26,078
+Di Konektor, buka Tracking Website,
+lalu Tambah platform iklan.
+
+7
+00:00:26,500 --> 00:00:28,998
+Pilih Meta, Facebook dan Instagram.
+
+8
+00:00:30,500 --> 00:00:34,352
+Isi nama, tempel Pixel ID, lalu
+tempel Access Token.
+
+9
+00:00:35,200 --> 00:00:36,014
+Klik Simpan.
+
+10
+00:00:36,014 --> 00:00:39,000
+Status Menunggu, sampai
+event pertama masuk.
+
+11
+00:00:40,300 --> 00:00:41,224
+Mau cek sekarang?
+
+12
+00:00:41,224 --> 00:00:42,093
+Pilih Uji kirim.
+
+13
+00:00:42,800 --> 00:00:45,875
+Tempel Test Event Code dari Events
+Manager, lalu kirim.
+
+14
+00:00:47,600 --> 00:00:48,924
+Test Event terkirim.
+
+15
+00:00:48,924 --> 00:00:50,580
+Event-nya muncul di Meta.
+
+16
+00:00:53,800 --> 00:00:55,980
+Panduannya, di konektor.id.

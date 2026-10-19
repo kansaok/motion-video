@@ -1,0 +1,73 @@
+1
+00:00:00,400 --> 00:00:03,380
+Sambungkan WhatsApp resmi lewat
+Kapso ke Konektor.
+
+2
+00:00:05,300 --> 00:00:09,444
+Di Kapso, buka Phone numbers,
+lalu Set up number.
+
+3
+00:00:10,180 --> 00:00:15,143
+Pilih nomor US instan, SIM sendiri, atau
+WhatsApp Business yang sudah ada.
+
+4
+00:00:15,850 --> 00:00:17,930
+Ikuti jendela Facebook sampai Finish.
+
+5
+00:00:20,450 --> 00:00:23,678
+Buka Integrate, API keys,
+lalu buat key baru.
+
+6
+00:00:23,678 --> 00:00:24,109
+Salin.
+
+7
+00:00:26,850 --> 00:00:31,159
+Di Konektor, buka Hubungkan WhatsApp,
+pilih Hubungkan lewat Kapso.
+
+8
+00:00:31,900 --> 00:00:32,726
+Tempel API key.
+
+9
+00:00:32,726 --> 00:00:34,212
+Nomornya langsung terpilih.
+
+10
+00:00:35,000 --> 00:00:35,966
+Klik Hubungkan.
+
+11
+00:00:35,966 --> 00:00:36,610
+Terhubung!
+
+12
+00:00:38,400 --> 00:00:41,127
+Webhook terpasang otomatis,
+tanpa setting tambahan.
+
+13
+00:00:43,100 --> 00:00:44,474
+Kirim satu chat uji.
+
+14
+00:00:44,474 --> 00:00:46,536
+Langsung masuk ke Kotak Masuk.
+
+15
+00:00:47,800 --> 00:00:48,536
+Balas dari sini.
+
+16
+00:00:48,536 --> 00:00:49,869
+Pelanggan lihat centang biru.
+
+17
+00:00:53,400 --> 00:00:55,546
+Panduannya, di konektor.id.

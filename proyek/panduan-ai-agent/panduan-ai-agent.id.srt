@@ -1,0 +1,585 @@
+1
+00:00:00,500 --> 00:00:03,087
+Jam dua pagi, pelanggan masih chat.
+
+2
+00:00:03,087 --> 00:00:04,344
+AI yang membalas.
+
+3
+00:00:04,344 --> 00:00:06,784
+Dan closing-nya tercatat sendiri!
+
+4
+00:00:07,900 --> 00:00:14,264
+CRM dengan AI Agent biasanya mulai
+sekitar 159 dolar sebulan.
+
+5
+00:00:14,264 --> 00:00:15,725
+Jutaan rupiah.
+
+6
+00:00:15,850 --> 00:00:18,668
+Di Konektor, AI Agent-nya gratis.
+
+7
+00:00:18,668 --> 00:00:20,461
+Tanpa biaya tambahan.
+
+8
+00:00:20,461 --> 00:00:24,133
+Kamu cuma bayar pemakaian AI
+ke OpenRouter.
+
+9
+00:00:25,200 --> 00:00:28,244
+Di video ini, kamu pasang semuanya.
+
+10
+00:00:28,244 --> 00:00:30,680
+Dari nol sampai AI membalas.
+
+11
+00:00:31,100 --> 00:00:33,248
+Tujuh bab, satu per satu.
+
+12
+00:00:36,700 --> 00:00:40,770
+AI Agent itu asisten CS yang
+tidak pernah tidur.
+
+13
+00:00:41,200 --> 00:00:45,318
+Ia mencari jawaban di
+Pengetahuanmu, lalu menulis balasan.
+
+14
+00:00:45,318 --> 00:00:48,300
+Bisa sebagai draf, bisa langsung terkirim.
+
+15
+00:00:48,750 --> 00:00:53,762
+Foto produk, pesan suara, dan PDF
+dari pelanggan juga ia baca.
+
+16
+00:00:54,150 --> 00:00:58,110
+Batasnya 30 balasan per chat dalam 24 jam.
+
+17
+00:00:59,150 --> 00:01:02,256
+Tapi ada hal yang tetap
+dikerjakan manusia.
+
+18
+00:01:02,256 --> 00:01:04,207
+Itulah fungsi Serah ke tim.
+
+19
+00:01:04,650 --> 00:01:06,977
+Pelanggan minta bicara dengan orang?
+
+20
+00:01:06,977 --> 00:01:09,497
+Agent berhenti, dan tim mengambil alih.
+
+21
+00:01:09,900 --> 00:01:14,708
+Komplain, refund, dan pembatalan juga
+bisa kamu serahkan ke tim.
+
+22
+00:01:14,708 --> 00:01:16,210
+Agent tidak menebak.
+
+23
+00:01:16,650 --> 00:01:20,647
+Kalau urusannya beres, tim
+menekan Serahkan ke Wulan.
+
+24
+00:01:20,647 --> 00:01:22,080
+Agent bekerja lagi.
+
+25
+00:01:23,150 --> 00:01:28,878
+Agent paling berguna untuk pertanyaan yang
+berulang: harga, stok, jam buka.
+
+26
+00:01:29,300 --> 00:01:32,473
+Salah umum: menganggap agent
+menggantikan tim.
+
+27
+00:01:32,473 --> 00:01:35,990
+Agent menjawab, tim tetap
+memegang chat yang sulit.
+
+28
+00:01:36,450 --> 00:01:41,460
+Cek: buka tab Serah ke tim, lalu
+pastikan pemicunya sudah menyala.
+
+29
+00:01:44,400 --> 00:01:47,182
+Pertama, isi saldo di OpenRouter.
+
+30
+00:01:47,182 --> 00:01:49,795
+Buka Credits, klik Add Credits.
+
+31
+00:01:49,700 --> 00:01:56,072
+Buka API Keys, klik New Key, beri
+nama, lalu klik Create.
+
+32
+00:01:56,600 --> 00:01:57,707
+Salin kuncinya.
+
+33
+00:01:57,707 --> 00:02:00,510
+OpenRouter menampilkannya cuma sekali.
+
+34
+00:02:01,500 --> 00:02:03,831
+OpenRouter itu dompet AI-mu.
+
+35
+00:02:03,831 --> 00:02:07,160
+Biaya model dipotong dari saldo di sana.
+
+36
+00:02:07,600 --> 00:02:10,476
+Salah umum: kunci tanpa Credit limit.
+
+37
+00:02:10,476 --> 00:02:13,430
+Pasang batas biaya yang kamu tentukan.
+
+38
+00:02:13,850 --> 00:02:16,799
+Cek: jangan bagikan kunci ke siapa pun.
+
+39
+00:02:16,799 --> 00:02:20,050
+Kunci yang bocor bisa
+menghabiskan saldomu.
+
+40
+00:02:23,000 --> 00:02:27,487
+Di Konektor, buka AI Wulan,
+Agent dan model.
+
+41
+00:02:27,487 --> 00:02:31,260
+Tempel kunci, klik Uji kunci, Simpan.
+
+42
+00:02:30,800 --> 00:02:34,579
+Model per tugas sudah terisi,
+dengan pilihan yang murah.
+
+43
+00:02:34,579 --> 00:02:35,794
+Ganti kalau perlu.
+
+44
+00:02:37,450 --> 00:02:39,363
+Kunci disimpan terenkripsi.
+
+45
+00:02:39,363 --> 00:02:42,763
+Layar hanya menampilkan empat
+karakter terakhir.
+
+46
+00:02:43,200 --> 00:02:46,360
+Salah umum: pesan Format tidak dikenali.
+
+47
+00:02:46,360 --> 00:02:48,256
+Artinya kunci terpotong.
+
+48
+00:02:48,256 --> 00:02:50,310
+Salin ulang kunci lengkap.
+
+49
+00:02:50,750 --> 00:02:53,788
+Cek: tunggu pesan Koneksi berhasil.
+
+50
+00:02:53,788 --> 00:02:55,264
+Baru klik Simpan.
+
+51
+00:02:58,200 --> 00:03:02,114
+Isi Pengetahuan: FAQ, harga, info toko.
+
+52
+00:03:02,114 --> 00:03:06,329
+Agent menjawab dari datamu, bukan menebak.
+
+53
+00:03:07,250 --> 00:03:09,870
+Pengetahuan punya tiga jenis sumber.
+
+54
+00:03:10,300 --> 00:03:13,596
+Tanya-jawab, untuk pertanyaan
+yang sering muncul.
+
+55
+00:03:14,050 --> 00:03:19,400
+Katalog produk dan harga, dari file CSV
+atau tautan Google Sheets.
+
+56
+00:03:19,850 --> 00:03:23,566
+Teks bebas, untuk kebijakan
+retur dan jam buka.
+
+57
+00:03:24,650 --> 00:03:27,572
+Sebelum menyalakan apa pun, uji dulu.
+
+58
+00:03:27,572 --> 00:03:32,073
+Ketik satu pertanyaan di Uji
+pertanyaan, lalu klik Tanya.
+
+59
+00:03:32,500 --> 00:03:35,470
+Muncul Agent akan menjawab
+dari bagian ini?
+
+60
+00:03:35,470 --> 00:03:36,367
+Datamu cukup.
+
+61
+00:03:36,367 --> 00:03:39,268
+Pertanyaan uji tidak dikirim ke siapa pun.
+
+62
+00:03:39,750 --> 00:03:44,930
+Kalau Agent tidak yakin, tambahkan
+jawabannya ke sumber, lalu uji lagi.
+
+63
+00:03:46,000 --> 00:03:48,445
+Pengetahuan itu bahan jawabannya.
+
+64
+00:03:48,445 --> 00:03:51,780
+Makin lengkap isinya, makin
+tepat balasannya.
+
+65
+00:03:52,250 --> 00:03:56,322
+Salah umum: sumber masih
+Memproses, tapi sudah diuji.
+
+66
+00:03:56,322 --> 00:03:58,550
+Tunggu sampai statusnya Siap.
+
+67
+00:03:59,000 --> 00:04:02,461
+Cek: model Balasan berlabel
+Mendukung alat.
+
+68
+00:04:02,461 --> 00:04:05,440
+Tanpa itu, Pengetahuan tidak dipakai.
+
+69
+00:04:08,500 --> 00:04:10,133
+Kamu punya dua cara.
+
+70
+00:04:10,133 --> 00:04:12,826
+Pertama, biarkan AI menulis draf.
+
+71
+00:04:12,826 --> 00:04:15,520
+Kamu periksa, lalu kirim sendiri.
+
+72
+00:04:15,950 --> 00:04:17,488
+Kedua, Balas otomatis.
+
+73
+00:04:17,488 --> 00:04:20,845
+Agent mengirim balasannya
+langsung ke pelanggan.
+
+74
+00:04:21,300 --> 00:04:22,200
+Belum yakin?
+
+75
+00:04:22,200 --> 00:04:23,400
+Mulai dari draf.
+
+76
+00:04:23,400 --> 00:04:27,450
+Balas otomatis mati sampai kamu
+sendiri menyalakannya.
+
+77
+00:04:28,400 --> 00:04:30,233
+Nyalakan Balas otomatis.
+
+78
+00:04:30,233 --> 00:04:34,358
+Atur juga Serah ke tim, untuk
+chat yang perlu manusia.
+
+79
+00:04:34,600 --> 00:04:37,734
+Pelanggan bertanya, agent
+langsung membalas.
+
+80
+00:04:37,734 --> 00:04:39,230
+Dalam hitungan detik!
+
+81
+00:04:40,150 --> 00:04:42,363
+Isi Profil bisnis lebih dulu.
+
+82
+00:04:42,363 --> 00:04:45,340
+Jawaban agent hanya setepat profil itu.
+
+83
+00:04:45,750 --> 00:04:49,784
+Salah umum: saklar menyala,
+tapi lupa klik Simpan.
+
+84
+00:04:49,784 --> 00:04:53,254
+Balas otomatis baru aktif
+setelah disimpan.
+
+85
+00:04:53,700 --> 00:04:55,714
+Cek: kirim satu pesan uji.
+
+86
+00:04:55,714 --> 00:05:00,130
+Chat yang dibalas agent mendapat
+tanda AI di Kotak Masuk.
+
+87
+00:05:03,200 --> 00:05:05,072
+Agent sudah membalas chat.
+
+88
+00:05:05,072 --> 00:05:08,383
+Sekarang, catat closing-nya
+tanpa klik manual.
+
+89
+00:05:08,800 --> 00:05:11,719
+Aturan Otomatisasi yang mengerjakannya.
+
+90
+00:05:11,719 --> 00:05:15,910
+Ada dua cara: dari chat pelanggan,
+atau dari kalimat CS.
+
+91
+00:05:17,000 --> 00:05:21,050
+Buka Aturan Otomatisasi, lalu
+buat aturan baru.
+
+92
+00:05:22,300 --> 00:05:26,123
+Syaratnya: pesan pelanggan
+mengandung "sudah transfer".
+
+93
+00:05:28,700 --> 00:05:33,870
+Aksinya: ambil nominal dari pesan, lalu
+ubah status jadi Closing.
+
+94
+00:05:35,300 --> 00:05:35,944
+Simpan.
+
+95
+00:05:35,944 --> 00:05:38,244
+Aturannya langsung aktif.
+
+96
+00:05:38,700 --> 00:05:42,523
+Pelanggan chat: sudah transfer Rp 750.000.
+
+97
+00:05:43,100 --> 00:05:46,897
+Status jadi Closing, nilainya
+terisi sendiri.
+
+98
+00:05:46,897 --> 00:05:47,403
+Beres!
+
+99
+00:05:49,100 --> 00:05:52,673
+Lalu Purchase terkirim ke Meta,
+tanpa klik apa pun.
+
+100
+00:05:53,900 --> 00:05:58,764
+Syaratnya: pesan dari CS mengandung
+terima kasih atas konfirmasinya.
+
+101
+00:06:01,100 --> 00:06:07,152
+Aksinya: ambil angka setelah kata Total,
+dan status berganti ke Closing.
+
+102
+00:06:08,100 --> 00:06:10,388
+Simpan juga aturan kedua ini.
+
+103
+00:06:10,388 --> 00:06:10,861
+Aktif!
+
+104
+00:06:11,500 --> 00:06:16,509
+CS tinggal menulis: terima kasih atas
+konfirmasinya, lalu totalnya.
+
+105
+00:06:17,500 --> 00:06:21,661
+Sekali lagi status jadi Closing,
+dan nilainya terisi.
+
+106
+00:06:21,661 --> 00:06:22,525
+Tanpa klik!
+
+107
+00:06:23,500 --> 00:06:26,200
+Purchase kedua ikut meluncur ke Meta.
+
+108
+00:06:28,300 --> 00:06:33,182
+Catatan: balasan dari Kotak Masuk resmi
+tidak menjalankan aturan.
+
+109
+00:06:33,182 --> 00:06:35,435
+Di sana, ubah status di Leads.
+
+110
+00:06:36,350 --> 00:06:38,936
+Aturan hanya mengubah status dan nilai.
+
+111
+00:06:38,936 --> 00:06:42,318
+Pengaturan Konversi yang
+mengirim Purchase ke Meta.
+
+112
+00:06:42,750 --> 00:06:45,668
+Salah umum: kata kunci terlalu pendek.
+
+113
+00:06:45,668 --> 00:06:48,894
+Kata pendek ikut cocok di dalam kata lain.
+
+114
+00:06:49,350 --> 00:06:52,654
+Cek: aturan hanya jalan
+untuk lead yang ada.
+
+115
+00:06:52,654 --> 00:06:55,959
+Lalu buka Log pengiriman:
+Purchase Terkirim.
+
+116
+00:06:58,900 --> 00:07:03,010
+Tips: pasang Credit limit,
+supaya biaya terkendali.
+
+117
+00:07:03,950 --> 00:07:05,799
+Jadi, berapa biayanya?
+
+118
+00:07:05,799 --> 00:07:10,169
+Fitur AI Agent di Konektor tidak
+ada biaya tambahan.
+
+119
+00:07:10,600 --> 00:07:15,925
+Yang kamu bayar cuma pemakaian AI,
+langsung ke akun OpenRouter-mu.
+
+120
+00:07:16,400 --> 00:07:19,730
+Biaya memproses Pengetahuan
+ditanggung Konektor.
+
+121
+00:07:20,150 --> 00:07:21,537
+Pembandingnya,
+
+122
+00:07:21,537 --> 00:07:29,166
+satu CRM populer: paket AI Agent-nya 159
+dolar sebulan kalau ditagih tahunan,
+
+123
+00:07:29,166 --> 00:07:31,544
+199 dolar kalau bulanan.
+
+124
+00:07:32,600 --> 00:07:34,945
+Itulah panduan AI Agent kita.
+
+125
+00:07:34,945 --> 00:07:40,526
+Siapkan OpenRouter, hubungkan kunci, isi
+Pengetahuan, uji jawabannya,
+
+126
+00:07:40,526 --> 00:07:44,812
+nyalakan Balas otomatis, lalu
+catat closing otomatis.
+
+127
+00:07:45,850 --> 00:07:47,971
+Tips satu: mulai dari draf.
+
+128
+00:07:47,971 --> 00:07:52,057
+Nyalakan Balas otomatis setelah
+jawabannya kamu uji.
+
+129
+00:07:52,500 --> 00:07:57,288
+Tips dua: isi Profil bisnis dan
+Pengetahuan selengkap mungkin.
+
+130
+00:07:57,288 --> 00:07:59,450
+Uji lagi tiap harga berubah.
+
+131
+00:07:59,900 --> 00:08:05,944
+Tips tiga: nyalakan Serah ke tim, supaya
+komplain dan refund ditangani manusia.
+
+132
+00:08:07,000 --> 00:08:10,168
+Panduan lengkapnya ada di konektor.id.
