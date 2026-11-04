@@ -11,6 +11,9 @@ import * as Stok from '../lib/stok.mjs';
 import * as Pr from './proyek.mjs';
 import * as A from './antrean.mjs';
 import {hitung} from './ekspresi.mjs';
+import * as Log from './log.mjs';
+import * as M from './metrik.mjs';
+import {kesiapan} from './sehat.mjs';
 
 const PANDUAN = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'PANDUAN.md'), 'utf8');
 
@@ -100,14 +103,16 @@ export function buatServer(uid) {
     ...m, render: A.statusProyek(Pr.buka(uid, m.id))?.status ?? null,
   }))), {readOnlyHint: true});
 
-  alat('info_proyek', 'Isi proyek: berkas src, aset audio yang sudah diunggah, scene di komposisi, config, dan status render terakhir.',
+  alat('info_proyek', 'Isi proyek: berkas src, aset audio yang sudah diunggah, scene di komposisi, config, status render terakhir, '
+    + 'dan berapa hari lagi proyek dihapus bila tidak disentuh.',
     {proyek: Proyek}, async ({proyek}) => {
       const p = Pr.buka(uid, proyek);
       const cfgF = path.join(p.dir, 'config.json');
       const cfg = existsSync(cfgF) ? JSON.parse(readFileSync(cfgF, 'utf8')) : null;
       let scenes = null;
       if (cfg) { try { scenes = K.bacaScenes(Pr.jalurAman(p.src, cfg.komposisi)); } catch (e) { scenes = e.message; } }
-      return teks({meta: p.meta, src: Pr.berkasSrc(p), aset: Pr.asetAda(p), scenes, config: cfg, render: A.statusProyek(p)});
+      return teks({meta: p.meta, dihapusDalamHari: Pr.sisaHari(p), src: Pr.berkasSrc(p), aset: Pr.asetAda(p), scenes, config: cfg,
+        render: A.statusProyek(p)});
     }, {readOnlyHint: true});
 
   alat('hapus_proyek', 'Hapus proyek beserta semua berkas dan videonya. Tidak bisa dibatalkan.',
@@ -161,7 +166,7 @@ export function buatServer(uid) {
         // Dihitung ulang sesudah symlink dibuang: komposisi yang ternyata symlink tidak boleh terdaftar.
         const {html, jsx} = K.temukan(p.src);
         if (!html.length) throw new Error('tidak ada berkas .html yang memuat OM_SCENES di dalam zip');
-        if (symlink) console.warn(`impor_zip ${proyek}: ${symlink} symlink dibuang`);
+        if (symlink) Log.peringatan('impor_zip: symlink dibuang', {uid, proyek, jumlah: symlink});
         for (const f of html) for (const x of ['.asli', '.terap']) rmSync(path.join(p.src, f + x), {force: true});
         Pr.sentuh(p);
         const info = html.map((f) => {
@@ -262,7 +267,10 @@ export function buatServer(uid) {
       }
       if (!komp) throw new Error('belum ada komposisi .html ber-OM_SCENES di src');
       Pr.jalurAman(p.src, komp);
-      const f = await A.cuplikGiliran(uid, () => A.cuplikPekerja(uid, p, komp, detik));
+      let f;
+      try { f = await A.cuplikGiliran(uid, () => A.cuplikPekerja(uid, p, komp, detik)); }
+      catch (e) { M.cuplikTotal.tambah({status: 'gagal'}); throw e; }
+      M.cuplikTotal.tambah({status: 'selesai'});
       return {content: f.flatMap((x, i) => [
         {type: 'text', text: `t = ${detik[i]} dtk`},
         {type: 'image', data: readFileSync(x).toString('base64'), mimeType: 'image/jpeg'},
@@ -277,6 +285,9 @@ export function buatServer(uid) {
     const p = Pr.buka(uid, proyek);
     const j = Pr.bacaConfig(p);
     Pr.periksaConfig(p, j);
+    // Tolak di pintu masuk: render yang diterima saat disk hampir penuh gagal di tengah encode.
+    const k = kesiapan({dir: Pr.DATA});
+    if (!k.siap) throw new Error(`server belum siap menerima render: ${k.alasan.join('; ')} — coba lagi nanti`);
     const t = A.kirim(uid, p, {frames});
     return teks({render: t.id, status: t.status, catatan: 'poll status_render tiap ±20 detik'});
   });

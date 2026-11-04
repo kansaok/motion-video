@@ -38,7 +38,7 @@ aman (`"C.Hasil + 0.5"`, `"P[7] - 0.35"`) yang dievaluasi `ekspresi.mjs` tanpa `
    # Mesin render lain, termasuk rama-tuf, wajib memakai lockfile yang sama.
    cp .env.mcp.example .env.mcp      # isi PUBLIC_URL, BIMP_API_URL, BIMP_SERVICE_KEY, UNDUH_RAHASIA
    docker compose up -d --build
-   curl -s localhost:8420/sehat       # {"ok":true}
+   curl -s localhost:8420/siap        # {"ok":true, ...} — 503 + alasan bila belum siap
    ```
 2. Reverse proxy HTTPS di depan port 8420, misalnya nginx:
    ```nginx
@@ -82,6 +82,27 @@ untuk `WORKERS=4`; turunkan `WORKERS` atau `MOTION_VIEWPORT` kalau log berisi "T
 yang bermasalah tidak mengambil alih VPS. Frame sementara disimpan di volume `motion-tmp`,
 bukan tmpfs kecil; siapkan volume/filesystem itu dengan kuota dan kapasitas yang cukup untuk
 render terpanjang, lalu pantau pemakaiannya bersama `motion-data`.
+
+## Pemantauan
+
+| Endpoint | Arti | Akses |
+|---|---|---|
+| `/hidup` | proses menjawab | bebas |
+| `/siap` | ffmpeg dan Chromium ada, disk DATA ≥ `MIN_DISK_MB`; 503 + `alasan` bila tidak | bebas |
+| `/sehat` | sama dengan `/siap`; dipakai `HEALTHCHECK` Docker | bebas |
+| `/metrik` | Prometheus: `motion_render_total{status}`, `motion_render_detik`, `motion_render_langkah_detik{langkah}`, `motion_cuplik_total{status}`, `motion_antrean_panjang`, `motion_render_jalan`, `motion_data_byte`, `motion_disk_bebas_byte`, `motion_akun_aktif{hari}` | hanya alamat privat **tanpa** `X-Forwarded-For`; lewat nginx selalu 404 |
+
+Scrape dari host: `curl -s localhost:8420/metrik`. Kueri dasar:
+`rate(motion_render_total{status="gagal"}[1h])` dan
+`histogram_quantile(0.95, rate(motion_render_detik_bucket[1h]))`.
+
+Log server berupa JSON satu baris (`{t, level, pesan, uid, render, langkah, ms, ...}`). Token,
+teks naskah, dan URL unggahan dibuang oleh `mcp/log.mjs`, bukan oleh tiap pemanggil.
+
+Retensi berjalan tiap jam: `stem/`, `cuplikan/`, dan `aset/master.wav` dibuang dari proyek yang
+24 jam tidak disentuh (kecuali sedang dirender); proyek utuh dihapus sesudah `RETENSI_HARI`.
+`info_proyek` melaporkan `dihapusDalamHari`. Saat start, direktori kerja pekerja yatim
+(`/tmp/motion-kerja-*`) dihapus.
 
 ## Uji lokal tanpa bimp
 

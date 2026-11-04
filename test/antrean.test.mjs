@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import test from 'node:test';
-import {jalankanPekerja, bersihkanFramesPekerja, buatAntrean, lingkunganPekerja, perintahPekerja, cuplikGiliran} from '../mcp/antrean.mjs';
+import {jalankanPekerja, bersihkanTmpYatim, buatAntrean, lingkunganPekerja, perintahPekerja, cuplikGiliran} from '../mcp/antrean.mjs';
 import {mkdtemp, mkdir, writeFile, access} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
@@ -71,10 +71,10 @@ test('jalankanPekerja menghentikan grup pekerja ketika batas total terlewati', a
   await assert.rejects(() => jalankanPekerja(tugas, {
     batasMs: 1, macetMs: 100,
     buatProses: () => { const anak = new EventEmitter(); anak.pid = 4321; anak.send = () => {}; return anak; },
-    bunuhGrup: (pid) => { dibunuh = pid; }, bersihkanFrame: (pid) => { dibersihkan = pid; },
+    bunuhGrup: (pid) => { dibunuh = pid; }, buatKerja: () => '/tmp/motion-kerja-uji', hapusKerja: (d) => { dibersihkan = d; },
   }), /melebihi batas waktu render/);
   assert.equal(dibunuh, 4321);
-  assert.equal(dibersihkan, 4321);
+  assert.equal(dibersihkan, '/tmp/motion-kerja-uji');
 });
 
 test('jalankanPekerja menghentikan render yang tidak menambah frame', async () => {
@@ -87,20 +87,34 @@ test('jalankanPekerja menghentikan render yang tidak menambah frame', async () =
       anak.send = () => anak.emit('message', {langkah: 'render'});
       return anak;
     },
-    bunuhGrup: (pid) => { dibunuh = pid; }, bersihkanFrame: () => {},
+    bunuhGrup: (pid) => { dibunuh = pid; }, buatKerja: () => '/tmp/motion-kerja-uji', hapusKerja: () => {},
   }), /jumlah frame tidak bertambah/);
   assert.equal(dibunuh, 4322);
 });
 
-test('bersihkanFramesPekerja hanya menghapus frame pekerja yang dihentikan', async () => {
+test('bersihkanTmpYatim menghapus kerja pekerja dan frame lama, bukan render CLI yang sedang jalan', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'motion-antrean-'));
-  const milik = path.join(dir, 'frames-video-4321');
-  const lain = path.join(dir, 'frames-video-9876');
-  await Promise.all([mkdir(milik), mkdir(lain)]);
-  await writeFile(path.join(milik, '000001.jpg'), 'x');
-  bersihkanFramesPekerja(4321, dir);
-  await assert.rejects(() => access(milik));
-  await assert.doesNotReject(() => access(lain));
+  const kerja = path.join(dir, 'motion-kerja-abc');
+  const frameBaru = path.join(dir, 'frames-video-4321');
+  const lainnya = path.join(dir, 'bukan-milik-motion');
+  await Promise.all([mkdir(kerja), mkdir(frameBaru), mkdir(lainnya)]);
+  await writeFile(path.join(kerja, '000001.jpg'), 'x');
+  await writeFile(path.join(dir, 'pk-12.m4a'), 'x');
+  const sekarang = Date.now();
+  assert.equal(bersihkanTmpYatim({direktoriTmp: dir, sekarang}), 1);
+  await assert.rejects(() => access(kerja));
+  await assert.doesNotReject(() => access(frameBaru));
+  assert.equal(bersihkanTmpYatim({direktoriTmp: dir, sekarang: sekarang + 7 * 3600e3}), 2);
+  await assert.rejects(() => access(frameBaru));
+  await assert.rejects(() => access(path.join(dir, 'pk-12.m4a')));
+  await assert.doesNotReject(() => access(lainnya));
+});
+
+test('sandbox memakai direktori kerja di volume /tmp, bukan tmpfs', () => {
+  const {argumen} = perintahPekerja(tugas, {ada: () => true, dirKerja: '/tmp/motion-kerja-x'});
+  const i = argumen.indexOf('--bind');
+  assert.deepEqual(argumen.slice(i, i + 3), ['--bind', '/tmp/motion-kerja-x', '/tmp']);
+  assert.ok(!argumen.includes('--tmpfs'));
 });
 
 test('cuplik membatasi satu Chromium per akun', async () => {

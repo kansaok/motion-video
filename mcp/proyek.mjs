@@ -110,18 +110,54 @@ export function periksaKuota(p, tambahan = 0) {
 
 /* Proyek yang tidak diubah lebih dari RETENSI_HARI dihapus. MP4 dan frame cepat memenuhi disk
    VPS, dan pelanggan menyimpan hasil akhirnya sendiri lewat tautan unduh. */
-export function bersihkan() {
+/** Jumlah akun yang menyentuh setidaknya satu proyek dalam `hari` terakhir (dari mtime meta.json). */
+export function akunAktif(hari) {
   const u = path.join(DATA, 'u');
   if (!existsSync(u)) return 0;
-  const batas = Date.now() - BATAS.retensiHari * 86400e3;
-  let n = 0;
+  const batas = Date.now() - hari * 86400e3;
+  return readdirSync(u).filter((uid) => readdirSync(path.join(u, uid)).some((id) => {
+    const m = path.join(u, uid, id, 'meta.json');
+    return existsSync(m) && statSync(m).mtimeMs >= batas;
+  })).length;
+}
+
+/* Hasil antara yang dibuat ulang oleh setiap render: stem mix (WAV ukuran penuh, beberapa ratus
+   MB untuk video 3 menit), master.wav, dan gambar cuplikan. Dibuang sesudah sehari tidak
+   disentuh, jauh sebelum proyeknya sendiri dihapus. Yang TIDAK dibuang: src, config, aset unggahan
+   (VO berbayar), dan MP4/sampul yang tautannya masih berlaku. */
+const RINGAN = ['stem', 'cuplikan', path.join('aset', 'master.wav')];
+const sedangDirender = (dir) => {
+  try { return ['antre', 'jalan'].includes(JSON.parse(readFileSync(path.join(dir, 'render.json'), 'utf8')).status); }
+  catch { return false; } // render.json belum ada/rusak: tidak ada render yang perlu dilindungi
+};
+
+/** Hari tersisa sebelum proyek dihapus retensi, dihitung dari sentuhan terakhir. */
+export function sisaHari(p, sekarang = Date.now()) {
+  const m = path.join(p.dir, 'meta.json');
+  const sentuhan = existsSync(m) ? statSync(m).mtimeMs : sekarang;
+  return Math.max(0, Math.ceil((sentuhan + BATAS.retensiHari * 86400e3 - sekarang) / 86400e3));
+}
+
+export function bersihkan({sekarang = Date.now(), ringanJam = 24} = {}) {
+  const u = path.join(DATA, 'u'), hasil = {proyek: 0, ringan: 0, byte: 0};
+  if (!existsSync(u)) return hasil;
+  const batas = sekarang - BATAS.retensiHari * 86400e3, batasRingan = sekarang - ringanJam * 3600e3;
   for (const uid of readdirSync(u)) {
     for (const id of readdirSync(path.join(u, uid))) {
-      const m = path.join(u, uid, id, 'meta.json');
-      if (existsSync(m) && statSync(m).mtimeMs < batas) { rmSync(path.join(u, uid, id), {recursive: true, force: true}); n++; }
+      const dir = path.join(u, uid, id), m = path.join(dir, 'meta.json');
+      if (!existsSync(m)) continue;
+      const diubah = statSync(m).mtimeMs;
+      if (diubah < batas) { rmSync(dir, {recursive: true, force: true}); hasil.proyek++; continue; }
+      if (diubah >= batasRingan || sedangDirender(dir)) continue;
+      for (const r of RINGAN) {
+        const f = path.join(dir, r);
+        if (!existsSync(f)) continue;
+        hasil.byte += lstatSync(f).isDirectory() ? ukuranPohon(f) : lstatSync(f).size; hasil.ringan++;
+        rmSync(f, {recursive: true, force: true});
+      }
     }
   }
-  return n;
+  return hasil;
 }
 
 /* Isi ulang komposisi berarti `.asli`-nya basi. `apply` selalu menerapkan dari `.asli`, jadi

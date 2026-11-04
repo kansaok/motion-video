@@ -13,11 +13,15 @@ import {buatServer} from './alat.mjs';
 import {verifikasi} from './auth.mjs';
 import * as Pr from './proyek.mjs';
 import {periksaLingkungan} from './env.mjs';
+import * as Log from './log.mjs';
+import * as M from './metrik.mjs';
+import * as A from './antrean.mjs';
+import {kesiapan, diskBebasMb} from './sehat.mjs';
 
 try {
   periksaLingkungan();
 } catch (e) {
-  console.error(`motion-mcp tidak dimulai: ${e.message}`);
+  Log.galat('motion-mcp tidak dimulai', {galat: e});
   process.exit(1);
 }
 
@@ -27,7 +31,35 @@ app.disable('x-powered-by');
 app.set('trust proxy', true);
 app.use(express.json({limit: `${Pr.BATAS.unduhMb * 1.4 + 2}mb`}));
 
-app.get('/sehat', (_req, res) => res.json({ok: true}));
+/* /hidup: proses menjawab. /siap: alat render ada dan disk DATA cukup. /sehat dipakai
+   HEALTHCHECK Docker dan berarti sama dengan /siap, supaya disk yang hampir penuh tampak
+   sebagai container unhealthy sebelum render pelanggan gagal di tengah jalan. */
+app.get('/hidup', (_req, res) => res.json({ok: true}));
+const siap = (_req, res) => {
+  const k = kesiapan({dir: Pr.DATA});
+  res.status(k.siap ? 200 : 503).json({ok: k.siap, ...k});
+};
+app.get('/siap', siap);
+app.get('/sehat', siap);
+
+/* Ukuran DATA dihitung dengan menelusuri pohon berkas; di-cache 5 menit agar scrape tiap
+   15 detik tidak menjadi beban I/O. */
+let ukuranData = {t: 0, byte: 0};
+const pakaiData = () => {
+  if (Date.now() - ukuranData.t > 300_000) ukuranData = {t: Date.now(), byte: Pr.ukuranPohon(Pr.DATA)};
+  return ukuranData.byte;
+};
+M.registri.gauge('motion_antrean_panjang', 'Render yang menunggu di antrean.', () => A.ringkasAntrean().antre);
+M.registri.gauge('motion_render_jalan', 'Render yang sedang berjalan.', () => A.ringkasAntrean().jalan);
+M.registri.gauge('motion_data_byte', 'Pemakaian disk volume DATA, byte (cache 5 menit).', pakaiData);
+M.registri.gauge('motion_disk_bebas_byte', 'Ruang bebas filesystem DATA, byte.', () => diskBebasMb(Pr.DATA) * 1048576);
+M.registri.gauge('motion_akun_aktif', 'Akun yang menyentuh proyek dalam 1 dan 7 hari terakhir.',
+  () => [1, 7].map((hari) => [{hari: String(hari)}, Pr.akunAktif(hari)]));
+
+app.get('/metrik', async (req, res) => {
+  if (!M.bolehMetrik(req.socket.remoteAddress, req.headers)) return res.status(404).end();
+  res.type('text/plain; version=0.0.4').send(await M.registri.teks());
+});
 
 const tolak = (res, kode, pesan) => res.status(kode).json({jsonrpc: '2.0', error: {code: -32001, message: pesan}, id: null});
 
@@ -50,7 +82,7 @@ async function mcp(req, res) {
   } catch (e) {
     // Error transport bisa menyertakan URL request; jangan sampai token pada /mcp/:token
     // tercetak ke stdout container lalu tersimpan di agregator log.
-    console.error(`mcp: galat transport ${e?.name || 'Error'}`);
+    Log.galat('mcp: galat transport', {uid: u.user_id, jenis: e?.name || 'Error'});
     if (!res.headersSent) tolak(res, 500, 'galat internal');
   }
 }
@@ -81,8 +113,18 @@ app.get('/unduh/:uid/:proyek/:berkas', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`motion-mcp di :${PORT} · data ${Pr.DATA}`);
-  const bersih = () => { try { const n = Pr.bersihkan(); if (n) console.log(`retensi: ${n} proyek lama dihapus`); } catch (e) { console.error('retensi:', e.message); } };
+  Log.info('motion-mcp mulai', {port: PORT, data: Pr.DATA});
+  try {
+    const n = A.bersihkanTmpYatim();
+    if (n) Log.info('tmp yatim dibersihkan', {jumlah: n});
+  } catch (e) { Log.galat('pembersihan tmp gagal', {galat: e}); }
+  const bersih = () => {
+    try {
+      const h = Pr.bersihkan();
+      if (h.proyek || h.ringan) Log.info('retensi', {proyekDihapus: h.proyek, hasilAntaraDihapus: h.ringan, mb: Math.round(h.byte / 1048576)});
+    } catch (e) { Log.galat('retensi gagal', {galat: e}); }
+  };
   bersih();
-  setInterval(bersih, 6 * 3600e3).unref();
+  // Tiap jam: hasil antara proyek yang sehari tak disentuh dibuang tidak lama sesudah batasnya.
+  setInterval(bersih, 3600e3).unref();
 });
