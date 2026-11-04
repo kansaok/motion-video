@@ -47,7 +47,7 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
   jam), `scripts/cadangan.sh` + `docs/operasional.md`, versi 1.1.0 + `CHANGELOG.md` + `versiSkema`.
   Ikut diperbaiki: `/tmp` sandbox P2-03 kini direktori kerja di volume, bukan tmpfs (risiko OOM).
 - **P7-01..P7-04**: README/CLAUDE/AGENTS/IKLAN/katalog/docs dalam Markdown (`.docx` di
-  `docs/arsip/`), `docs/arsitektur.md`, `proyek/README.md`, `CONTRIBUTING.md`.
+  `.docx` asli dihapus sesudah verifikasi; masih ada di riwayat git), `docs/arsitektur.md`, `proyek/README.md`, `CONTRIBUTING.md`.
 
 ## Belum dikerjakan / prioritas berikutnya
 

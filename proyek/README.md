@@ -28,7 +28,7 @@ abaikan yang sama.
 ## Catatan pemeliharaan
 
 - Sebagian naskah masih tersimpan sebagai `naskah.md.docx` (ekspor Google Docs). Dokumen repo
-  utama sudah dikonversi ke Markdown (`docs/arsip/` menyimpan `.docx` aslinya); naskah per video
+  utama sudah dikonversi ke Markdown (`.docx` aslinya dihapus; tersedia di riwayat git); naskah per video
   belum, karena tiap berkas perlu diperiksa manual sesudah konversi.
 - Bila jumlah proyek terus tumbuh, pertimbangkan repo data terpisah yang memakai motion-engine
   sebagai dependensi. Sampai itu terjadi, aturan di atas menjaga repo ini tetap kecil.
