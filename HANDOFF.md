@@ -56,7 +56,6 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
    sambungkan `/metrik` ke monitoring. Isi baris P2-04.3/P2-04.4 di tabel catatan rencana.
 2. **Fase 5** (audio: tes sintetis, batas biaya ElevenLabs, ketahanan API, lubang musik, cek visual).
 3. **Fase 6** sesuai kebutuhan produk; mulai dari P6-01, P6-02, P6-11.
-4. 48 `proyek/*/naskah.md.docx` masih docx (lihat `proyek/README.md`).
 
 ## Verifikasi terakhir
 

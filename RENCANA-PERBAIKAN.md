@@ -365,7 +365,7 @@ Urut dari nilai/biaya terbaik. Tiap fitur harus ada tesnya dan satu paragraf di 
 | P3-06 | 4 Nov 2026 | `tsc --noEmit --allowJs --checkJs` lulus tanpa daftar pengecualian. | 9e0bff6 |
 | P4-01..P4-03 | 4 Nov 2026 | Log JSON tanpa token/naskah/URL; `/metrik` Prometheus hanya alamat privat tanpa XFF; `/hidup`, `/siap`; retensi bertahap. Belum disambungkan ke stack monitoring VPS. | 467874f |
 | P4-04, P4-05 | 4 Nov 2026 | `scripts/cadangan.sh` diuji pulih lokal (identik); uji di container VPS belum. Versi 1.1.0, `versiSkema` + migrasi. | 69050c1 |
-| P7-01..P7-04 | 4 Nov 2026 | `.docx` dokumen repo dikonversi (pandoc tidak ada; konverter heuristik, diperiksa per berkas), `.docx` asli dihapus sesudah verifikasi (tersedia di riwayat git, commit a7dda09). 48 `naskah.md.docx` di `proyek/` sengaja belum. `.env` tidak pernah masuk riwayat (hanya contoh, tanpa nilai). | (commit ini) |
+| P7-01..P7-04 | 4 Nov 2026 | `.docx` dokumen repo dikonversi (pandoc tidak ada; konverter heuristik, diperiksa per berkas), `.docx` asli dihapus sesudah verifikasi (tersedia di riwayat git, commit a7dda09). Proyek lama (config tanpa aset/video) dihapus dari repo; tersedia di riwayat git. `.env` tidak pernah masuk riwayat (hanya contoh, tanpa nilai). | (commit ini) |
 | P2-04.4 (WebSocket lolos `page.route`?) | | | |
 | P2-04.3 (rebinding bisa direproduksi?) | | | |
 | | | | |

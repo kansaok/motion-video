@@ -1,8 +1,10 @@
 # proyek/
 
-Satu folder per video yang dibuat dengan motion-engine. Folder ini tinggal di repo yang sama
-dengan mesinnya karena config video adalah tes regresi paling jujur: perubahan di `lib/` yang
-merusak satu config lama ketahuan dari sini, bukan dari pelanggan.
+Tempat kerja video: satu folder per video yang dibuat dengan motion-engine
+(`motion init <zip> proyek/<nama>`). Proyek-proyek lama dihapus dari repo pada 4 Nov 2026 karena
+yang tersimpan hanya config tanpa komposisi, aset, maupun videonya; config lama masih bisa diambil
+dari riwayat git (`git show 7dc8b85:proyek/<nama>/motion.config.mjs`). Contoh yang bisa langsung
+dirender ada di `contoh/kontrak-v2/`.
 
 ## Yang masuk git dan yang tidak
 
@@ -25,10 +27,9 @@ abaikan yang sama.
   `lib/env.mjs`.
 - Sunting `.jsx` **dan** `.jsx.asli`: `motion apply` selalu menerapkan ulang dari `.asli`.
 
-## Catatan pemeliharaan
+## Catatan
 
-- Sebagian naskah masih tersimpan sebagai `naskah.md.docx` (ekspor Google Docs). Dokumen repo
-  utama sudah dikonversi ke Markdown (`.docx` aslinya dihapus; tersedia di riwayat git); naskah per video
-  belum, karena tiap berkas perlu diperiksa manual sesudah konversi.
-- Bila jumlah proyek terus tumbuh, pertimbangkan repo data terpisah yang memakai motion-engine
-  sebagai dependensi. Sampai itu terjadi, aturan di atas menjaga repo ini tetap kecil.
+- Video jadi dan bahan proyek lama ada di mesin pembuatnya (`~/Videos/Ads/`, `rama-tuf`) dan di
+  folder Google Drive yang disebut README, bukan di repo ini.
+- Beberapa aturan di `IKLAN.md` dan `README.md` menyebut berkas proyek lama sebagai bukti
+  (mis. `proyek/kelas-motion-v07/bgm.sh`); berkas itu kini hanya ada di riwayat git.
