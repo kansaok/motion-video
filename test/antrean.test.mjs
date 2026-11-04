@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import test from 'node:test';
-import {jalankanPekerja, bersihkanFramesPekerja, buatAntrean, lingkunganPekerja, cuplikGiliran} from '../mcp/antrean.mjs';
+import {jalankanPekerja, bersihkanFramesPekerja, buatAntrean, lingkunganPekerja, perintahPekerja, cuplikGiliran} from '../mcp/antrean.mjs';
 import {mkdtemp, mkdir, writeFile, access} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
@@ -12,9 +12,11 @@ function pekerjaTiruan(ketikaKirim) {
   return () => anak;
 }
 
+const tugas = {uid: 7, proyek: 'promo-123', dir: process.cwd(), opsi: {frames: 10}};
+
 test('jalankanPekerja meneruskan kemajuan dan hasil dari IPC', async () => {
   const langkah = [];
-  const hasil = await jalankanPekerja({uid: 7, proyek: 'promo-123', opsi: {frames: 10}}, {
+  const hasil = await jalankanPekerja(tugas, {
     buatProses: pekerjaTiruan((anak, pesan) => {
       assert.deepEqual(pesan, {uid: 7, proyek: 'promo-123', opsi: {frames: 10}});
       anak.emit('message', {langkah: 'mix'});
@@ -27,23 +29,35 @@ test('jalankanPekerja meneruskan kemajuan dan hasil dari IPC', async () => {
 });
 
 test('jalankanPekerja meneruskan galat pekerja', async () => {
-  await assert.rejects(() => jalankanPekerja({uid: 7, proyek: 'promo-123'}, {
+  await assert.rejects(() => jalankanPekerja(tugas, {
     buatProses: pekerjaTiruan((anak) => anak.emit('message', {galat: 'render gagal'})),
   }), /render gagal/);
 });
 
-test('jalankanPekerja tidak mewariskan flag proses induk ke pekerja', async () => {
+test('jalankanPekerja menjalankan pekerja dalam sandbox tanpa flag proses induk', async () => {
   let opsi;
-  await jalankanPekerja({uid: 7, proyek: 'promo-123'}, {
-    buatProses: (_berkas, _argumen, o) => {
+  await jalankanPekerja(tugas, {
+    buatProses: (_perintah, _argumen, o) => {
       opsi = o;
       const anak = new EventEmitter();
       anak.send = () => anak.emit('message', {hasil: {}});
       return anak;
     },
   });
-  assert.deepEqual(opsi.execArgv, []);
   assert.equal(opsi.detached, true);
+});
+
+test('sandbox pekerja hanya memasang proyek aktif dan proc baru', () => {
+  const p = '/data/u/7/promo-123';
+  const {perintah, argumen} = perintahPekerja({...tugas, dir: p}, {
+    ada: (x) => x === p || x === '/usr' || x === '/app', node: '/usr/local/bin/node', berkas: '/app/mcp/pekerja.mjs',
+  });
+  assert.equal(perintah, '/usr/bin/bwrap');
+  assert.deepEqual(argumen.slice(0, 12), ['--die-with-parent', '--new-session', '--unshare-user', '--unshare-pid', '--unshare-uts', '--unshare-ipc', '--cap-drop', 'ALL', '--proc', '/proc', '--dev', '/dev']);
+  assert.ok(argumen.includes('--bind'));
+  assert.ok(argumen.includes(p));
+  assert.ok(!argumen.includes('/data/u/8/proyek-lain'));
+  assert.ok(argumen.includes('--clearenv'));
 });
 
 test('lingkungan pekerja tidak membawa rahasia server', () => {
@@ -54,7 +68,7 @@ test('lingkungan pekerja tidak membawa rahasia server', () => {
 
 test('jalankanPekerja menghentikan grup pekerja ketika batas total terlewati', async () => {
   let dibunuh, dibersihkan;
-  await assert.rejects(() => jalankanPekerja({uid: 7, proyek: 'promo-123'}, {
+  await assert.rejects(() => jalankanPekerja(tugas, {
     batasMs: 1, macetMs: 100,
     buatProses: () => { const anak = new EventEmitter(); anak.pid = 4321; anak.send = () => {}; return anak; },
     bunuhGrup: (pid) => { dibunuh = pid; }, bersihkanFrame: (pid) => { dibersihkan = pid; },
@@ -65,7 +79,7 @@ test('jalankanPekerja menghentikan grup pekerja ketika batas total terlewati', a
 
 test('jalankanPekerja menghentikan render yang tidak menambah frame', async () => {
   let dibunuh;
-  await assert.rejects(() => jalankanPekerja({uid: 7, proyek: 'promo-123'}, {
+  await assert.rejects(() => jalankanPekerja(tugas, {
     batasMs: 100, macetMs: 1,
     buatProses: () => {
       const anak = new EventEmitter();

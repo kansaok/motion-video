@@ -5,7 +5,7 @@
 FROM mcr.microsoft.com/playwright:v1.64.1-noble
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ffmpeg unzip tini \
+ && apt-get install -y --no-install-recommends bubblewrap ffmpeg unzip tini \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

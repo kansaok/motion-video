@@ -8,7 +8,6 @@ import {z} from 'zod';
 import * as Pipa from '../lib/pipa.mjs';
 import * as K from '../lib/komposisi.mjs';
 import * as Stok from '../lib/stok.mjs';
-import {cuplik} from '../lib/render.mjs';
 import * as Pr from './proyek.mjs';
 import * as A from './antrean.mjs';
 import {hitung} from './ekspresi.mjs';
@@ -259,9 +258,7 @@ export function buatServer(uid) {
       }
       if (!komp) throw new Error('belum ada komposisi .html ber-OM_SCENES di src');
       Pr.jalurAman(p.src, komp);
-      const ke = path.join(p.dir, 'cuplikan');
-      rmSync(ke, {recursive: true, force: true});
-      const f = await A.cuplikGiliran(uid, () => cuplik(p.src, komp, detik, ke));
+      const f = await A.cuplikGiliran(uid, () => A.cuplikPekerja(uid, p, komp, detik));
       return {content: f.flatMap((x, i) => [
         {type: 'text', text: `t = ${detik[i]} dtk`},
         {type: 'image', data: readFileSync(x).toString('base64'), mimeType: 'image/jpeg'},

@@ -3,7 +3,7 @@
    membuat renderer Chromium mati dengan "Target crashed" (lihat VIEWPORT di lib/render.mjs).
    Tiap pelanggan hanya boleh punya satu render yang menunggu atau berjalan. */
 import {randomBytes} from 'node:crypto';
-import {fork} from 'node:child_process';
+import {spawn} from 'node:child_process';
 import {existsSync, readFileSync, writeFileSync, readdirSync, rmSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -12,6 +12,34 @@ import * as Pr from './proyek.mjs';
 
 const PARALEL = Number(process.env.RENDER_PARALEL || 1);
 const BERKAS_PEKERJA = fileURLToPath(new URL('./pekerja.mjs', import.meta.url));
+
+/* Chromium menjalankan JavaScript milik pelanggan. Proses anak dengan environment bersih
+   saja belum cukup: tanpa namespace mount ia masih dapat membaca /proc proses server (UID
+   sama) dan seluruh volume /data. bubblewrap membuat /proc baru dan hanya memasang proyek
+   yang sedang dikerjakan. Jangan beri fallback tanpa sandbox; kegagalan bwrap harus membuat
+   render gagal, bukan diam-diam kembali ke isolasi yang lebih lemah. */
+const JALUR_RUNTIME = ['/usr', '/usr/local', '/bin', '/lib', '/lib64', '/etc', '/app', '/ms-playwright'];
+export function perintahPekerja(t, {bwrap = '/usr/bin/bwrap', node = process.execPath,
+  berkas = BERKAS_PEKERJA, ada = existsSync} = {}) {
+  const proyek = path.resolve(String(t.dir || ''));
+  if (!path.isAbsolute(String(t.dir || '')) || !ada(proyek)) throw new Error('direktori proyek pekerja tidak sah');
+  const bagian = proyek.split(path.sep).filter(Boolean);
+  // Pr.buka() tetap memakai jalur DATA_DIR; buat hanya leluhur proyek yang diperlukan.
+  const args = ['--die-with-parent', '--new-session', '--unshare-user', '--unshare-pid', '--unshare-uts', '--unshare-ipc',
+    '--cap-drop', 'ALL', '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/tmp'];
+  let tujuan = '';
+  // Jangan pasang volume induknya: hanya buat direktori kosong sampai proyek aktif.
+  for (const nama of bagian.slice(0, -1)) {
+    tujuan += `/${nama}`;
+    args.push('--dir', tujuan);
+  }
+  for (const sumber of JALUR_RUNTIME) if (ada(sumber)) args.push('--ro-bind', sumber, sumber);
+  args.push('--bind', proyek, proyek, '--chdir', '/app', '--clearenv');
+  for (const [nama, nilai] of Object.entries(lingkunganPekerja())) args.push('--setenv', nama, nilai);
+  // HOME tidak diwariskan: profil Chromium sementara tidak boleh menyentuh home server.
+  args.push('--setenv', 'HOME', '/tmp', node, berkas);
+  return {perintah: bwrap, argumen: args};
+}
 
 /* Pekerja menjalankan HTML pelanggan lewat Chromium. Ia hanya menerima konfigurasi teknis
    render; token BIMP dan tautan unduh tetap tinggal di proses server HTTP. */
@@ -110,7 +138,7 @@ export function bersihkanFramesPekerja(pid, direktoriTmp = os.tmpdir()) {
 }
 
 export function jalankanPekerja(t, {
-  buatProses = fork, onLangkah = () => {}, onKemajuan = () => {},
+  buatProses = spawn, onLangkah = () => {}, onKemajuan = () => {},
   batasMs = Pr.BATAS.renderMenit * 60_000, macetMs = Pr.BATAS.renderMacetDetik * 1_000,
   bunuhGrup = (pid) => process.kill(-pid, 'SIGKILL'), bersihkanFrame = bersihkanFramesPekerja,
 } = {}) {
@@ -128,8 +156,10 @@ export function jalankanPekerja(t, {
       try { bersihkanFrame(anak.pid); } catch (e) { console.error(`frame pekerja ${anak.pid} tidak dapat dibersihkan:`, e.message); }
       akhir(gagal, new Error(pesan));
     };
-    const anak = buatProses(BERKAS_PEKERJA, [], {
-      detached: true, execArgv: [], env: lingkunganPekerja(), stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
+    let perintah;
+    try { perintah = perintahPekerja(t); } catch (e) { akhir(gagal, e); return; }
+    const anak = buatProses(perintah.perintah, perintah.argumen, {
+      detached: true, env: lingkunganPekerja(), stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
     });
     anak.once('error', (e) => akhir(gagal, e));
     anak.on('message', (pesan) => {
@@ -152,8 +182,17 @@ export function jalankanPekerja(t, {
     watchdog = setInterval(() => {
       if (renderMulai && Date.now() - renderMulai > macetMs) hentikan('render macet: jumlah frame tidak bertambah');
     }, Math.min(1_000, macetMs));
-    anak.send({uid: t.uid, proyek: t.proyek, opsi: t.opsi});
+    anak.send(t.pesan || {uid: t.uid, proyek: t.proyek, opsi: t.opsi});
   });
+}
+
+/* Cuplik juga mengeksekusi HTML pelanggan. Ia wajib melewati namespace yang sama dengan
+   render penuh; menjalankannya langsung dari server akan membuka kembali /data ke Chromium. */
+export async function cuplikPekerja(uid, p, komposisi, detik) {
+  const hasil = await jalankanPekerja({uid, proyek: p.meta.id, dir: p.dir, pesan: {
+    mode: 'cuplik', uid, proyek: p.meta.id, komposisi, detik,
+  }, opsi: {}}, {batasMs: 2 * 60_000});
+  return hasil.cuplikan || [];
 }
 
 async function kerjakan(t) {

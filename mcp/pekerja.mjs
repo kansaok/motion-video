@@ -1,11 +1,12 @@
 /* Pekerja render MCP. Proses ini sengaja terpisah dari server HTTP: ffmpeg dan encode frame
    bersifat sinkron di sejumlah tahap lama, sehingga hanya pekerja yang boleh tertahan olehnya. */
-import {writeFileSync} from 'node:fs';
+import {writeFileSync, rmSync} from 'node:fs';
 import path from 'node:path';
 import * as Pipa from '../lib/pipa.mjs';
 import * as K from '../lib/komposisi.mjs';
 import * as T from '../lib/tata.mjs';
 import * as Pr from './proyek.mjs';
+import {cuplik} from '../lib/render.mjs';
 
 const kirim = (pesan) => process.send?.(pesan);
 
@@ -48,9 +49,19 @@ async function kerjakan({uid, proyek, opsi}) {
   };
 }
 
+async function kerjakanCuplik({uid, proyek, komposisi, detik}) {
+  const p = Pr.buka(uid, proyek);
+  const html = Pr.jalurAman(p.src, komposisi);
+  const ke = path.join(p.dir, 'cuplikan');
+  // Hasil lama dapat memakan kuota; direktori ini selalu dibangun ulang untuk satu permintaan.
+  rmSync(ke, {recursive: true, force: true});
+  const hasil = await cuplik(p.src, path.relative(p.src, html), detik, ke);
+  return {cuplikan: hasil};
+}
+
 process.once('message', async (pesan) => {
   try {
-    kirim({hasil: await kerjakan(pesan)});
+    kirim({hasil: pesan?.mode === 'cuplik' ? await kerjakanCuplik(pesan) : await kerjakan(pesan)});
   } catch (e) {
     kirim({galat: String(e?.message || e).slice(0, 1500)});
   } finally {
