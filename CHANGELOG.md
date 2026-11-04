@@ -11,10 +11,13 @@ Aturan versi:
 
 ## [Belum dirilis]
 
-Semua perubahan di bawah ada di CLI (`motion`). Server MCP tidak berubah perilakunya kecuali
-perbaikan mixer, yang dipakai keduanya.
+Hampir semua perubahan di bawah ada di CLI (`motion`). Di server MCP: perbaikan mixer (dipakai
+keduanya) dan parameter render parsial yang aditif (`scene`, `dari`, `sampai` di alat `render`).
 
 ### Ditambahkan
+- Render parsial: `motion render --scene=<nama|no>` atau `--dari`/`--sampai`, dan parameter
+  `scene`/`dari`/`sampai` di alat MCP `render`. Hanya frame rentang itu yang dirender, audio ikut
+  dipotong, ke berkas `-potong-<dari>-<sampai>.mp4`; MP4 penuh dan sampulnya tidak tertimpa.
 - `motion plan --kering` / `motion all --kering`: durasi, posisi, cue, musik, dan biaya tanpa
   ElevenLabs dan tanpa menulis ke proyek (laporan `kerja/kering.json`). `suara.kps` opsional untuk
   perkiraan durasi suara yang belum punya VO di proyek.

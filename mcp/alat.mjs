@@ -284,9 +284,15 @@ export function buatServer(uid) {
     }, {readOnlyHint: true});
 
   alat('render', 'Masukkan proyek ke antrean render: tempatkan VO, sesuaikan durasi scene, mix audio, render MP4, periksa. '
-    + 'Kembali segera dengan id render; poll status_render. `frames` (misal 60) untuk uji cepat beberapa detik pertama.',
-  {proyek: Proyek, frames: z.number().int().min(1).max(600).optional()},
-  async ({proyek, frames}) => {
+    + 'Kembali segera dengan id render; poll status_render. `frames` (misal 60) untuk uji cepat beberapa detik pertama. '
+    + '`scene` (nama atau nomor mulai 1) atau `dari`/`sampai` (detik video sesudah penempatan VO) merender potongan saja, '
+    + 'audio ikut dipotong, ke berkas terpisah tanpa sampul dan tanpa pemeriksaan; MP4 penuh tidak tertimpa.',
+  {proyek: Proyek, frames: z.number().int().min(1).max(600).optional(),
+    scene: z.union([z.string().min(1).max(120), z.number().int().min(1)]).optional(),
+    dari: z.number().min(0).optional(), sampai: z.number().positive().optional()},
+  async ({proyek, frames, scene, dari, sampai}) => {
+    if (scene !== undefined && (dari !== undefined || sampai !== undefined)) throw new Error('pakai `scene` ATAU `dari`/`sampai`, bukan keduanya');
+    if (dari !== undefined && sampai !== undefined && sampai <= dari) throw new Error('`sampai` harus lebih besar dari `dari`');
     batasiLaju(uid, 'render');
     const p = Pr.buka(uid, proyek);
     const j = Pr.bacaConfig(p);
@@ -294,7 +300,7 @@ export function buatServer(uid) {
     // Tolak di pintu masuk: render yang diterima saat disk hampir penuh gagal di tengah encode.
     const k = kesiapan({dir: Pr.DATA});
     if (!k.siap) throw new Error(`server belum siap menerima render: ${k.alasan.join('; ')} — coba lagi nanti`);
-    const t = A.kirim(uid, p, {frames});
+    const t = A.kirim(uid, p, {frames, scene, dari, sampai});
     return teks({render: t.id, status: t.status, catatan: 'poll status_render tiap ±20 detik'});
   });
 

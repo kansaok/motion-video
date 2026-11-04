@@ -61,14 +61,16 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
    dalam dan publik, `/metrik` 404 dari publik; cadangan pra-deploy di
    `vps2:/root/backup-motionmcp/`, image lama `motion-mcp:prev`. Server bukan checkout git:
    kirim dengan rsync dan **jangan hapus `sfx-stok/*.mp3`** (tidak ada di git).
-2. **Fase 6**: P6-01 `motion doctor` dan P6-11 `--kering` selesai; berikutnya P6-02 (render parsial).
+2. **Fase 6**: P6-01 `motion doctor`, P6-11 `--kering`, P6-02 render parsial selesai. Server MCP di vps2
+   masih 1.1.0 tanpa parameter render parsial; deploy ulang bila dibutuhkan pelanggan. Berikutnya
+   sesuai kebutuhan produk (P6-04 subtitle, P6-08 webhook, P6-09 batalkan render).
 3. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
 
 ## Verifikasi terakhir
 
 ```sh
 npm ci                       # node_modules wajib ada; tanpa ini test/laju gagal impor SDK MCP
-npm test                     # 116 tes: 115 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
+npm test                     # 120 tes: 119 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
 npm run periksa:tipe         # tsc --noEmit bersih
 npm run periksa:playwright   # versi 1.64.1 selaras dengan Dockerfile
 git diff --check

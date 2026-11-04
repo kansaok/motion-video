@@ -38,6 +38,7 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
   motion speed  <suara...>          ukur kecepatan baca tiap suara SEBELUM menulis naskah
 
   motion render --komposisi=<html>  render orientasi lain dengan audio yang sama
+  motion render --scene=<nama|no>   render satu scene saja, audio ikut dipotong (atau --dari=<dtk> --sampai=<dtk>)
   motion plan --kering · all --kering  hitung durasi, posisi, cue, dan biaya tanpa ElevenLabs dan tanpa
                                     menulis ke proyek (laporan di <folder>/kerja/kering.json)
 
@@ -178,8 +179,21 @@ async function jalankan() {
         c.komposisi = String(bendera.komposisi);
         c.keluaran = String(bendera.keluaran || `${namaPendek(c.komposisi)}.mp4`);
       } else if (bendera.keluaran) c.keluaran = String(bendera.keluaran);
-      const r = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined, tab: bendera.tab && Number(bendera.tab)});
-      console.log(`  ✓ ${r.keluaran} — ${r.lebar}x${r.tinggi}, ${r.detik}s`);
+      /* Render parsial (P6-02): satu scene atau rentang detik, audio ikut dipotong. Detiknya
+         detik video sesudah `plan`/`apply`, bukan detik brief. */
+      let rentang = {};
+      if (bendera.scene) rentang = Pipa.rentangScene(c, String(bendera.scene));
+      else if (bendera.dari !== undefined || bendera.sampai !== undefined) {
+        rentang = {dari: bendera.dari === undefined ? undefined : Number(bendera.dari),
+          sampai: bendera.sampai === undefined ? undefined : Number(bendera.sampai)};
+      }
+      if ('dari' in rentang && !bendera.keluaran) {
+        c.keluaran = Pipa.namaPotongan(c.keluaran || `${c.nama}.mp4`, rentang);
+      }
+      const r = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined, tab: bendera.tab && Number(bendera.tab),
+        dari: rentang.dari, sampai: rentang.sampai});
+      console.log(`  ✓ ${r.keluaran} — ${r.lebar}x${r.tinggi}, ${Number(r.detik).toFixed(2)}s`
+        + `${r.dari !== undefined ? ` (detik ${r.dari.toFixed(2)}-${r.sampai.toFixed(2)} video)` : ''}`);
       if (r.sampul) console.log(`  ✓ ${r.sampul} — sampul dari detik ${r.sampulDetik.toFixed(2)}`);
       break;
     }

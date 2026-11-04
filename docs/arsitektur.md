@@ -65,7 +65,7 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `lib/timeline.mjs` | `timeline.json` kerja |
 | `lib/vo.mjs`, `sfx.mjs`, `musik.mjs` | tahap generate dan pemeriksaan hasil generator |
 | `lib/mix.mjs` | filtergraph ffmpeg, ducking, loudness -14 LUFS / -1 dBTP |
-| `lib/render.mjs` | server statis + Chromium per frame + encode; `periksaVisual` (tata letak di komposisi hidup) |
+| `lib/render.mjs` | server statis + Chromium per frame + encode; `rentangFrame` (render parsial); `periksaVisual` (tata letak di komposisi hidup); `muatPlaywright`/`OPSI_CHROMIUM` (dipakai juga `doctor`) |
 | `lib/periksa.mjs` | verifikasi hasil akhir: masking, bus SFX, hening, lubang musik, peta level, sampul, STT |
 | `lib/jaring.mjs` | penjaga SSRF untuk unduhan dan halaman Chromium |
 | `lib/stok.mjs` | katalog `sfx-stok/` |

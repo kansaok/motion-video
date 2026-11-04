@@ -22,6 +22,11 @@ lalu URL audionya diunggah ke sini.
 7. `simpan_config` (skema di bawah). Validasi langsung jalan: scene, SFX, dan ekspresi dicek.
 8. `render` dengan `frames: 60` untuk uji cepat, lalu `render` penuh. Poll `status_render`
    tiap ±20 detik. Hasilnya tautan MP4 + sampul JPG (berlaku 7 hari) dan laporan durasi/audio.
+   Untuk memeriksa SATU scene sesudah revisi, `render` dengan `scene: "<nama>"` (atau nomor mulai
+   1), atau `dari`/`sampai` dalam detik video sesudah penempatan VO. Hanya frame rentang itu yang
+   dirender, audio ikut dipotong, hasilnya berkas `-potong-<dari>-<sampai>.mp4` terpisah (tanpa
+   sampul, tanpa pemeriksaan audio MP4; `potongan` di hasil menyebut rentangnya). MP4 penuh tidak
+   tertimpa; potongan sebelumnya diganti.
 
 Yang perlu dicek di laporan: `mp4_lufs` di -14 ±1, `mp4_dbtp` ≤ -1,0, `sampul_kontras` ≥ 75%
 (frame 0 = sampul Reels/TikTok, jadi scene pertama jangan dibuka dengan fade dari hitam).

@@ -35,6 +35,7 @@ motion all proyek/video-baru                          # sampai MP4 + verifikasi
 | `motion sfx` / `motion music` | generate aset yang belum ada (yang sudah ada dilewati); `music` lalu mencetak peta level bed dan lubangnya |
 | `motion mix` | rakit `aset/master.wav` + `stem/` |
 | `motion render` | MP4 + `<keluaran>-sampul.jpg` (`--frames=60` untuk uji cepat) |
+| `motion render --scene=<nama\|no>` · `--dari=<dtk> --sampai=<dtk>` | render satu scene/rentang saja, audio ikut dipotong, ke `<keluaran>-potong-<dari>-<sampai>.mp4` (tanpa sampul; MP4 penuh tidak tertimpa) |
 | `motion render --komposisi=<html>` | orientasi lain, audio yang sama, tanpa menyunting config |
 | `motion check` | verifikasi hasil, termasuk frame 0 sebagai sampul dan tata letak di komposisi hidup (`--cepat` melewati STT + A/B) |
 | `motion shot <detik...>` | cuplik frame dari komposisi hidup, tanpa render penuh |
