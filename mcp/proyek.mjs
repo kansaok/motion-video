@@ -5,24 +5,25 @@ import {randomBytes, createHmac, timingSafeEqual} from 'node:crypto';
 import path from 'node:path';
 import {ff, durasi} from '../lib/ff.mjs';
 import {alamatPublik} from '../lib/jaring.mjs';
-import {akhirSuara} from '../lib/pipa.mjs';
+import {pangkasVo} from '../lib/vo.mjs';
+import {BATAS_BAWAAN, menitRenderBawaan, SFX, MUSIK} from '../lib/konstanta.mjs';
 import * as K from '../lib/komposisi.mjs';
 import {hitung} from './ekspresi.mjs';
 
 export const DATA = path.resolve(process.env.DATA_DIR || path.join(process.cwd(), 'data'));
 const angkaPositif = (nilai, bawaan) => Number.isFinite(Number(nilai)) && Number(nilai) > 0 ? Number(nilai) : bawaan;
 export function batasDariEnv(env = process.env) {
-  const detik = angkaPositif(env.MAKS_DETIK, 180);
+  const B = BATAS_BAWAAN, detik = angkaPositif(env.MAKS_DETIK, B.detik);
   return {
-    proyek: angkaPositif(env.MAKS_PROYEK, 20),
+    proyek: angkaPositif(env.MAKS_PROYEK, B.proyek),
     detik,
-    unduhMb: angkaPositif(env.MAKS_UNDUH_MB, 50),
-    ekstrakMb: angkaPositif(env.MAKS_EKSTRAK_MB, 300),
-    kuotaMb: angkaPositif(env.KUOTA_MB, 1500),
-    retensiHari: angkaPositif(env.RETENSI_HARI, 14),
-    renderMenit: angkaPositif(env.RENDER_BATAS_MENIT, Math.max(10, detik / 6)),
-    renderMacetDetik: angkaPositif(env.RENDER_BATAS_MACET_DETIK, 120),
-    antreMaks: angkaPositif(env.ANTRE_MAKS, 20),
+    unduhMb: angkaPositif(env.MAKS_UNDUH_MB, B.unduhMb),
+    ekstrakMb: angkaPositif(env.MAKS_EKSTRAK_MB, B.ekstrakMb),
+    kuotaMb: angkaPositif(env.KUOTA_MB, B.kuotaMb),
+    retensiHari: angkaPositif(env.RETENSI_HARI, B.retensiHari),
+    renderMenit: angkaPositif(env.RENDER_BATAS_MENIT, menitRenderBawaan(detik)),
+    renderMacetDetik: angkaPositif(env.RENDER_BATAS_MACET_DETIK, B.renderMacetDetik),
+    antreMaks: angkaPositif(env.ANTRE_MAKS, B.antreMaks),
   };
 }
 export const BATAS = batasDariEnv();
@@ -212,26 +213,18 @@ export async function ambilIsi({url, base64}) {
 /* ── audio ────────────────────────────────────────────────────────────────── */
 const NAMA = /^[a-z0-9][a-z0-9-]{0,40}$/;
 
-/* VO dari connector diproses SAMA PERSIS dengan VO yang digenerate mesin (lihat Pipa.vo):
-   awal dipotong di -58 dB supaya letupan konsonan tidak hilang, ekor dipotong di jendela
-   terakhir di atas -45 dB + 0,25 dtk peluruhan. `tempo` menggantikan parameter speed yang
-   tidak ada di connector; pitch tetap. */
+/* VO dari connector memakai pemangkasan yang sama dengan jalur TTS CLI. `tempo` menggantikan
+   parameter speed yang tidak ada di connector; pitch tetap. */
 export function simpanVo(p, no, buf, tempo = 1) {
   const n = String(Number(no)).padStart(2, '0');
   if (!(Number(no) >= 1 && Number(no) <= 99)) throw new Error('nomor VO 1-99');
   const mentah = path.join(p.aset, 'vo', `.vo-${n}.mentah`);
-  const awal = path.join(p.aset, 'vo', `.vo-${n}.awal.wav`);
   const out = path.join(p.aset, 'vo', `vo-${n}.mp3`);
   writeFileSync(mentah, buf);
   try {
-    const t = Math.min(2, Math.max(0.5, Number(tempo) || 1));
-    ff(['-i', mentah, '-af', `${t !== 1 ? `atempo=${t},` : ''}silenceremove=start_periods=1:start_duration=0.01:start_threshold=-58dB:detection=peak`, awal]);
-    const panjang = Math.min(durasi(awal), akhirSuara(awal) + 0.25);
-    if (panjang < 0.1) throw new Error(`VO-${no} senyap sesudah trim — periksa berkasnya`);
-    ff(['-i', awal, '-af', `atrim=0:${panjang.toFixed(3)},afade=t=in:st=0:d=0.015,`
-      + `afade=t=out:st=${Math.max(0, panjang - 0.08).toFixed(3)}:d=0.08`, out]);
+    pangkasVo(mentah, out, {tempo, label: `VO-${no}`});
   } finally {
-    for (const f of [mentah, awal]) if (existsSync(f)) unlinkSync(f);
+    if (existsSync(mentah)) unlinkSync(mentah);
   }
   // cache normalisasi mixer dikunci ke waktu ubah, tetapi hapus juga supaya tidak ada sisa
   const norm = path.join(p.aset, 'vo', 'norm', `vo-${n}.mp3`);
@@ -245,8 +238,9 @@ export function simpanAudio(p, jenis, nama, buf) {
   const mentah = `${out}.mentah`;
   writeFileSync(mentah, buf);
   try {
-    // Kepala musik dipangkas di -45 dB, SFX di -58 dB — alasannya ada di Pipa.musik dan Pipa.sfx.
-    const ambang = jenis === 'sfx' ? 'start_duration=0.01:start_threshold=-58dB' : 'start_duration=0.02:start_threshold=-45dB';
+    // Ambang yang sama dengan jalur generator; alasannya ada di lib/konstanta.mjs.
+    const k = jenis === 'sfx' ? SFX : MUSIK;
+    const ambang = `start_duration=${k.durasiAwal}:start_threshold=${k.ambangAwal}`;
     ff(['-i', mentah, '-af', `silenceremove=start_periods=1:${ambang}:detection=peak`, '-ar', '44100', '-b:a', '192k', out]);
   } finally { if (existsSync(mentah)) unlinkSync(mentah); }
   const norm = jenis === 'sfx' ? path.join(p.aset, 'sfx', 'norm', `${nama}.mp3`) : out.replace(/\.mp3$/, '-norm.mp3');

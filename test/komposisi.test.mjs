@@ -3,7 +3,7 @@ import test from 'node:test';
 import {mkdtemp, readFile, cp, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
-import {bacaScenes, tulisScenes, relatif, jsxUtama, geserJangkar, geserDeret, geserKapsi} from '../lib/komposisi.mjs';
+import {bacaScenes, tulisScenes, relatif, jsxUtama, laporanKeselarasan, geserJangkar, geserDeret, geserKapsi} from '../lib/komposisi.mjs';
 
 const fixture = (nama) => new URL(`fixtures/${nama}`, import.meta.url);
 async function salinFixture(...nama) {
@@ -48,9 +48,17 @@ test('geserJangkar, geserDeret, dan geserKapsi mempertahankan alias peta cue', a
   assert.doesNotMatch(isi, /CUES\.dp|at: NaN/);
 });
 
+test('laporan keselarasan menghitung pola JSX sebelum ditulis', async () => {
+  const dir = await salinFixture('utama.jsx');
+  const r = laporanKeselarasan(path.join(dir, 'utama.jsx'));
+  assert.deepEqual(r.jangkar, ['intro']);
+  assert.deepEqual(r.deret, ['deret']);
+  assert.deepEqual(r.kapsi, {ditemukan: true, jumlah: 1, tidakCocok: []});
+});
+
 test('geserKapsi menggagalkan kapsi yang tidak berpola', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'motion-test-'));
   const jsx = path.join(dir, 'tanpa-kapsi.jsx');
   await writeFile(jsx, 'const judul = "tanpa kapsi";');
-  assert.throws(() => geserKapsi(jsx, [1]), /kapsi tidak berpola/);
+  assert.throws(() => geserKapsi(jsx, [1]), /kapsi tidak berpola.*deklarasi tidak ditemukan/);
 });

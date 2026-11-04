@@ -1,0 +1,58 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Contoh kontrak komposisi v2 (docs/kontrak-komposisi-v2.md). Tidak ada angka timing yang
+     ditambal mesin selain `dur` di OM_SCENES; kapsi dan beat dibaca dari timing.js. -->
+<script>window.OM_SCENES = '[{"name":"Hook","dur":2.5},{"name":"Isi","dur":3},{"name":"CTA","dur":2.5}]';</script>
+<script src="timing.js"></script>
+<style>
+  html,body{margin:0;background:#000}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#101014;color:#f4f1ea;
+    font-family:system-ui,sans-serif}
+  .judul{position:absolute;left:80px;right:80px;top:700px;font-size:110px;font-weight:800;line-height:1.05}
+  .lencana{position:absolute;right:80px;top:420px;width:220px;height:220px;border-radius:50%;
+    background:#ffcc33;color:#101014;font-size:56px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .kapsi{position:absolute;left:80px;right:80px;bottom:300px;font-size:58px;font-weight:700;text-align:center;
+    min-height:70px}
+</style></head><body>
+<div id="stage" data-om-kontrak="2" data-om-exportable-video-with-duration-secs="8">
+  <div class="lencana" id="lencana">BARU</div>
+  <div class="judul" id="judul"></div>
+  <div class="kapsi" id="kapsi"></div>
+</div>
+<script>
+(() => {
+  const SC = JSON.parse(window.OM_SCENES), C = {};
+  let total = 0;
+  for (const s of SC) { C[s.name] = total; total += s.dur; }
+  const stage = document.getElementById('stage');
+  stage.setAttribute('data-om-exportable-video-with-duration-secs', total.toFixed(2));
+
+  // Cadangan hanya untuk `cuplik` sebelum VO ada; saat render mesin selalu menulis timing.js.
+  const VO = window.VO_TIMING || [{no: 1, pos: C.Hook + 0.2, dur: 1.8}, {no: 2, pos: C.Isi + 0.3, dur: 2.2},
+    {no: 3, pos: C.CTA + 0.2, dur: 1.8}];
+  const CUES = window.OM_CUES || [{nama: 'pop', at: C.Isi + 0.3}];
+  const KAPSI = {1: 'Video dari satu berkas HTML', 2: 'Kapsi ikut suara, tanpa tambalan', 3: 'Coba sekarang'};
+  const JUDUL = {Hook: 'Kontrak v2', Isi: 'Timing dari mesin', CTA: 'Selesai.'};
+
+  const jelas = (t, a, d) => Math.min(1, Math.max(0, (t - a) / d));
+  const sceneDi = (t) => SC.reduce((x, s) => (t >= C[s.name] ? s.name : x), SC[0].name);
+
+  function frame(t) {
+    const sc = sceneDi(t);
+    const j = document.getElementById('judul');
+    j.textContent = JUDUL[sc] || sc;
+    const k = sc === 'Hook' ? 1 : jelas(t, C[sc], 0.3);      // frame 0 = sampul, tanpa fade
+    j.style.opacity = k; j.style.transform = `translateY(${(1 - k) * 40}px)`;
+
+    // Beat: lencana berdenyut tepat di setiap cue `pop`, bukan di detik yang ditulis tangan.
+    const denyut = CUES.filter((c) => c.nama === 'pop')
+      .reduce((m, c) => Math.max(m, t >= c.at ? Math.max(0, 1 - (t - c.at) / 0.35) : 0), 0);
+    document.getElementById('lencana').style.transform = `scale(${1 + denyut * 0.25})`;
+
+    // Kapsi muncul 0,15 dtk sebelum kalimatnya agar sempat terbaca.
+    const l = VO.find((v) => t >= v.pos - 0.15 && t < v.pos + v.dur + 0.2);
+    document.getElementById('kapsi').textContent = l ? KAPSI[l.no] || '' : '';
+  }
+  stage.addEventListener('data-om-seek-to-time-frame', (e) => frame(Number(e.detail.time) || 0));
+  frame(0);
+})();
+</script></body></html>

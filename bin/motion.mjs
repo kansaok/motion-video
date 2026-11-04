@@ -74,10 +74,13 @@ async function jalankan() {
         throw new Error('pilih salah satu: motion init <zip> <folder> --komposisi="<berkas.dc.html>"');
       }
       if (!utama) utama = html.find((f) => /portrait|9x16/i.test(f)) || html[0];
-      const namaJsx = info.find((h) => h.f === utama).utama;
+      const versi = K.kontrak(path.join(src, utama), src);
+      // Kontrak v2 membaca timing.js; JSX-nya tidak pernah ditambal, jadi tidak masuk config.
+      const namaJsx = versi === 2 ? null : info.find((h) => h.f === utama).utama;
+      if (versi === 2) console.log('  kontrak v2: kapsi/beat dibaca dari timing.js, JSX tidak ditambal');
       // Hanya komposisi yang berbagi .jsx utama yang sama yang boleh ikut `jugaTulis` —
       // itu definisi "orientasi lain dari video yang sama".
-      const lain = (grup.get(namaJsx || utama) || []).filter((f) => f !== utama);
+      const lain = (grup.get(info.find((h) => h.f === utama).utama || utama) || []).filter((f) => f !== utama);
       const scenes = K.bacaScenes(path.join(src, utama));
       const {total} = K.jadwal(scenes);
       console.log(`  dipakai komposisi: ${info.find((h) => h.f === utama).dipakai.join(' · ') || '(tidak ada x-import jsx)'}`);
@@ -89,10 +92,13 @@ async function jalankan() {
       if (nganggur.length) console.log(`  jsx sisa versi lama, TIDAK dipakai: ${nganggur.join(' · ')}`);
       if (namaJsx) {
         const r = K.relatif(path.join(src, namaJsx));
+        const cocok = K.laporanKeselarasan(path.join(src, namaJsx));
         console.log(`  jsx: ${namaJsx} — ${r.rel} rujukan scene-relatif, ${r.abs} array absolut`);
         console.log(r.aman
           ? '  ✓ 100% scene-relatif: durasi scene aman diubah'
           : '  ! ada array detik absolut — angkanya harus dipetakan ulang manual kalau scene diubah');
+        console.log(`  keselarasan JSX: ${cocok.jangkar.length} jangkar · ${cocok.deret.length} deret · ${cocok.kapsi.jumlah} kapsi${cocok.kapsi.tidakCocok.length ? ` · ! kapsi tak cocok: ${cocok.kapsi.tidakCocok.join(', ')}` : ''}`);
+        for (const x of cocok.tidakCocok) console.log(`    ! tidak dapat ditulis balik: ${x}`);
       }
       console.log(`\n  ${scenes.length} scene, ${total}s:`);
       let a = 0;
@@ -300,7 +306,7 @@ async function periksaDanLapor(c, opsi) {
   }
   if (h.lubang) {
     const L = h.lubang.lubang;
-    console.log(`  bed musik ${L.length ? '✖ bolong ' + L.map((x) => `${x.dari.toFixed(2)}-${x.sampai.toFixed(2)}s (${x.min.toFixed(0)} dB)`).join(' · ')
+    console.log(`  bed musik ${h.lubang.galat ? `✖ tidak dapat diperiksa — ${h.lubang.galat}` : L.length ? '✖ bolong ' + L.map((x) => `${x.dari.toFixed(2)}-${x.sampai.toFixed(2)}s (${x.min.toFixed(0)} dB)`).join(' · ')
       : 'rata, tanpa lubang ✓'}`);
   }
   for (const w of h.hening || []) {

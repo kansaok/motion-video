@@ -164,8 +164,12 @@ export function buatServer(uid) {
         if (symlink) console.warn(`impor_zip ${proyek}: ${symlink} symlink dibuang`);
         for (const f of html) for (const x of ['.asli', '.terap']) rmSync(path.join(p.src, f + x), {force: true});
         Pr.sentuh(p);
-        const info = html.map((f) => ({komposisi: f, ...K.jsxUtama(path.join(p.src, f), p.src),
-          scenes: K.bacaScenes(path.join(p.src, f))}));
+        const info = html.map((f) => {
+          const x = K.jsxUtama(path.join(p.src, f), p.src), kontrak = K.kontrak(path.join(p.src, f), p.src);
+          // v2 tidak ditambal, jadi laporan keselarasan JSX tidak berlaku untuknya.
+          return {komposisi: f, ...x, kontrak, scenes: K.bacaScenes(path.join(p.src, f)),
+            keselarasan: x.utama && kontrak === 1 ? K.laporanKeselarasan(path.join(p.src, x.utama)) : null};
+        });
         return teks({html, jsx, info});
       } finally { rmSync(zip, {force: true}); }
     });

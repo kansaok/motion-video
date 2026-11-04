@@ -11,7 +11,8 @@
     "motion": "node bin/motion.mjs",
     "mcp": "node mcp/server.mjs",
     "test": "node --test test/*.test.mjs",
-    "periksa:playwright": "node scripts/periksa-playwright.mjs"
+    "periksa:playwright": "node scripts/periksa-playwright.mjs",
+    "periksa:tipe": "tsc -p ."
   },
   "engines": {
     "node": ">=20"
@@ -21,5 +22,9 @@
     "express": "^5.3.0",
     "playwright": "1.64.1",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^5.9.3"
   }
 }

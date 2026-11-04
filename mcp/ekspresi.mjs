@@ -9,6 +9,7 @@
    Nama scene yang memuat spasi ditulis C['Nama Scene']. */
 
 const FUNGSI = {min: Math.min, max: Math.max};
+/** @type {Set<string | number>} */
 const PETA = new Set(['C', 'P', 'E', 'S']);
 
 function token(s) {

@@ -24,6 +24,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run periksa:playwright
+      - run: npm run periksa:tipe
       # Konfigurasi proyek ikut dapat sintaks dicek supaya galat baru tidak lolos ke render.
       - run: find . -name '*.mjs' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check
       - if: matrix.node == 20

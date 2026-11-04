@@ -34,15 +34,16 @@ Satu berkas `.html` (nama bebas, misal `Video 9x16.dc.html`) di akar `src/`:
   kutip tunggal**, di `<script>` sendiri. Mesin menulis ulang `dur` supaya VO muat, jadi baca
   durasi dari sini saat halaman dimuat; jangan menulis detik scene di tempat lain.
 - Satu elemen stage berukuran piksel tetap dengan atribut
-  `data-om-exportable-video-with-duration-secs="<total>"`. Ukuran: 1080×1920 (9:16),
+  `data-om-exportable-video-with-duration-secs="<total>"` dan `data-om-kontrak="2"`. Ukuran: 1080×1920 (9:16),
   1080×1350 (4:5), 1080×1080 (1:1), 1920×1080 (16:9). Set atributnya dari total OM_SCENES.
 - Stage mendengarkan event `data-om-seek-to-time-frame` dan **menggambar frame untuk
   `e.detail.time` secara sinkron**. Semua gerak adalah fungsi dari `t`: tanpa CSS animation/
   transition, tanpa setTimeout, tanpa `Date.now()`. Frame dirender acak urutannya di beberapa tab.
 - `<script src="timing.js"></script>` sebelum skrip utama. Mesin menulis
-  `window.VO_TIMING = [{no, pos, dur}, …]` (detik absolut) sesudah VO ditempatkan. Pakai untuk
-  kapsi dan beat yang harus jatuh tepat di kata. Sediakan perkiraan cadangan agar `cuplik`
-  sebelum render tetap tampil.
+  `window.VO_TIMING = [{no, pos, dur}, …]` (detik absolut) sesudah VO ditempatkan, dan
+  `window.OM_CUES = [{nama, at}, …]` (cue SFX dari config, detik absolut). Pakai untuk kapsi dan
+  beat yang harus jatuh tepat di kata atau bunyi. Sediakan perkiraan cadangan agar `cuplik`
+  sebelum render tetap tampil. Spesifikasi lengkap: `docs/kontrak-komposisi-v2.md` di repo.
 - Font dari Google Fonts boleh. Gambar: `unggah` `{jenis: "gambar", nama: "img/logo.png", url}`
   lalu rujuk relatif (`img/logo.png`).
 
@@ -60,7 +61,7 @@ Contoh minimal yang benar:
   .judul{position:absolute;left:80px;right:80px;top:760px;font-size:96px;font-weight:800;line-height:1.1}
   .kapsi{position:absolute;left:80px;right:80px;bottom:260px;font-size:52px;font-weight:700;text-align:center}
 </style></head><body>
-<div id="stage" data-om-exportable-video-with-duration-secs="7">
+<div id="stage" data-om-kontrak="2" data-om-exportable-video-with-duration-secs="7">
   <div class="judul" id="judul"></div><div class="kapsi" id="kapsi"></div>
 </div>
 <script>
@@ -120,8 +121,9 @@ Contoh minimal yang benar:
 - `musik.titik`: `[scene, offset, dB]` amplop volume (bed lazim -20…-23 dB). Hindari lompatan
   lebih dari 6 dB dalam kurang dari 1,5 detik — terdengar seperti musiknya bolong.
 - `gate`: jendela yang benar-benar senyap (jeda dramatis). Ikat ke `E[n]` DAN `P[n+1]`.
-- Opsional untuk komposisi Claude Design (.jsx): `jsx`, `kapsi: true`, `jugaTulis`,
+- Opsional untuk komposisi Claude Design (.jsx, kontrak v1): `jsx`, `kapsi: true`, `jugaTulis`,
   `jangkar: {"namaVar": noVO}`, `deret: {"namaVar": [noVO,…]}` — sama dengan README motion-engine.
+  Komposisi bertanda `data-om-kontrak="2"` menolak field ini; `impor_zip` melaporkan `kontrak`.
 
 ## Batas
 

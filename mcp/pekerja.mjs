@@ -1,6 +1,6 @@
 /* Pekerja render MCP. Proses ini sengaja terpisah dari server HTTP: ffmpeg dan encode frame
    bersifat sinkron di sejumlah tahap lama, sehingga hanya pekerja yang boleh tertahan olehnya. */
-import {writeFileSync, rmSync} from 'node:fs';
+import {rmSync} from 'node:fs';
 import path from 'node:path';
 import * as Pipa from '../lib/pipa.mjs';
 import * as K from '../lib/komposisi.mjs';
@@ -23,12 +23,8 @@ async function kerjakan({uid, proyek, opsi}) {
   const a = await Pipa.terap(c);
   const laporan = T.laporan(a.scenes, Object.fromEntries(K.bacaScenes(`${c.htmlUtama}.asli`).map((s) => [s.name, s.dur])), c.vo, a.scenes.reduce((x, s) => x + s.dur, 0));
 
-  /* timing.js berasal dari timeline yang sama dengan mixer supaya komposisi v2 tidak perlu
-     menebak posisi kapsi atau beat dari sumber JSX yang telah ditambal. */
-  const {C, total} = K.jadwal(K.bacaScenes(c.htmlUtama));
-  T.tempatkan(c.vo, C, c.tata || {});
-  const vo = c.vo.map((l) => ({no: l.no, pos: +l.pos.toFixed(3), dur: +l.dur.toFixed(3)}));
-  writeFileSync(path.join(c.src, 'timing.js'), `window.VO_TIMING = ${JSON.stringify(vo)};\n`);
+  // timing.js (VO_TIMING + OM_CUES) sudah ditulis `terap` dari timeline yang sama dengan mixer.
+  const {vo, total} = a.timing;
   if (total > Pr.BATAS.detik) throw new Error(`video jadi ${total.toFixed(1)} dtk sesudah VO, batas ${Pr.BATAS.detik} dtk`);
 
   langkah('mix');
@@ -59,7 +55,7 @@ async function kerjakanCuplik({uid, proyek, komposisi, detik}) {
   return {cuplikan: hasil};
 }
 
-process.once('message', async (pesan) => {
+process.once('message', async (/** @type {any} */ pesan) => {
   try {
     kirim({hasil: pesan?.mode === 'cuplik' ? await kerjakanCuplik(pesan) : await kerjakan(pesan)});
   } catch (e) {

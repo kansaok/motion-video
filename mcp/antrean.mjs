@@ -137,6 +137,12 @@ export function bersihkanFramesPekerja(pid, direktoriTmp = os.tmpdir()) {
   }
 }
 
+/**
+ * @param {any} t
+ * @param {{buatProses?: typeof spawn, onLangkah?: (langkah: string) => void,
+ *   onKemajuan?: (frame: number, totalFrame?: number) => void, batasMs?: number, macetMs?: number,
+ *   bunuhGrup?: (pid: number) => void, bersihkanFrame?: (pid: number) => void}} [opsi]
+ */
 export function jalankanPekerja(t, {
   buatProses = spawn, onLangkah = () => {}, onKemajuan = () => {},
   batasMs = Pr.BATAS.renderMenit * 60_000, macetMs = Pr.BATAS.renderMacetDetik * 1_000,
@@ -162,7 +168,7 @@ export function jalankanPekerja(t, {
       detached: true, env: lingkunganPekerja(), stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
     });
     anak.once('error', (e) => akhir(gagal, e));
-    anak.on('message', (pesan) => {
+    anak.on('message', (/** @type {any} */ pesan) => {
       if (pesan?.langkah) {
         if (pesan.langkah === 'render') { renderMulai = Date.now(); frameTerakhir = 0; }
         onLangkah(pesan.langkah);

@@ -358,7 +358,11 @@ Urut dari nilai/biaya terbaik. Tiap fitur harus ada tesnya dan satu paragraf di 
 
 | Tugas | Tanggal | Hasil verifikasi / keputusan | Commit |
 |---|---|---|---|
-| P2-03 (flag `--no-sandbox`?) | | | |
+| P2-03 (flag `--no-sandbox`?) | 4 Nov 2026 | `bubblewrap` memisahkan mount/PID, worker hanya menerima proyek aktif dan env allowlist; Chrome render + cuplik memakai `chromiumSandbox`. Uji runtime pascadeploy: `docs/isolasi-renderer.md`. | belum di-commit |
+| P3-03 | 4 Nov 2026 | Langkah 1--2 sudah ada; langkah 3: `docs/kontrak-komposisi-v2.md`, `K.kontrak()`, `Pipa.tulisTiming` (VO_TIMING + OM_CUES), `contoh/kontrak-v2` dirender penuh tanpa tambalan JSX (`test/kontrak-v2.test.mjs`). | belum di-commit |
+| P3-04 | 4 Nov 2026 | Pemindai literal; dibandingkan dengan `vm` (nilai JS sebenarnya). Tes banding parser lama dilewati otomatis bila `proyek/*/src` tidak ada di mesin. | belum di-commit |
+| P3-05 | 4 Nov 2026 | Temuan nyata: `lubang()` lolos palsu saat ffmpeg gagal; kini membawa `galat`. | belum di-commit |
+| P3-06 | 4 Nov 2026 | `tsc --noEmit --allowJs --checkJs` lulus tanpa daftar pengecualian. | belum di-commit |
 | P2-04.4 (WebSocket lolos `page.route`?) | | | |
 | P2-04.3 (rebinding bisa direproduksi?) | | | |
 | | | | |

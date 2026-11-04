@@ -27,7 +27,7 @@ export async function verifikasi(token) {
       body: JSON.stringify({token}),
       signal: AbortSignal.timeout(8000),
     });
-    const j = await r.json().catch(() => ({}));
+    const j = await r.json().catch(() => ({})); // badan bukan JSON = token tidak sah, bukan API mati
     if (r.ok && j.valid) s = {user_id: Number(j.user_id), nama: j.name || '', berlaku_sampai: j.expires_at || null};
   } catch (e) {
     // API bimp mati: pakai hasil terakhir yang sah kalau masih ada, supaya render tidak putus.
