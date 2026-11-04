@@ -371,6 +371,7 @@ Urut dari nilai/biaya terbaik. Tiap fitur harus ada tesnya dan satu paragraf di 
 | P5-03 | 4 Nov 2026 | Server tiruan lokal (`test/el.test.mjs`): 503→200, Retry-After detik/tanggal (maks 60 dtk), 401/403/422 tidak diulang, `quota_exceeded` (400/401) dan `insufficient_credits` (402) menghentikan rantai di baris itu, timeout diulang. | (commit ini) |
 | P5-04 | 4 Nov 2026 | `musik.periksaBed` atas potongan yang dipakai (`lewati`/`mulai`/`fadeOut`), jendela 1 dtk, median − 12 dB, sparkline; trek `luar` dan trek yang lebih pendek dari video ikut dilaporkan. Dua trek bergantian dengan jeda sengaja tidak dituduh bolong. | (commit ini) |
 | P5-05 | 4 Nov 2026 | `render.periksaVisual`; diuji end-to-end pada salinan `contoh/kontrak-v2` dengan kapsi tak terpatahkan: `motion check` melaporkan "867 px di luar stage" di 3,47 dtk; contoh asli 8 titik bersih. Teks hanya dicek di tengah VO/scene, bukan di batas scene (transisi). | (commit ini) |
+| P6-01 | 5 Nov 2026 | `lib/doktor.mjs` + `motion doctor`. Cek memakai jalur yang sama dengan render (`muatPlaywright`, `OPSI_CHROMIUM` bersandbox, `encoderVideo`). 13 tes dengan mesin palsu + server tiruan ElevenLabs (satu percobaan, tanpa ulang); mutasi cek tmpfs dan `--luring` tertangkap. Tes menemukan ffprobe tidak diperiksa saat ffmpeg hilang; diperbaiki. Di mesin kerja: semua ✓ kecuali `.env` yang memang tidak ada. | (commit ini) |
 | P2-04.4 (WebSocket lolos `page.route`?) | | | |
 | P2-04.3 (rebinding bisa direproduksi?) | | | |
 | | | | |

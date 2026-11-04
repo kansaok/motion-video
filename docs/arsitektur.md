@@ -56,6 +56,7 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `lib/env.mjs` | memuat `.env`, `wajib()` |
 | `lib/ff.mjs` | pembungkus ffmpeg/ffprobe: `durasi`, `volume`, `lufs`, `puncakSejati` |
 | `lib/el.mjs` | klien ElevenLabs: TTS, SFX, musik, STT, kuota; golongan galat dan percobaan ulang |
+| `lib/doktor.mjs` | `motion doctor`: cek prasyarat mesin (Node, ffmpeg, Playwright/Chromium, `.env`, disk/tmpfs, ElevenLabs) |
 | `lib/biaya.mjs` | perkiraan biaya sebelum generate, gerbang `BIAYA_MAKS_USD`/`--ya`, `biaya.json` |
 | `lib/lafal.mjs` | ejaan akronim dan domain untuk TTS |
 | `lib/komposisi.mjs` | baca/tulis `OM_SCENES`, deteksi kontrak v1/v2, penambal JSX v1 |

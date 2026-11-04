@@ -27,6 +27,7 @@ motion all proyek/video-baru                          # sampai MP4 + verifikasi
 
 | **Perintah** | **Isi** |
 |---|---|
+| `motion doctor` | periksa prasyarat mesin: Node, ffmpeg (filter + encoder), Playwright + peluncuran Chromium, `.env`, disk dan `/tmp` tmpfs, akses ElevenLabs; kode keluar 1 bila ada ✖ (`--luring`, `--cepat`) |
 | `motion init <zip> <folder>` | bongkar, cari komposisi ber-`OM_SCENES`, cek scene-relatif, tulis kerangka config |
 | `motion plan` | generate VO, hitung posisi baris dan durasi scene |
 | `motion apply` | tulis durasi + jangkar animasi + kapsi balik ke komposisi |
@@ -322,7 +323,10 @@ npm ci                           # pakai package-lock.json; jangan `npm install`
 npx playwright install chromium
 cp .env.example .env             # isi ELEVENLABS_API_KEY
 npm link                         # opsional, supaya `motion` ada di PATH
+node bin/motion.mjs doctor       # semua prasyarat di atas dalam satu daftar centang
 ```
+
+`motion doctor` memeriksa tabel di atas plus hal yang dulu baru ketahuan di tengah render: filter ffmpeg yang dipakai mixer (build minimal tidak punya `sidechaincompress`), Chromium yang terunduh tapi tidak bisa diluncurkan dengan sandbox (pustaka sistem atau user namespace), `/tmp` tmpfs ≥ 70% penuh (Chromium mati di sekitar frame 250, lihat "Render di `rama-tuf`"), ruang bebas < 4 GB untuk frame, penyetel `.env` yang salah ketik, dan satu panggilan ringan ke ElevenLabs (sisa kredit). Tiap ✖ disertai perintah perbaikannya. `--luring` melewati ElevenLabs; `--cepat` tidak meluncurkan Chromium.
 
 Kalau Playwright sudah terpasang di repo lain, tunjuk foldernya dan lewati unduhan Chromium kedua:
 

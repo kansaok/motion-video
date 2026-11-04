@@ -15,6 +15,8 @@ Semua perubahan di bawah ada di CLI (`motion`). Server MCP tidak berubah perilak
 perbaikan mixer, yang dipakai keduanya.
 
 ### Ditambahkan
+- `motion doctor`: prasyarat mesin dalam satu daftar centang dengan saran perbaikan; kode keluar 1
+  bila ada yang gagal.
 - Perkiraan biaya ElevenLabs sebelum `plan`, `apply`, `sfx`, `music`, `mix`, `check`, dan `all`;
   berhenti bila di atas `BIAYA_MAKS_USD` (bawaan $0,50) kecuali disetujui atau `--ya`.
   Realisasinya dicatat ke `<proyek>/biaya.json`.

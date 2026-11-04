@@ -54,17 +54,21 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
 
 ## Belum dikerjakan / prioritas berikutnya
 
-1. **Operasional VPS** (butuh izin): firewall `DOCKER-USER` + `limit_req` nginx (P2-04/P2-06),
-   deploy 1.1.0, bukti isolasi `docs/isolasi-renderer.md`, uji pulih cadangan di container,
-   sambungkan `/metrik` ke monitoring. Isi baris P2-04.3/P2-04.4 di tabel catatan rencana.
-2. **Fase 6** sesuai kebutuhan produk; mulai dari P6-01, P6-02, P6-11.
+1. **Operasional VPS** (butuh izin; skill `vps2`): firewall `DOCKER-USER` + `limit_req` nginx
+   (P2-04/P2-06), bukti isolasi `docs/isolasi-renderer.md`, uji pulih cadangan di container,
+   smoke test render lewat MCP, sambungkan `/metrik` ke monitoring. Isi baris P2-04.3/P2-04.4
+   di tabel catatan rencana. **Deploy 1.1.0 selesai 5 Nov 2026** (`55f43ac`): `/siap` 200 di
+   dalam dan publik, `/metrik` 404 dari publik; cadangan pra-deploy di
+   `vps2:/root/backup-motionmcp/`, image lama `motion-mcp:prev`. Server bukan checkout git:
+   kirim dengan rsync dan **jangan hapus `sfx-stok/*.mp3`** (tidak ada di git).
+2. **Fase 6**: P6-01 `motion doctor` selesai; berikutnya P6-11 (`--kering`), P6-02 (render parsial).
 3. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
 
 ## Verifikasi terakhir
 
 ```sh
 npm ci                       # node_modules wajib ada; tanpa ini test/laju gagal impor SDK MCP
-npm test                     # 97 tes: 96 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
+npm test                     # 110 tes: 109 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
 npm run periksa:tipe         # tsc --noEmit bersih
 npm run periksa:playwright   # versi 1.64.1 selaras dengan Dockerfile
 git diff --check

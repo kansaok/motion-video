@@ -21,6 +21,7 @@ const dirProyek = path.resolve(posisi.find((a) => !/^[\d.]+$/.test(a)) || proces
 const BANTUAN = `
 motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
 
+  motion doctor                     periksa prasyarat mesin (--luring tanpa ElevenLabs, --cepat tanpa luncur Chromium)
   motion init <file.zip> <folder>   bongkar zip, deteksi komposisi, tulis kerangka config
   motion plan   [folder]            generate VO lalu hitung posisi baris + durasi scene
   motion apply  [folder]            tulis durasi & jangkar hasil plan balik ke komposisi
@@ -261,6 +262,13 @@ async function jalankan() {
         console.log(`  ${(x.name || '').padEnd(18)} ${x.voice_id}  ${x.labels?.age || ''} ${x.labels?.use_case || ''} — ${x.labels?.description || ''}`);
       }
       console.log(`  ${v.length} suara`);
+      break;
+    }
+    case 'doctor': {
+      const D = await import('../lib/doktor.mjs');
+      const h = await D.periksa({luring: Boolean(bendera.luring), cepat: Boolean(bendera.cepat)});
+      console.log(D.lapor(h));
+      if (h.some((x) => x.status === 'gagal')) process.exitCode = 1;
       break;
     }
     default: console.log(BANTUAN);
