@@ -13,6 +13,7 @@ dirender ada di `contoh/kontrak-v2/`.
 | `motion.config.mjs` | `src/` (isi zip Claude Design) |
 | skrip pendukung (`basis.mjs`, `gambar.mjs`, `bgm.sh`, `kata.mjs`, ...) | `aset/`, `stem/`, `cuplikan/`, `sfx/` |
 | `naskah.md` / `naskah.md.docx`, `prompt-claude-design.md` | `timeline.json` |
+| `biaya.json` (perkiraan vs realisasi kredit ElevenLabs per perintah) | |
 | komponen JSX buatan sendiri di `bagian/` | `*.mp4`, `*.wav`, `*.mp3`, `*-sampul.jpg`, `lembar*.jpg` |
 
 Proyek bertingkat (satu basis, beberapa video) memakai `proyek/<nama>/<varian>/` dengan aturan

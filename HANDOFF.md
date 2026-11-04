@@ -46,6 +46,9 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
   (render ditolak bila disk < `MIN_DISK_MB`), retensi bertahap (hasil antara dibuang sesudah 24
   jam), `scripts/cadangan.sh` + `docs/operasional.md`, versi 1.1.0 + `CHANGELOG.md` + `versiSkema`.
   Ikut diperbaiki: `/tmp` sandbox P2-03 kini direktori kerja di volume, bukan tmpfs (risiko OOM).
+- **P5-01..P5-05**: tes mixer sintetis (menemukan dan memperbaiki mix tanpa cue SFX), batas
+  biaya ElevenLabs (`lib/biaya.mjs`, `--ya`, `biaya.json`), golongan galat API + `Retry-After`,
+  peta bed sesudah `motion music`, pemeriksaan visual di `motion check`.
 - **P7-01..P7-04**: README/CLAUDE/AGENTS/IKLAN/katalog/docs dalam Markdown (`.docx` di
   `.docx` asli dihapus sesudah verifikasi; masih ada di riwayat git), `docs/arsitektur.md`, `proyek/README.md`, `CONTRIBUTING.md`.
 
@@ -54,14 +57,14 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
 1. **Operasional VPS** (butuh izin): firewall `DOCKER-USER` + `limit_req` nginx (P2-04/P2-06),
    deploy 1.1.0, bukti isolasi `docs/isolasi-renderer.md`, uji pulih cadangan di container,
    sambungkan `/metrik` ke monitoring. Isi baris P2-04.3/P2-04.4 di tabel catatan rencana.
-2. **Fase 5** (audio: tes sintetis, batas biaya ElevenLabs, ketahanan API, lubang musik, cek visual).
-3. **Fase 6** sesuai kebutuhan produk; mulai dari P6-01, P6-02, P6-11.
+2. **Fase 6** sesuai kebutuhan produk; mulai dari P6-01, P6-02, P6-11.
+3. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
 
 ## Verifikasi terakhir
 
 ```sh
 npm ci                       # node_modules wajib ada; tanpa ini test/laju gagal impor SDK MCP
-npm test                     # 56 tes: 55 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
+npm test                     # 97 tes: 96 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
 npm run periksa:tipe         # tsc --noEmit bersih
 npm run periksa:playwright   # versi 1.64.1 selaras dengan Dockerfile
 git diff --check

@@ -9,6 +9,28 @@ Aturan versi:
 - **Minor**: alat, field, atau perilaku baru yang tidak merusak klien/config lama.
 - **Patch**: perbaikan tanpa perubahan kontrak.
 
+## [Belum dirilis]
+
+Semua perubahan di bawah ada di CLI (`motion`). Server MCP tidak berubah perilakunya kecuali
+perbaikan mixer, yang dipakai keduanya.
+
+### Ditambahkan
+- Perkiraan biaya ElevenLabs sebelum `plan`, `apply`, `sfx`, `music`, `mix`, `check`, dan `all`;
+  berhenti bila di atas `BIAYA_MAKS_USD` (bawaan $0,50) kecuali disetujui atau `--ya`.
+  Realisasinya dicatat ke `<proyek>/biaya.json`.
+- `motion music` mencetak peta level bed per trek (sparkline) dan lubangnya dalam detik video,
+  scene, dan bagian `rencana`, sebelum mix dan render. Trek `luar` ikut diperiksa.
+- `motion check` memeriksa tata letak di komposisi hidup: teks keluar stage atau terpotong
+  wadah, kapsi kosong (`periksa: {kapsi: '<selektor>'}`), dan frame hitam.
+
+### Diubah
+- Galat ElevenLabs digolongkan: 429/5xx/timeout diulang dengan menghormati `Retry-After`; 4xx
+  lain tidak; kuota/kredit habis menghentikan rantai. Pesan galat menyebut baris VO, SFX, atau
+  trek musiknya.
+
+### Diperbaiki
+- Mix video tanpa satu pun cue SFX gagal dengan `amix=inputs=0`.
+
 ## [1.1.0] - 2026-11-04
 
 ### Ditambahkan

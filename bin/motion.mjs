@@ -7,6 +7,7 @@ import * as Pipa from '../lib/pipa.mjs';
 import * as K from '../lib/komposisi.mjs';
 import * as T from '../lib/tata.mjs';
 import * as Stok from '../lib/stok.mjs';
+import * as Biaya from '../lib/biaya.mjs';
 import {cuplik} from '../lib/render.mjs';
 import {AKAR} from '../lib/env.mjs';
 
@@ -37,10 +38,18 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
 
   motion render --komposisi=<html>  render orientasi lain dengan audio yang sama
 
+  Perintah yang bisa memanggil ElevenLabs (plan, apply, sfx, music, mix, check, all) mencetak
+  perkiraan biaya dulu dan berhenti bila di atas BIAYA_MAKS_USD (bawaan $0,50) kecuali --ya.
+  Realisasinya dicatat ke <folder>/biaya.json.
+
 Folder default = direktori sekarang. Kunci dibaca dari ${path.join(AKAR, '.env')}.
 `;
 
 const rp = (n) => n.toLocaleString('id-ID');
+/* VO ikut dibuat ulang oleh `apply`, `mix`, dan `check` (semuanya memanggil `vo()`), bukan
+   hanya oleh `plan`. Gerbang biaya dipasang di semua pintu itu, bukan cuma yang namanya
+   terdengar mahal. */
+const berbiaya = (c, langkah, kerja, o = {}) => Biaya.berbiaya(c, perintah, langkah, kerja, {ya: Boolean(bendera.ya), ...o});
 // 'Iklan CTWA Konektor 4x5.dc.html' -> 'iklan-ctwa-konektor-4x5'
 const namaPendek = (f) => path.basename(f).replace(/\.(dc\.)?html?$/i, '').replace(/\W+/g, '-').toLowerCase();
 
@@ -114,26 +123,33 @@ async function jalankan() {
     }
     case 'plan': {
       const c = await Pipa.muat(dirProyek);
-      const {scenes, asli, total} = await Pipa.rencana(c);
+      const {scenes, asli, total} = await berbiaya(c, ['vo'], () => Pipa.rencana(c));
       console.log(T.laporan(scenes, asli, c.vo, total));
       break;
     }
     case 'apply': {
       const c = await Pipa.muat(dirProyek);
-      const r = await Pipa.terap(c);
+      const r = await berbiaya(c, ['vo'], () => Pipa.terap(c));
       console.log(`  ${r.html} berkas html · ${r.kapsi} kapsi · ${r.jangkar} jangkar animasi ditulis ulang`);
       break;
     }
-    case 'sfx':   { const c = await Pipa.muat(dirProyek); console.log(`  ${await Pipa.sfx(c)} bunyi baru (${(c.sfx || []).length} total)`); break; }
+    case 'sfx':   { const c = await Pipa.muat(dirProyek); console.log(`  ${await berbiaya(c, ['sfx'], () => Pipa.sfx(c))} bunyi baru (${(c.sfx || []).length} total)`); break; }
     case 'stok': {
       if (bendera.bangun) { const r = await Stok.bangun(); console.log(`  stok ✓ ${r.unik} bunyi unik dari ${r.kandidat} berkas → ${Stok.DIR}`); break; }
       for (const d of Stok.cari(posisi.join(' '))) console.log(`${d.id}  ${d.detik}s  [${d.kategori.join(',')}]\n    cocok: ${d.cocok[0]}\n    ${d.prompt || ''}`);
       break;
     }
-    case 'music': { const c = await Pipa.muat(dirProyek); console.log(`  ${await Pipa.musik(c)} trek baru`); break; }
+    case 'music': {
+      const c = await Pipa.muat(dirProyek);
+      console.log(`  ${await berbiaya(c, ['musik'], () => Pipa.musik(c))} trek baru`);
+      // Lubang dilaporkan sekarang, dalam detik, bukan sesudah render beberapa menit di `check`.
+      const bed = Pipa.laporBed(Pipa.periksaBed(c));
+      if (bed) console.log(bed);
+      break;
+    }
     case 'mix': {
       const c = await Pipa.muat(dirProyek);
-      const r = await Pipa.mix(c);
+      const r = await berbiaya(c, ['vo'], () => Pipa.mix(c));
       console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`);
       break;
     }
@@ -165,24 +181,38 @@ async function jalankan() {
     }
     case 'check': {
       const c = await Pipa.muat(dirProyek);
-      await periksaDanLapor(c, {lengkap: !bendera.cepat});
+      await berbiaya(c, ['vo'], () => periksaDanLapor(c, {lengkap: !bendera.cepat, visual: true}));
       break;
     }
     case 'all': {
       const c = await Pipa.muat(dirProyek);
       const t0 = Date.now();
-      console.log('sfx…');    await Pipa.sfx(c);
-      console.log('plan…');   const {scenes, asli, total} = await Pipa.rencana(c);
-      console.log(T.laporan(scenes, asli, c.vo, total));
-      console.log('apply…');  const a = await Pipa.terap(c);
-      console.log(`  ${a.html} html · ${a.kapsi} kapsi · ${a.jangkar} jangkar`);
-      console.log('musik…');  await Pipa.musik(c);
-      console.log('mix…');    const r = await Pipa.mix(c);
-      console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`);
-      console.log('render…'); const v = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined});
-      console.log(`  ✓ ${v.keluaran} — ${v.lebar}x${v.tinggi}`);
-      if (v.sampul) console.log(`  ✓ ${v.sampul} — sampul dari detik ${v.sampulDetik.toFixed(2)}`);
-      console.log('check…'); await periksaDanLapor(c, {lengkap: !bendera.cepat});
+      /* Perkiraan dicetak di AWAL, bukan hanya laporan biaya di akhir. Durasi musik di sini
+         masih dari komposisi asli (timeline belum ada); sesudah `plan` musiknya diperkirakan
+         ulang dan ditanyakan lagi kalau ternyata lebih mahal dari yang sudah disetujui. */
+      const awal = Biaya.perkiraan(c, ['vo', 'sfx', 'musik']);
+      const musikAwal = awal.rincian.filter((b) => b.jenis === 'musik').reduce((a, b) => a + b.kredit, 0);
+      await berbiaya(c, ['vo', 'sfx', 'musik'], async () => {
+        console.log('sfx…');    await Pipa.sfx(c);
+        console.log('plan…');   const {scenes, asli, total} = await Pipa.rencana(c);
+        console.log(T.laporan(scenes, asli, c.vo, total));
+        console.log('apply…');  const a = await Pipa.terap(c);
+        console.log(`  ${a.html} html · ${a.kapsi} kapsi · ${a.jangkar} jangkar`);
+        const pm = Biaya.perkiraan(c, ['musik']);
+        if (pm.kredit > musikAwal + 1) {
+          console.log(`  musik sesudah plan: ${rp(pm.kredit)} kredit (perkiraan awal ${rp(Math.round(musikAwal))})`);
+          await Biaya.jaga(pm, {ya: Boolean(bendera.ya)});
+        }
+        console.log('musik…');  await Pipa.musik(c);
+        const bed = Pipa.laporBed(Pipa.periksaBed(c));
+        if (bed) console.log(bed);
+        console.log('mix…');    const r = await Pipa.mix(c);
+        console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`);
+        console.log('render…'); const v = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined});
+        console.log(`  ✓ ${v.keluaran} — ${v.lebar}x${v.tinggi}`);
+        if (v.sampul) console.log(`  ✓ ${v.sampul} — sampul dari detik ${v.sampulDetik.toFixed(2)}`);
+        console.log('check…'); await periksaDanLapor(c, {lengkap: !bendera.cepat, visual: true});
+      }, {cetak: true});
       const b = await Pipa.biaya(t0 - 5 * 60 * 1000);
       console.log(`biaya   ${rp(b.total)} kredit ≈ Rp${rp(b.rupiah)} · sisa kuota ${rp(b.kuota.sisa)}`);
       break;
@@ -312,6 +342,17 @@ async function periksaDanLapor(c, opsi) {
   for (const w of h.hening || []) {
     const d = w.dapat ? `senyap ${w.dapat[0].toFixed(2)}-${w.dapat[1].toFixed(2)}s (${w.lama.toFixed(2)}s)` : 'TIDAK ADA senyap';
     console.log(`  hening   minta ${w.minta[0].toFixed(2)}-${w.minta[1].toFixed(2)}s -> ${d} ${w.lolos ? '✓' : '✖'}`);
+  }
+  /* Visual: tata letak di komposisi hidup. Peringatan, bukan putusan: transisi yang sengaja
+     menggelapkan layar di awal scene bisa terbaca sebagai frame hitam. */
+  if (h.visual) {
+    const v = h.visual;
+    if (v.galat) console.log(`  visual   ✖ tidak dapat diperiksa — ${v.galat}`);
+    else if (!v.masalah.length) console.log(`  visual   ✓ ${v.titik} titik: teks di dalam stage, kapsi terisi, tanpa frame hitam`);
+    else {
+      console.log(`  visual   ! ${v.masalah.length} dari ${v.titik} titik bermasalah:`);
+      for (const m of v.masalah) for (const x of m.masalah) console.log(`           ${m.t.toFixed(2)}s ${m.alasan}: ${x}`);
+    }
   }
   if (h.transkrip) {
     const t = h.transkrip;

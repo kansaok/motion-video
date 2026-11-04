@@ -30,17 +30,33 @@ motion all proyek/video-baru                          # sampai MP4 + verifikasi
 | `motion init <zip> <folder>` | bongkar, cari komposisi ber-`OM_SCENES`, cek scene-relatif, tulis kerangka config |
 | `motion plan` | generate VO, hitung posisi baris dan durasi scene |
 | `motion apply` | tulis durasi + jangkar animasi + kapsi balik ke komposisi |
-| `motion sfx` / `motion music` | generate aset yang belum ada (yang sudah ada dilewati) |
+| `motion sfx` / `motion music` | generate aset yang belum ada (yang sudah ada dilewati); `music` lalu mencetak peta level bed dan lubangnya |
 | `motion mix` | rakit `aset/master.wav` + `stem/` |
 | `motion render` | MP4 + `<keluaran>-sampul.jpg` (`--frames=60` untuk uji cepat) |
 | `motion render --komposisi=<html>` | orientasi lain, audio yang sama, tanpa menyunting config |
-| `motion check` | verifikasi hasil, termasuk frame 0 sebagai sampul (`--cepat` melewati STT + A/B) |
+| `motion check` | verifikasi hasil, termasuk frame 0 sebagai sampul dan tata letak di komposisi hidup (`--cepat` melewati STT + A/B) |
 | `motion shot <detik...>` | cuplik frame dari komposisi hidup, tanpa render penuh |
-| `motion all` | seluruh rantai sampai `check` + laporan biaya |
+| `motion all` | seluruh rantai sampai `check`; perkiraan biaya di awal, laporan biaya di akhir |
 | `motion speed <suara...>` | ukur kar/dtk tiap suara **sebelum** menulis naskah |
 | `motion cost [jam]` · `motion voices [cari]` | biaya ElevenLabs · katalog suara |
 
 Folder proyek boleh di mana saja; default direktori sekarang.
+
+**Biaya dijaga sebelum generate.** `plan`, `apply`, `sfx`, `music`, `mix`, `check`, dan `all` bisa
+memanggil ElevenLabs (VO ikut dibuat ulang oleh semua perintah yang memanggil `vo()`, bukan cuma
+`plan`). Masing-masing mencetak perkiraan kredit untuk aset yang **akan** dibuat (kunci tidak
+segar; stok dan unggahan gratis) dan berhenti bila di atas `BIAYA_MAKS_USD` (`.env`, bawaan
+$0,50) sampai disetujui di terminal atau diulang dengan `--ya`. Tanpa terminal (agent, CI) tidak
+ada yang bisa ditanya, jadi perintahnya gagal. Sebabnya: satu perubahan yang menyentuh semua
+baris (`suara.speed`, `lafal`, model) membuat ulang seluruh VO tanpa bertanya, dan laporan biaya
+dulu baru muncul sesudah kreditnya terbakar. Realisasi tiap perintah (selisih kredit terpakai
+akun) dicatat ke `<proyek>/biaya.json`; tarif SFX dan musik di `lib/konstanta.mjs` (`HARGA`)
+dikalibrasi dari catatan itu.
+
+**Galat ElevenLabs digolongkan.** 429 dan 5xx diulang (menghormati `Retry-After`, maksimal 60
+detik), timeout 5 menit per permintaan juga diulang; 4xx lain tidak. Kuota/kredit habis
+(`quota_exceeded`, `insufficient_credits`) menghentikan rantai di baris itu dengan pesan sebab.
+Setiap galat menyebut baris VO, SFX, atau trek musiknya.
 
 ## Config
 
@@ -216,7 +232,7 @@ ssh rama-tuf 'bash -lc "cd ~/render/motion-engine && TMPDIR=$HOME/render/tmp WOR
 - Tiap baris ditulis `{ at: CUES.Scene + 0.00, text: '...' }`, satu baris satu kapsi.
 - `until` JANGAN ditulis: `<Captions>` sudah memakai `at` kapsi berikutnya. Kalau perlu batas atas, turunkan di `items={caps.map(...)}` — `geserKapsi` hanya menulis ulang `at`, dan `until` yang dibekukan akan meleset begitu VO berubah panjang.
 
-**Bus VO dan bus musik yang KOSONG itu sah, dan dulu mustahil di-mix.** Satu explainer diputuskan tanpa bed musik dan satu opener 5 detik dibawa penuh oleh SFX. Keduanya gagal di `mix` dengan `amix=inputs=0` dan `[m0]` yang merujuk label yang tidak pernah dibuat — ffmpeg berhenti dengan `Invalid argument` tanpa menyebut bus mana. Sekarang bus yang kosong diisi `aevalsrc=0`, jadi ducking, stem, dan amix di belakangnya tidak perlu tahu.
+**Bus VO, musik, dan SFX yang KOSONG itu sah, dan dulu mustahil di-mix.** Satu explainer diputuskan tanpa bed musik dan satu opener 5 detik dibawa penuh oleh SFX. Keduanya gagal di `mix` dengan `amix=inputs=0` dan `[m0]` yang merujuk label yang tidak pernah dibuat — ffmpeg berhenti dengan `Invalid argument` tanpa menyebut bus mana. Sekarang bus yang kosong diisi `aevalsrc=0`, jadi ducking, stem, dan amix di belakangnya tidak perlu tahu. Bus SFX yang kosong (video tanpa satu cue pun) masih gagal dengan `amix=inputs=0` sampai 4 Nov 2026; ketiganya kini dijaga `test/mix.test.mjs`.
 
 **Cek yang MENGUKUR VO dilewati kalau tidak ada VO.** `masking` dan `sub bed` sama-sama dinilai terhadap stem VO. Pada video tanpa VO stem itu senyap, jadi "musik +39,3 dB terhadap VO" selalu ✖ dan "VO di atas SFX -59,4 dB" tidak berarti apa-apa. Cek yang selalu merah di satu kelas video persis sama gunanya dengan cek yang tidak ada. `check` sekarang mencetak "tanpa VO: cek pita bicara dan sub bed tidak berlaku", dan `periksa` melewati panggilan STT berbayar untuk stem yang memang senyap.
 
@@ -274,13 +290,15 @@ Komposisi yang isinya mockup perangkat tegak selalu paling lemah di 16:9: perang
 
 ## Verifikasi
 
-`motion check` menjalankan lima hal yang masing-masing pernah menangkap kelas kesalahan yang tidak terlihat:
+`motion check` menjalankan pemeriksaan di bawah; masing-masing pernah menangkap kelas kesalahan yang tidak terlihat (ditambah LUFS/dBTP MP4 dan sub bed terhadap VO):
 
 1. **Frame 0 sebagai sampul.** Instagram Reels, TikTok, dan LinkedIn memakainya sebagai sampul kalau pengunggah tidak memilih sendiri, dan TikTok tidak mengizinkannya diganti sesudah unggah. Diukur sebagai simpangan baku luma frame 0 dibagi median simpangan sepanjang detik pertamanya — rasio, bukan ambang mutlak, karena trailer gelap memang berkontras rendah di scene pembukanya. Di bawah 0,75 dinyatakan gagal. Waktu cek ini dipasang, **35 dari 41 berkas MP4 di repo ini** tidak lolos — yang lolos cuma dua video, dan keduanya kebetulan. Lihat `IKLAN.md` §5.
 2. **Masking di pita bicara 300 Hz–4 kHz** lewat stem terpisah. Broadband menipu — angkanya didominasi sub-bass yang sama sekali tidak menutupi suara.
 3. **A/B bus SFX**: render ulang dengan bus itu dimatikan lalu bandingkan. Selisih **0,0 dB di semua titik** berarti bus-nya tidak pernah masuk — bukan berarti SFX-nya pelan.
 4. **Jendela hening diukur di MP4 final.** `eval=frame` plus limiter menggeser gerbang ±0,08 detik dari angka yang ditulis di mixer.
 5. **Transkrip balik stem VO** lewat `speech-to-text` (±Rp150). Menangkap baris dobel, baris hilang, urutan tertukar, dan pelafalan salah sekaligus — kalau ejaan ulang seperti `desbord` kembali jadi "dashboard", bunyinya memang benar.
+6. **Lubang bed musik** di stem musik, terhadap median trek itu sendiri. Peta yang sama sudah dicetak `motion music` atas potongan trek yang benar-benar dipakai (`lewati`, `mulai`, sampai akhir `fadeOut`), dalam detik video, scene, dan bagian `rencana` — jadi lubang ketahuan sebelum mix dan render, termasuk di trek `luar` yang dulu tidak pernah diperiksa.
+7. **Tata letak di komposisi hidup** (Chromium, tanpa render): di tengah tiap baris VO, tengah tiap scene, dan 0,25 detik sesudah tiap batas scene. Melaporkan teks yang keluar stage atau terpotong wadah ber-overflow, kapsi yang kosong atau tidak memuat kata naskahnya (aktif bila `kapsi: true` atau `periksa: {kapsi: '<selektor>'}`), dan frame hitam rata. Peringatan, bukan putusan: transisi fade-ke-hitam yang disengaja juga terbaca sebagai frame hitam.
 
 ## Pasang
 

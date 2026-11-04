@@ -55,15 +55,16 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `lib/tipe.mjs` | typedef JSDoc `Config`, `Scene`, `BarisVO` (hanya untuk `tsc`) |
 | `lib/env.mjs` | memuat `.env`, `wajib()` |
 | `lib/ff.mjs` | pembungkus ffmpeg/ffprobe: `durasi`, `volume`, `lufs`, `puncakSejati` |
-| `lib/el.mjs` | klien ElevenLabs: TTS, SFX, musik, STT, kuota |
+| `lib/el.mjs` | klien ElevenLabs: TTS, SFX, musik, STT, kuota; golongan galat dan percobaan ulang |
+| `lib/biaya.mjs` | perkiraan biaya sebelum generate, gerbang `BIAYA_MAKS_USD`/`--ya`, `biaya.json` |
 | `lib/lafal.mjs` | ejaan akronim dan domain untuk TTS |
 | `lib/komposisi.mjs` | baca/tulis `OM_SCENES`, deteksi kontrak v1/v2, penambal JSX v1 |
 | `lib/tata.mjs` | menempatkan baris VO dan menurunkan durasi scene (`jangkar`/`alir`) |
 | `lib/timeline.mjs` | `timeline.json` kerja |
 | `lib/vo.mjs`, `sfx.mjs`, `musik.mjs` | tahap generate dan pemeriksaan hasil generator |
 | `lib/mix.mjs` | filtergraph ffmpeg, ducking, loudness -14 LUFS / -1 dBTP |
-| `lib/render.mjs` | server statis + Chromium per frame + encode |
-| `lib/periksa.mjs` | verifikasi hasil akhir: masking, bus SFX, hening, lubang musik, sampul, STT |
+| `lib/render.mjs` | server statis + Chromium per frame + encode; `periksaVisual` (tata letak di komposisi hidup) |
+| `lib/periksa.mjs` | verifikasi hasil akhir: masking, bus SFX, hening, lubang musik, peta level, sampul, STT |
 | `lib/jaring.mjs` | penjaga SSRF untuk unduhan dan halaman Chromium |
 | `lib/stok.mjs` | katalog `sfx-stok/` |
 | `mcp/server.mjs` | Express: `/mcp`, `/unduh`, `/hidup`, `/siap`, `/metrik`, retensi |
@@ -83,7 +84,11 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | VO melebihi `maks` / transkrip tidak cocok (`dengar`) | `vo.mjs` | `plan` (dilaporkan, take terbaik dipakai) |
 | VO senyap sesudah trim | `vo.pangkasVo` | `plan` / `unggah` |
 | SFX kosong sesudah N percobaan | `sfx.mjs` | `sfx` |
+| perkiraan biaya di atas `BIAYA_MAKS_USD` | `biaya.jaga` | sebelum `plan`/`apply`/`sfx`/`music`/`mix`/`check`/`all` |
+| kuota ElevenLabs habis / 4xx (tidak diulang) | `el.kirim`, `el.golongkan` | langkah yang memanggil API |
 | musik berlubang (diminta ulang) | `musik.mjs` + `periksa.lubang` | `music` |
+| lubang di potongan bed yang dipakai video | `musik.periksaBed` | `music` (laporan, tidak gagal) |
+| teks keluar stage / terpotong, kapsi kosong, frame hitam | `render.periksaVisual` | `check` (peringatan) |
 | kapsi/jangkar/deret tidak berpola | `komposisi.geser*` | `apply` |
 | config v1 pada komposisi v2 | `pipa.terap` | `apply` / render MCP |
 | SFX/musik belum ada | `pipa.mix` | `mix` |
@@ -117,4 +122,7 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | MP4 2 detik padahal "900 frame ✓" | dua render berbagi direktori frame | `render.render` (PID di nama) |
 | render MCP mati OOM di video panjang | frame di tmpfs sandbox | `antrean.perintahPekerja` (`dirKerja`) |
 | `/siap` 503 | disk < `MIN_DISK_MB`, ffmpeg/Chromium hilang | `mcp/sehat.mjs` |
+| `mix` gagal `amix=inputs=0` | video tanpa cue SFX (diperbaiki; dijaga `test/mix.test.mjs`) | `mix.rakit` (`senyap`) |
+| perintah berhenti "di atas BIAYA_MAKS_USD" | kunci cache semua baris berubah (`suara.*`, `lafal`, model) | `biaya.perkiraan` → `vo.rencanaVo` |
+| galat "VO-7 (...): kuota/kredit ElevenLabs habis" | kuota akun habis; berkas yang sudah jadi tetap di cache | `el.kirim` |
 | config lama ditolak "versiSkema" | config dari server lebih baru | `mcp/skema.mjs` |

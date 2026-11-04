@@ -16,4 +16,6 @@ export default {
   sfx: [['pop', '@luar']],
   // Cue yang sama menggerakkan SFX di mixer dan lencana di layar (lewat window.OM_CUES).
   cue: ({P}) => [{nama: 'pop', at: P[2] + 0.05, gain: 0.3}],
+  // Cek visual `motion check`: elemen kapsi harus berisi kalimat baris VO di tengah tiap baris.
+  periksa: {kapsi: '.kapsi'},
 };
