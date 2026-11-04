@@ -38,6 +38,8 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
   motion speed  <suara...>          ukur kecepatan baca tiap suara SEBELUM menulis naskah
 
   motion render --komposisi=<html>  render orientasi lain dengan audio yang sama
+  motion plan --kering · all --kering  hitung durasi, posisi, cue, dan biaya tanpa ElevenLabs dan tanpa
+                                    menulis ke proyek (laporan di <folder>/kerja/kering.json)
 
   Perintah yang bisa memanggil ElevenLabs (plan, apply, sfx, music, mix, check, all) mencetak
   perkiraan biaya dulu dan berhenti bila di atas BIAYA_MAKS_USD (bawaan $0,50) kecuali --ya.
@@ -55,6 +57,19 @@ const berbiaya = (c, langkah, kerja, o = {}) => Biaya.berbiaya(c, perintah, lang
 const namaPendek = (f) => path.basename(f).replace(/\.(dc\.)?html?$/i, '').replace(/\W+/g, '-').toLowerCase();
 
 async function jalankan() {
+  /* Mode kering (P6-11): hitung semuanya tanpa ElevenLabs dan tanpa menulis ke proyek, kecuali
+     laporan kerja/kering.json. Ditangani sebelum switch supaya tidak ada jalan ke gerbang biaya
+     (yang memanggil kuota ElevenLabs) atau ke tahap yang menulis. */
+  if (bendera.kering) {
+    if (!['plan', 'all'].includes(perintah)) throw new Error(`--kering hanya untuk plan dan all, bukan ${perintah}`);
+    const Kr = await import('../lib/kering.mjs');
+    const c = await Pipa.muat(dirProyek, {kering: true});
+    const h = Kr.kering(c, {langkah: perintah === 'all' ? ['vo', 'sfx', 'musik'] : ['vo']});
+    console.log(Kr.lapor(h, c));
+    console.log(`  laporan: ${Kr.simpan(c, h)}`);
+    if (h.galat) process.exitCode = 1;
+    return;
+  }
   switch (perintah) {
     case 'init': {
       const zip = path.resolve(posisi[0]);

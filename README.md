@@ -30,6 +30,7 @@ motion all proyek/video-baru                          # sampai MP4 + verifikasi
 | `motion doctor` | periksa prasyarat mesin: Node, ffmpeg (filter + encoder), Playwright + peluncuran Chromium, `.env`, disk dan `/tmp` tmpfs, akses ElevenLabs; kode keluar 1 bila ada ✖ (`--luring`, `--cepat`) |
 | `motion init <zip> <folder>` | bongkar, cari komposisi ber-`OM_SCENES`, cek scene-relatif, tulis kerangka config |
 | `motion plan` | generate VO, hitung posisi baris dan durasi scene |
+| `motion plan --kering` · `motion all --kering` | hitung durasi baris (VO yang belum ada diperkirakan), durasi scene, cue, musik, dan biaya tanpa ElevenLabs dan tanpa menulis ke proyek; laporan di `kerja/kering.json` |
 | `motion apply` | tulis durasi + jangkar animasi + kapsi balik ke komposisi |
 | `motion sfx` / `motion music` | generate aset yang belum ada (yang sudah ada dilewati); `music` lalu mencetak peta level bed dan lubangnya |
 | `motion mix` | rakit `aset/master.wav` + `stem/` |
@@ -53,6 +54,8 @@ baris (`suara.speed`, `lafal`, model) membuat ulang seluruh VO tanpa bertanya, d
 dulu baru muncul sesudah kreditnya terbakar. Realisasi tiap perintah (selisih kredit terpakai
 akun) dicatat ke `<proyek>/biaya.json`; tarif SFX dan musik di `lib/konstanta.mjs` (`HARGA`)
 dikalibrasi dari catatan itu.
+
+**Mode kering untuk melihat dampak dulu.** `--kering` menjalankan seluruh perhitungan `plan` (dan untuk `all`: status SFX, musik, cue) tanpa satu pun permintaan ke ElevenLabs dan tanpa menyentuh komposisi, aset, atau `timeline.json`. Durasi VO yang belum ada atau kuncinya basi **diperkirakan** dari jumlah karakter terlafal: kar/dtk dikalibrasi dari VO suara yang sama yang sudah ada di proyek, lalu `suara.kps` (hasil `motion speed`), lalu 16,3 kar/dtk × `speed`. Laporannya menandai tiap baris perkiraan dengan `≈` dan sumbernya; durasi TTS tidak deterministik, jadi angka itu untuk memutuskan, bukan untuk dikunci. Batas scene yang memotong kalimat, cue di luar video atau tanpa entri `sfx`, dan baris yang diperkirakan lewat `maks` ikut dilaporkan. Kode keluar 1 bila rencananya gagal.
 
 **Galat ElevenLabs digolongkan.** 429 dan 5xx diulang (menghormati `Retry-After`, maksimal 60
 detik), timeout 5 menit per permintaan juga diulang; 4xx lain tidak. Kuota/kredit habis

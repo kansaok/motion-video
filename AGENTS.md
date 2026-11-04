@@ -69,7 +69,7 @@ ssh rama-tuf 'bash -lc "cd ~/render/motion-engine && WORKERS=8 node bin/motion.m
 
 `motion check` menjalankan serangkaian verifikasi (daftarnya di README "Verifikasi"), dan tiap satunya pernah menangkap kelas kesalahan yang tidak terlihat. Kalau salah satu gagal, sebutkan angkanya — jangan diamkan.
 
-Perintah yang bisa membuat VO/SFX/musik berhenti bila perkiraan biayanya di atas `BIAYA_MAKS_USD`. Jangan langsung mengulang dengan `--ya`: baca dulu rinciannya. Perkiraan yang tiba-tiba memuat semua baris VO biasanya berarti perubahan config menyentuh kunci cache semua baris (`suara.*`, `lafal`, model).
+Perintah yang bisa membuat VO/SFX/musik berhenti bila perkiraan biayanya di atas `BIAYA_MAKS_USD`. Jangan langsung mengulang dengan `--ya`: baca dulu rinciannya. Perkiraan yang tiba-tiba memuat semua baris VO biasanya berarti perubahan config menyentuh kunci cache semua baris (`suara.*`, `lafal`, model). Sebelum mengubah suara, naskah, atau `tata`, jalankan `motion plan --kering`: durasi scene dan biayanya terlihat tanpa membakar kredit.
 
 ## Kalau kamu menemukan aturan baru
 
