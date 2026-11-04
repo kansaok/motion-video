@@ -37,8 +37,7 @@ proyek/*/sfx/
 proyek/**/*-sampul.jpg
 thumb-tutorial/
 
-# lockfile hasil npm install di mesin render, log kerja, dan lembar kontak
-package-lock.json
+# log kerja dan lembar kontak
 *.log
 proyek/**/lembar*.jpg
 proyek/**/lembar/

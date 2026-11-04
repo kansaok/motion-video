@@ -24,6 +24,20 @@ const teks = (x) => ({content: [{type: 'text', text: typeof x === 'string' ? x :
 const gagal = (e) => ({isError: true, content: [{type: 'text', text: `✖ ${e.message || e}`}]});
 const aman = (fn) => async (a) => { try { return await fn(a); } catch (e) { return gagal(e); } };
 
+/* Token bucket cukup di memori: tujuan utamanya menahan satu akun yang membanjiri alat mahal,
+   bukan menjadi catatan kuota permanen. Entri lama dibuang saat bucket berikutnya dibuat. */
+const bucket = new Map();
+const LAJU = {unggah: [12, 60_000], impor_zip: [2, 60_000], render: [2, 10 * 60_000], cuplik: [6, 60_000]};
+export function batasiLaju(uid, alat, sekarang = Date.now()) {
+  const [kapasitas, jendela] = LAJU[alat] || [];
+  if (!kapasitas) return;
+  const kunci = `${uid}:${alat}`, lama = bucket.get(kunci) || {isi: kapasitas, pada: sekarang};
+  const isi = Math.min(kapasitas, lama.isi + (sekarang - lama.pada) * kapasitas / jendela);
+  if (isi < 1) throw new Error(`batas laju ${alat} tercapai — coba lagi dalam ${Math.ceil((1 - isi) * jendela / kapasitas)} dtk`);
+  bucket.set(kunci, {isi: isi - 1, pada: sekarang});
+  if (bucket.size > 10_000) bucket.delete(bucket.keys().next().value);
+}
+
 /* Skema config. Semua yang sampai ke string filter ffmpeg harus angka, dan objek `mixer`
    disebarkan Pipa.mix ke opsi mixer — kunci di luar daftar ini (dir, vo, cue…) bisa
    membelokkan tempat tulis. Karena itu strict di semua tingkat. */
@@ -108,6 +122,7 @@ export function buatServer(uid) {
   async ({proyek, berkas, isi}) => {
     if (!/\.(html?|jsx?|mjs|css|svg|json|txt|md)$/i.test(berkas)) throw new Error('hanya berkas teks: html, js, jsx, css, svg, json');
     const p = Pr.buka(uid, proyek);
+    Pr.periksaKuota(p, Buffer.byteLength(isi));
     Pr.tulisSrc(p, berkas, isi);
     Pr.sentuh(p);
     let catatan = '';
@@ -133,12 +148,16 @@ export function buatServer(uid) {
   alat('impor_zip', 'Impor zip ekspor Claude Design (komposisi .dc.html + .jsx) dari URL https ke src/.',
     {proyek: Proyek, url: z.string().url()},
     async ({proyek, url}) => {
+      batasiLaju(uid, 'impor_zip');
       const p = Pr.buka(uid, proyek);
       const buf = await Pr.unduh(url);
       const zip = path.join(os.tmpdir(), `impor-${proyek}-${Date.now()}.zip`);
       writeFileSync(zip, buf);
       try {
-        Pipa.bongkar(zip, p.dir);
+        const batasZip = {maksBytes: Pr.BATAS.ekstrakMb * 1048576};
+        const infoZip = Pipa.periksaZip(zip, batasZip);
+        Pr.periksaKuota(p, infoZip.ukuran);
+        Pipa.bongkar(zip, p.dir, batasZip);
         const symlink = Pr.buangSymlink(p.src);
         // Dihitung ulang sesudah symlink dibuang: komposisi yang ternyata symlink tidak boleh terdaftar.
         const {html, jsx} = K.temukan(p.src);
@@ -162,8 +181,10 @@ export function buatServer(uid) {
     tempo: z.number().min(0.5).max(2).optional().describe('khusus vo: 1.1 = 10% lebih cepat, nada tetap'),
   },
   async ({proyek, jenis, url, base64, no, nama, tempo}) => {
+    batasiLaju(uid, 'unggah');
     const p = Pr.buka(uid, proyek);
     const buf = await Pr.ambilIsi({url, base64});
+    Pr.periksaKuota(p, buf.length);
     let r;
     if (jenis === 'vo') {
       if (!no) throw new Error('jenis vo butuh `no`');
@@ -229,6 +250,7 @@ export function buatServer(uid) {
   alat('cuplik', 'Ambil gambar frame komposisi pada detik tertentu untuk memeriksa tata letak (tanpa audio). Maks 6 detik per panggilan.',
     {proyek: Proyek, detik: z.array(z.number().min(0)).min(1).max(6), komposisi: z.string().max(200).optional()},
     async ({proyek, detik, komposisi}) => {
+      batasiLaju(uid, 'cuplik');
       const p = Pr.buka(uid, proyek);
       let komp = komposisi;
       if (!komp) {
@@ -239,7 +261,7 @@ export function buatServer(uid) {
       Pr.jalurAman(p.src, komp);
       const ke = path.join(p.dir, 'cuplikan');
       rmSync(ke, {recursive: true, force: true});
-      const f = await A.cuplikGiliran(() => cuplik(p.src, komp, detik, ke));
+      const f = await A.cuplikGiliran(uid, () => cuplik(p.src, komp, detik, ke));
       return {content: f.flatMap((x, i) => [
         {type: 'text', text: `t = ${detik[i]} dtk`},
         {type: 'image', data: readFileSync(x).toString('base64'), mimeType: 'image/jpeg'},
@@ -250,6 +272,7 @@ export function buatServer(uid) {
     + 'Kembali segera dengan id render; poll status_render. `frames` (misal 60) untuk uji cepat beberapa detik pertama.',
   {proyek: Proyek, frames: z.number().int().min(1).max(600).optional()},
   async ({proyek, frames}) => {
+    batasiLaju(uid, 'render');
     const p = Pr.buka(uid, proyek);
     const j = Pr.bacaConfig(p);
     Pr.periksaConfig(p, j);

@@ -126,4 +126,5 @@ Contoh minimal yang benar:
 ## Batas
 
 Video maks 180 detik, 20 proyek per akun, unggahan maks 50 MB, proyek yang tidak disentuh
-14 hari dihapus. Render berjalan bergiliran; `status_render` menyebut urutan antrean.
+14 hari dihapus. Render berjalan bergiliran; `status_render` menyebut urutan antrean dan,
+bila sudah ada riwayat render, `estimasiTungguDetik` kasar dari rata-rata 10 render terakhir.

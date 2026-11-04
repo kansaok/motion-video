@@ -1,20 +1,31 @@
 // Penyimpanan proyek per pelanggan, unggahan, dan config JSON -> objek config `lib/pipa.mjs`.
 import {existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync, lstatSync, unlinkSync, renameSync} from 'node:fs';
+import https from 'node:https';
 import {randomBytes, createHmac, timingSafeEqual} from 'node:crypto';
 import path from 'node:path';
 import {ff, durasi} from '../lib/ff.mjs';
-import {hostPrivat} from '../lib/jaring.mjs';
+import {alamatPublik} from '../lib/jaring.mjs';
 import {akhirSuara} from '../lib/pipa.mjs';
 import * as K from '../lib/komposisi.mjs';
 import {hitung} from './ekspresi.mjs';
 
 export const DATA = path.resolve(process.env.DATA_DIR || path.join(process.cwd(), 'data'));
-export const BATAS = {
-  proyek: Number(process.env.MAKS_PROYEK || 20),
-  detik: Number(process.env.MAKS_DETIK || 180),
-  unduhMb: Number(process.env.MAKS_UNDUH_MB || 50),
-  retensiHari: Number(process.env.RETENSI_HARI || 14),
-};
+const angkaPositif = (nilai, bawaan) => Number.isFinite(Number(nilai)) && Number(nilai) > 0 ? Number(nilai) : bawaan;
+export function batasDariEnv(env = process.env) {
+  const detik = angkaPositif(env.MAKS_DETIK, 180);
+  return {
+    proyek: angkaPositif(env.MAKS_PROYEK, 20),
+    detik,
+    unduhMb: angkaPositif(env.MAKS_UNDUH_MB, 50),
+    ekstrakMb: angkaPositif(env.MAKS_EKSTRAK_MB, 300),
+    kuotaMb: angkaPositif(env.KUOTA_MB, 1500),
+    retensiHari: angkaPositif(env.RETENSI_HARI, 14),
+    renderMenit: angkaPositif(env.RENDER_BATAS_MENIT, Math.max(10, detik / 6)),
+    renderMacetDetik: angkaPositif(env.RENDER_BATAS_MACET_DETIK, 120),
+    antreMaks: angkaPositif(env.ANTRE_MAKS, 20),
+  };
+}
+export const BATAS = batasDariEnv();
 
 const ID = /^[a-z0-9][a-z0-9-]{2,40}$/;
 const dirUser = (uid) => path.join(DATA, 'u', String(Number(uid)));
@@ -23,7 +34,9 @@ const dirUser = (uid) => path.join(DATA, 'u', String(Number(uid)));
    berkas tersembunyi, dan jejak kerja mesin (.asli/.terap/.kunci) tidak boleh disentuh dari luar —
    menimpanya membuat `apply` berikutnya bekerja dari isi yang tidak pernah ditulis siapa pun. */
 export function jalurAman(akar, rel) {
-  const r = String(rel || '').replace(/\\/g, '/').replace(/^\/+/, '');
+  const masukan = String(rel || '');
+  if (path.isAbsolute(masukan) || path.win32.isAbsolute(masukan)) throw new Error(`nama berkas tidak sah: ${rel}`);
+  const r = masukan.replace(/\\/g, '/');
   if (!r || r.split('/').some((s) => s === '..' || s.startsWith('.'))) throw new Error(`nama berkas tidak sah: ${rel}`);
   if (/\.(asli|terap|kunci)$/i.test(r)) throw new Error(`berkas kerja mesin tidak boleh ditulis: ${rel}`);
   const f = path.resolve(akar, r);
@@ -68,6 +81,30 @@ export function buat(uid, nama) {
 export function hapus(uid, id) {
   const p = buka(uid, id);
   rmSync(p.dir, {recursive: true, force: true});
+}
+
+/* Jangan mengikuti symlink saat menghitung: symlink dari ZIP tidak boleh membuat kuota
+   terlihat kecil, atau mengarahkan pembacaan ke berkas host di luar data pelanggan. */
+export function ukuranPohon(d) {
+  if (!existsSync(d)) return 0;
+  let total = 0;
+  for (const e of readdirSync(d, {withFileTypes: true})) {
+    const f = path.join(d, e.name), st = lstatSync(f);
+    if (st.isSymbolicLink()) continue;
+    if (st.isDirectory()) total += ukuranPohon(f);
+    else if (st.isFile()) total += st.size;
+  }
+  return total;
+}
+
+export function pemakaianAkun(uid) { return ukuranPohon(dirUser(uid)); }
+
+export function periksaKuota(p, tambahan = 0) {
+  const dipakai = pemakaianAkun(p.meta.user_id);
+  const batas = BATAS.kuotaMb * 1048576;
+  if (dipakai + Math.max(0, tambahan) > batas) {
+    throw new Error(`kuota akun ${BATAS.kuotaMb} MB terlampaui (terpakai ${Math.ceil(dipakai / 1048576)} MB)`);
+  }
 }
 
 /* Proyek yang tidak diubah lebih dari RETENSI_HARI dihapus. MP4 dan frame cepat memenuhi disk
@@ -126,20 +163,38 @@ export function berkasSrc(p) {
 /* ── unduhan dari URL ─────────────────────────────────────────────────────────
    Server ini mengambil URL kiriman pelanggan, jadi URL ke jaringan dalam (metadata cloud,
    API bimp, container tetangga) harus ditolak — termasuk lewat redirect. */
+function ambilHttps(x, alamat, batasByte) {
+  return new Promise((selesai, gagal) => {
+    const req = https.request({hostname: alamat, port: Number(x.port) || 443, path: `${x.pathname}${x.search}`,
+      method: 'GET', servername: x.hostname, headers: {Host: x.host}, timeout: 120_000}, (res) => {
+      const panjang = Number(res.headers['content-length'] || 0);
+      if (panjang > batasByte) { req.destroy(); gagal(new Error(`berkas ${Math.round(panjang / 1048576)} MB, batas ${Math.floor(batasByte / 1048576)} MB`)); return; }
+      const bagian = []; let ukuran = 0;
+      res.on('data', (b) => {
+        ukuran += b.length;
+        if (ukuran > batasByte) { req.destroy(new Error(`berkas lebih dari ${Math.floor(batasByte / 1048576)} MB`)); return; }
+        bagian.push(b);
+      });
+      res.once('end', () => selesai({status: res.statusCode || 0, lokasi: res.headers.location, isi: Buffer.concat(bagian)}));
+      res.once('error', gagal);
+    });
+    req.once('timeout', () => req.destroy(new Error('unduh melewati batas waktu')));
+    req.once('error', gagal);
+    req.end();
+  });
+}
+
 export async function unduh(url, maksMb = BATAS.unduhMb) {
   let u = String(url);
+  const batasByte = maksMb * 1048576;
   for (let lompat = 0; lompat < 4; lompat++) {
     const x = new URL(u);
     if (x.protocol !== 'https:') throw new Error('hanya URL https yang diterima');
-    if (await hostPrivat(x.hostname)) throw new Error(`host ${x.hostname} mengarah ke jaringan privat`);
-    const r = await fetch(u, {redirect: 'manual', signal: AbortSignal.timeout(120000)});
-    if (r.status >= 300 && r.status < 400 && r.headers.get('location')) { u = new URL(r.headers.get('location'), u).toString(); continue; }
-    if (!r.ok) throw new Error(`unduh gagal: HTTP ${r.status}`);
-    const n = Number(r.headers.get('content-length') || 0);
-    if (n > maksMb * 1048576) throw new Error(`berkas ${Math.round(n / 1048576)} MB, batas ${maksMb} MB`);
-    const buf = Buffer.from(await r.arrayBuffer());
-    if (buf.length > maksMb * 1048576) throw new Error(`berkas lebih dari ${maksMb} MB`);
-    return buf;
+    const [alamat] = await alamatPublik(x.hostname);
+    const r = await ambilHttps(x, alamat, batasByte);
+    if (r.status >= 300 && r.status < 400 && r.lokasi) { u = new URL(r.lokasi, u).toString(); continue; }
+    if (r.status < 200 || r.status >= 300) throw new Error(`unduh gagal: HTTP ${r.status}`);
+    return r.isi;
   }
   throw new Error('terlalu banyak redirect');
 }
@@ -283,7 +338,11 @@ export function keConfig(p, j) {
 }
 
 /* ── tautan unduh bertanda tangan ─────────────────────────────────────────── */
-const RAHASIA = () => process.env.UNDUH_RAHASIA || 'ganti-rahasia-ini';
+const RAHASIA = () => {
+  const rahasia = process.env.UNDUH_RAHASIA;
+  if (!rahasia) throw new Error('UNDUH_RAHASIA belum diset');
+  return rahasia;
+};
 const tanda = (s) => createHmac('sha256', RAHASIA()).update(s).digest('base64url');
 
 export function tautan(uid, id, berkas, hari = 7) {

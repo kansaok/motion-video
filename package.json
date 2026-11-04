@@ -9,7 +9,9 @@
   },
   "scripts": {
     "motion": "node bin/motion.mjs",
-    "mcp": "node mcp/server.mjs"
+    "mcp": "node mcp/server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "periksa:playwright": "node scripts/periksa-playwright.mjs"
   },
   "engines": {
     "node": ">=20"
@@ -17,7 +19,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
     "express": "^5.3.0",
-    "playwright": "^1.64.1",
+    "playwright": "1.64.1",
     "zod": "^3.25.76"
   }
 }

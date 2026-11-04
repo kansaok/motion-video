@@ -11,8 +11,24 @@ services:
       - "127.0.0.1:8420:8420"
     volumes:
       - motion-data:/data
+      # Frame render ditulis sementara di sini. Volume terpisah mencegah frame yang
+      # membengkak menghabiskan layer image container; pantau kapasitas disk host.
+      - motion-tmp:/tmp
     # Chromium memakai /dev/shm untuk tab; 64 MB bawaan Docker membuat tab render crash.
     shm_size: "1gb"
+    # Render hanya boleh menjatuhkan container ini, bukan menghabiskan sumber daya VPS
+    # yang juga menjalankan layanan pelanggan lain. Sesuaikan setelah mengukur render
+    # terberat di mesin produksi.
+    mem_limit: "6g"
+    cpus: 4.0
+    pids_limit: 512
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    # Beri pekerja yang sedang merapikan ffmpeg/Chromium waktu berhenti sebelum Docker
+    # memaksa SIGKILL. Batas render induk tetap mematikan pekerjaan yang macet.
+    stop_grace_period: 2m
     # Kalau bimp jalan di VPS yang sama dalam network docker lain, sambungkan ke sini
     # dan isi BIMP_API_URL dengan nama service-nya (misal http://bimp-api:8401/api).
     # networks: [default, bimp]
@@ -22,6 +38,7 @@ services:
 
 volumes:
   motion-data:
+  motion-tmp:
 
 # networks:
 #   bimp:

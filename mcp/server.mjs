@@ -12,6 +12,14 @@ import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/st
 import {buatServer} from './alat.mjs';
 import {verifikasi} from './auth.mjs';
 import * as Pr from './proyek.mjs';
+import {periksaLingkungan} from './env.mjs';
+
+try {
+  periksaLingkungan();
+} catch (e) {
+  console.error(`motion-mcp tidak dimulai: ${e.message}`);
+  process.exit(1);
+}
 
 const PORT = Number(process.env.PORT || 8420);
 const app = express();
@@ -40,7 +48,9 @@ async function mcp(req, res) {
     await server.connect(transport);
     await transport.handleRequest(req, res, req.body);
   } catch (e) {
-    console.error('mcp:', e);
+    // Error transport bisa menyertakan URL request; jangan sampai token pada /mcp/:token
+    // tercetak ke stdout container lalu tersimpan di agregator log.
+    console.error(`mcp: galat transport ${e?.name || 'Error'}`);
     if (!res.headersSent) tolak(res, 500, 'galat internal');
   }
 }

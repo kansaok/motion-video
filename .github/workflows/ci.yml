@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  uji:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run periksa:playwright
+      # Konfigurasi proyek ikut dapat sintaks dicek supaya galat baru tidak lolos ke render.
+      - run: find . -name '*.mjs' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check
+      - if: matrix.node == 20
+        run: docker build --tag motion-engine:ci .
+
+  audit:
+    name: Audit dependensi (informasi)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high

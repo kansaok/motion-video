@@ -34,6 +34,8 @@ aman (`"C.Hasil + 0.5"`, `"P[7] - 0.35"`) yang dievaluasi `ekspresi.mjs` tanpa `
 
 1. Salin repo ke VPS, lalu:
    ```sh
+   # package-lock.json wajib ikut tersalin; jangan menjalankan npm install di mesin render.
+   # Mesin render lain, termasuk rama-tuf, wajib memakai lockfile yang sama.
    cp .env.mcp.example .env.mcp      # isi PUBLIC_URL, BIMP_API_URL, BIMP_SERVICE_KEY, UNDUH_RAHASIA
    docker compose up -d --build
    curl -s localhost:8420/sehat       # {"ok":true}
@@ -43,6 +45,9 @@ aman (`"C.Hasil + 0.5"`, `"P[7] - 0.35"`) yang dievaluasi `ekspresi.mjs` tanpa `
    server {
      server_name motion.bi1mp.id;
      client_max_body_size 80m;          # unggah base64
+     # Definisikan di blok `http`, lalu terapkan di server ini agar satu IP tidak
+     # membanjiri endpoint MCP sebelum autentikasi per-akun di aplikasi berlaku.
+     # limit_req_zone $binary_remote_addr zone=motion_mcp:10m rate=10r/m;
      location / {
        proxy_pass http://127.0.0.1:8420;
        proxy_set_header Host $host;
@@ -50,17 +55,33 @@ aman (`"C.Hasil + 0.5"`, `"P[7] - 0.35"`) yang dievaluasi `ekspresi.mjs` tanpa `
        proxy_set_header X-Forwarded-Proto $scheme;
        proxy_read_timeout 300s;         # cuplik menunggu Chromium
        proxy_buffering off;
+       limit_req zone=motion_mcp burst=20 nodelay;
      }
      # listen 443 ssl; ... (certbot)
    }
    ```
-   Jangan catat URL lengkap `/mcp/<token>` di access log publik — token ada di path.
+   Token custom connector berada di `/mcp/<token>`. Gunakan format access log yang menyamarkan
+   path tersebut (jangan memakai `$request` atau `$request_uri` mentah):
+   ```nginx
+   map $uri $motion_path_log {
+     ~^/mcp/[^/]+$  /mcp/[disamarkan];
+     default         $uri;
+   }
+   log_format motion '$remote_addr - $remote_user [$time_local] '
+                     '"$request_method $motion_path_log $server_protocol" $status $body_bytes_sent';
+   access_log /var/log/nginx/motion-mcp.access.log motion;
+   ```
 3. Di API bimp (`.env`): `MOTION_MCP_SERVICE_KEY` = nilai `BIMP_SERVICE_KEY`,
    `MOTION_MCP_URL` = `PUBLIC_URL`, `ORDERMM_PREFIX=MCPM`. Lalu `php artisan migrate` dan
    `php artisan config:cache`.
 
 Kebutuhan mesin: render 30 detik 1080×1920 memakan ±1–2 menit di 4 vCPU. RAM 4 GB cukup
 untuk `WORKERS=4`; turunkan `WORKERS` atau `MOTION_VIEWPORT` kalau log berisi "Target crashed".
+
+`docker-compose.yml` membatasi satu container ke 4 vCPU, 6 GB RAM, dan 512 PID agar render
+yang bermasalah tidak mengambil alih VPS. Frame sementara disimpan di volume `motion-tmp`,
+bukan tmpfs kecil; siapkan volume/filesystem itu dengan kuota dan kapasitas yang cukup untuk
+render terpanjang, lalu pantau pemakaiannya bersama `motion-data`.
 
 ## Uji lokal tanpa bimp
 
