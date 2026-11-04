@@ -42,19 +42,27 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
   `pipa.mjs`); typedef `Config`/`Scene`/`BarisVO` di `lib/tipe.mjs`; `npm run periksa:tipe`
   (`tsc --noEmit`, checkJs, tanpa pengecualian) masuk CI.
 
+- **P4-01..P4-05**: log JSON (`mcp/log.mjs`), `/metrik` Prometheus, `/hidup` + `/siap`
+  (render ditolak bila disk < `MIN_DISK_MB`), retensi bertahap (hasil antara dibuang sesudah 24
+  jam), `scripts/cadangan.sh` + `docs/operasional.md`, versi 1.1.0 + `CHANGELOG.md` + `versiSkema`.
+  Ikut diperbaiki: `/tmp` sandbox P2-03 kini direktori kerja di volume, bukan tmpfs (risiko OOM).
+- **P7-01..P7-04**: README/CLAUDE/AGENTS/IKLAN/katalog/docs dalam Markdown (`.docx` di
+  `docs/arsip/`), `docs/arsitektur.md`, `proyek/README.md`, `CONTRIBUTING.md`.
+
 ## Belum dikerjakan / prioritas berikutnya
 
-1. **Selesaikan operasional P2-04/P2-06** di VPS: aturan `DOCKER-USER` egress dan `limit_req`
-   nginx harus dipasang lalu diuji dari dalam container.
-2. **Fase 4--7** mengikuti urutan dalam `RENCANA-PERBAIKAN.md` (P4-*, P7-*, lalu P5-*, lalu P6-*).
-3. Komposisi MCP lama yang belum bertanda `data-om-kontrak="2"` tetap jalan sebagai v1; tidak
-   perlu migrasi paksa.
+1. **Operasional VPS** (butuh izin): firewall `DOCKER-USER` + `limit_req` nginx (P2-04/P2-06),
+   deploy 1.1.0, bukti isolasi `docs/isolasi-renderer.md`, uji pulih cadangan di container,
+   sambungkan `/metrik` ke monitoring. Isi baris P2-04.3/P2-04.4 di tabel catatan rencana.
+2. **Fase 5** (audio: tes sintetis, batas biaya ElevenLabs, ketahanan API, lubang musik, cek visual).
+3. **Fase 6** sesuai kebutuhan produk; mulai dari P6-01, P6-02, P6-11.
+4. 48 `proyek/*/naskah.md.docx` masih docx (lihat `proyek/README.md`).
 
 ## Verifikasi terakhir
 
 ```sh
 npm ci                       # node_modules wajib ada; tanpa ini test/laju gagal impor SDK MCP
-npm test                     # 47 tes: 46 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
+npm test                     # 56 tes: 55 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
 npm run periksa:tipe         # tsc --noEmit bersih
 npm run periksa:playwright   # versi 1.64.1 selaras dengan Dockerfile
 git diff --check

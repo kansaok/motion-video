@@ -358,11 +358,14 @@ Urut dari nilai/biaya terbaik. Tiap fitur harus ada tesnya dan satu paragraf di 
 
 | Tugas | Tanggal | Hasil verifikasi / keputusan | Commit |
 |---|---|---|---|
-| P2-03 (flag `--no-sandbox`?) | 4 Nov 2026 | `bubblewrap` memisahkan mount/PID, worker hanya menerima proyek aktif dan env allowlist; Chrome render + cuplik memakai `chromiumSandbox`. Uji runtime pascadeploy: `docs/isolasi-renderer.md`. | belum di-commit |
-| P3-03 | 4 Nov 2026 | Langkah 1--2 sudah ada; langkah 3: `docs/kontrak-komposisi-v2.md`, `K.kontrak()`, `Pipa.tulisTiming` (VO_TIMING + OM_CUES), `contoh/kontrak-v2` dirender penuh tanpa tambalan JSX (`test/kontrak-v2.test.mjs`). | belum di-commit |
-| P3-04 | 4 Nov 2026 | Pemindai literal; dibandingkan dengan `vm` (nilai JS sebenarnya). Tes banding parser lama dilewati otomatis bila `proyek/*/src` tidak ada di mesin. | belum di-commit |
-| P3-05 | 4 Nov 2026 | Temuan nyata: `lubang()` lolos palsu saat ffmpeg gagal; kini membawa `galat`. | belum di-commit |
-| P3-06 | 4 Nov 2026 | `tsc --noEmit --allowJs --checkJs` lulus tanpa daftar pengecualian. | belum di-commit |
+| P2-03 (flag `--no-sandbox`?) | 4 Nov 2026 | `bubblewrap` memisahkan mount/PID, worker hanya menerima proyek aktif dan env allowlist; Chrome render + cuplik memakai `chromiumSandbox`. Uji runtime pascadeploy: `docs/isolasi-renderer.md`. `/tmp` sandbox diganti direktori kerja di volume (tmpfs berisiko OOM) di 467874f. | 1dcc7e9 |
+| P3-03 | 4 Nov 2026 | Langkah 1--2 sudah ada; langkah 3: `docs/kontrak-komposisi-v2.md`, `K.kontrak()`, `Pipa.tulisTiming` (VO_TIMING + OM_CUES), `contoh/kontrak-v2` dirender penuh tanpa tambalan JSX (`test/kontrak-v2.test.mjs`). | 9e0bff6 |
+| P3-04 | 4 Nov 2026 | Pemindai literal; dibandingkan dengan `vm` (nilai JS sebenarnya). Tes banding parser lama dilewati otomatis bila `proyek/*/src` tidak ada di mesin. | 9e0bff6 |
+| P3-05 | 4 Nov 2026 | Temuan nyata: `lubang()` lolos palsu saat ffmpeg gagal; kini membawa `galat`. | 9e0bff6 |
+| P3-06 | 4 Nov 2026 | `tsc --noEmit --allowJs --checkJs` lulus tanpa daftar pengecualian. | 9e0bff6 |
+| P4-01..P4-03 | 4 Nov 2026 | Log JSON tanpa token/naskah/URL; `/metrik` Prometheus hanya alamat privat tanpa XFF; `/hidup`, `/siap`; retensi bertahap. Belum disambungkan ke stack monitoring VPS. | 467874f |
+| P4-04, P4-05 | 4 Nov 2026 | `scripts/cadangan.sh` diuji pulih lokal (identik); uji di container VPS belum. Versi 1.1.0, `versiSkema` + migrasi. | 69050c1 |
+| P7-01..P7-04 | 4 Nov 2026 | `.docx` dokumen repo dikonversi (pandoc tidak ada; konverter heuristik, diperiksa per berkas), asli di `docs/arsip/`. 48 `naskah.md.docx` di `proyek/` sengaja belum. `.env` tidak pernah masuk riwayat (hanya contoh, tanpa nilai). | (commit ini) |
 | P2-04.4 (WebSocket lolos `page.route`?) | | | |
 | P2-04.3 (rebinding bisa direproduksi?) | | | |
 | | | | |

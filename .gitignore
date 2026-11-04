@@ -42,3 +42,13 @@ thumb-tutorial/
 proyek/**/lembar*.jpg
 proyek/**/lembar/
 data/
+
+# contoh/ ikut git hanya sumbernya; hasil `motion apply/mix/render` di sana tidak.
+contoh/*/aset/
+contoh/*/stem/
+contoh/*/cuplikan/
+contoh/*/timeline.json
+contoh/*/src/timing.js
+contoh/**/*.asli
+contoh/**/*.terap
+contoh/**/*.kunci

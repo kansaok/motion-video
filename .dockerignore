@@ -5,7 +5,6 @@ data
 kerja
 .env
 .env.*
-*.docx
 *.mp4
 *.wav
 *.log
