@@ -110,6 +110,8 @@ Contoh minimal yang benar:
 }
 ```
 
+- `versiSkema` opsional; config tanpa field ini dianggap versi 1 dan dimigrasikan otomatis.
+  Server menolak config dengan `versiSkema` lebih baru dari yang dikenalnya.
 - `vo[].sc` + `off`: baris mulai paling cepat `off` detik sesudah scene `sc` mulai. Mode
   `jangkar`: scene hanya memanjang supaya VO muat. Mode `alir`: baris mengalir berurutan dan
   durasi scene diturunkan penuh dari VO (scene boleh memendek) — pakai kalau `off` cuma perkiraan.

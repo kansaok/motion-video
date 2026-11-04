@@ -9,6 +9,7 @@ import {pangkasVo} from '../lib/vo.mjs';
 import {BATAS_BAWAAN, menitRenderBawaan, SFX, MUSIK} from '../lib/konstanta.mjs';
 import * as K from '../lib/komposisi.mjs';
 import {hitung} from './ekspresi.mjs';
+import {migrasiConfig} from './skema.mjs';
 
 export const DATA = path.resolve(process.env.DATA_DIR || path.join(process.cwd(), 'data'));
 const angkaPositif = (nilai, bawaan) => Number.isFinite(Number(nilai)) && Number(nilai) > 0 ? Number(nilai) : bawaan;
@@ -299,7 +300,7 @@ export function asetAda(p) {
 export function bacaConfig(p) {
   const f = path.join(p.dir, 'config.json');
   if (!existsSync(f)) throw new Error('config belum disimpan — panggil simpan_config dulu');
-  return JSON.parse(readFileSync(f, 'utf8'));
+  return migrasiConfig(JSON.parse(readFileSync(f, 'utf8')));
 }
 
 export function periksaConfig(p, j) {

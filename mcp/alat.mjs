@@ -14,6 +14,10 @@ import {hitung} from './ekspresi.mjs';
 import * as Log from './log.mjs';
 import * as M from './metrik.mjs';
 import {kesiapan} from './sehat.mjs';
+import {migrasiConfig} from './skema.mjs';
+
+// Versi yang diumumkan ke klien MCP mengikuti package.json; lihat CHANGELOG.md.
+const VERSI = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 
 const PANDUAN = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'PANDUAN.md'), 'utf8');
 
@@ -47,6 +51,7 @@ const Ekspr = z.union([z.number(), z.string().max(200)]);
 const Angka = z.number().finite();
 const PetaAngka = z.record(z.string().max(60), Angka);
 const Config = z.object({
+  versiSkema: z.number().int().min(1).optional(),
   komposisi: z.string().max(200),
   jugaTulis: z.array(z.string().max(200)).max(4).optional(),
   jsx: z.string().max(200).optional(),
@@ -87,7 +92,7 @@ const Config = z.object({
 }).strict();
 
 export function buatServer(uid) {
-  const s = new McpServer({name: 'motion-mcp', version: '1.0.0'}, {instructions: INSTRUKSI});
+  const s = new McpServer({name: 'motion-mcp', version: VERSI}, {instructions: INSTRUKSI});
   const alat = (nama, deskripsi, skema, fn, anotasi = {}) =>
     s.registerTool(nama, {description: deskripsi, inputSchema: skema, annotations: anotasi}, aman(fn));
   const Proyek = z.string().describe('id proyek dari buat_proyek / daftar_proyek');
@@ -224,7 +229,8 @@ export function buatServer(uid) {
   {proyek: Proyek, config: z.record(z.any()).describe('objek config, lihat panduan')},
   async ({proyek, config}) => {
     const p = Pr.buka(uid, proyek);
-    const cek = Config.safeParse(config);
+    // Config dari klien yang masih memakai skema lama dimigrasikan dulu, baru divalidasi.
+    const cek = Config.safeParse(migrasiConfig(config));
     if (!cek.success) throw new Error(cek.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '));
     const j = cek.data;
     const {scenes, total} = Pr.periksaConfig(p, j);
