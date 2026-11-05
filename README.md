@@ -311,6 +311,8 @@ Diukur pada video 67,6 detik: 7 scene, 23 baris VO, 17 berkas SFX, 51 cue, 1 tre
 | `check` | 34 dtk | 2 mix ulang untuk A/B + STT |
 | **Total mesin** | **± 4,5 menit** | orientasi kedua: **+ 1,7 menit** (`render` saja) |
 
+Sejak P8-05 `motion all` memotret frame selagi musik dibuat dan di-mix: musik sebagian besar menunggu jaringan, dan mix berjalan sebagai `motion mix` di proses anak. Mix tidak boleh di proses yang sama dengan render: `rakit` memakai `execFileSync` yang memblokir event loop, dan Playwright habis waktu di tengah screenshot (terjadi saat diukur). Terukur 43-45 → 30-32 dtk pada 300 frame + mix 60 dtk + 15 dtk tunggu jaringan. Encode selama capture (P8-06) diukur dan TIDAK lebih cepat di 8 core: capture sudah memakai semua CPU.
+
 Sejak P8-04 (5 Nov 2026) `sfx` dan `plan` berjalan bersamaan dengan 3 permintaan sekaligus: 23 VO + 17 SFX terukur 22,3 dtk terhadap server tiruan berlatensi 1,2 dtk, dari 62,5 dtk berurutan. Lebih dari 3 tidak lebih cepat (5: 22,8 dtk): sisanya pemangkasan ffmpeg sinkron per berkas, yang menahan event loop.
 
 Biaya ElevenLabs satu video: **± Rp11.500**.

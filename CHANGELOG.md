@@ -70,6 +70,8 @@ render bisa bernilai `dibatalkan`.
   wadah, kapsi kosong (`periksa: {kapsi: '<selektor>'}`), dan frame hitam.
 
 ### Diubah
+- `motion all` memotret frame selagi musik dibuat dan di-mix (P8-05); mix berjalan sebagai `motion mix` di
+  proses anak. Terukur (300 frame + mix 60 dtk + 15 dtk menunggu jaringan musik): 43-45 → 30-32 dtk.
 - Perataan -6 dBFS tiap sumber kini di filtergraph mixer, bukan di MP3 baru (P8-09): VO, SFX, dan
   musik tidak lagi di-encode MP3 dua kali sebelum mix, dan `vo/norm/`, `sfx/norm/`, `*-norm.mp3`
   dibuang. Loop loudness mengukur LUFS tanpa true peak, `check`/laporan MCP mengukur LUFS + dBTP

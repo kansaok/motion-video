@@ -2,6 +2,8 @@
 // CLI motion-engine. Jalankan `motion` tanpa argumen untuk daftar perintah.
 import path from 'node:path';
 import os from 'node:os';
+import {spawn} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {existsSync, writeFileSync, mkdirSync, readdirSync, statSync} from 'node:fs';
 import * as Pipa from '../lib/pipa.mjs';
 import * as K from '../lib/komposisi.mjs';
@@ -295,13 +297,20 @@ async function jalankan() {
           console.log(`  musik sesudah plan: ${rp(pm.kredit)} kredit (perkiraan awal ${rp(Math.round(musikAwal))})`);
           await Biaya.jaga(pm, {ya: Boolean(bendera.ya)});
         }
-        console.log('musik…');  await Pipa.musik(c);
-        const bed = Pipa.laporBed(Pipa.periksaBed(c));
-        if (bed) console.log(bed);
-        console.log('mix…');    const r = await Pipa.mix(c);
-        console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`
-          + `${r.cache ? ' · dari cache' : ''}`);
-        console.log('render…'); const v = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined});
+        /* Frame dipotret SELAGI musik dibuat dan di-mix (P8-05): frame tidak butuh audio, hanya mux.
+           Terukur (300 frame + mix 60 dtk + 15 dtk tunggu jaringan): 43-45 dtk berurutan, 30-32 dtk
+           bersamaan. Mix di PROSES ANAK (`motion mix`): rakit memakai execFileSync yang memblokir event
+           loop, dan Playwright di proses yang sama habis waktu di tengah screenshot. */
+        console.log('musik + mix (bersamaan dengan render)…');
+        const audio = (async () => {
+          await Pipa.musik(c);
+          const bed = Pipa.laporBed(Pipa.periksaBed(c));
+          if (bed) console.log(bed);
+          await mixAnak(dirProyek);
+        })();
+        audio.catch(() => {});          // galatnya dilempar render yang menunggunya, sesudah capture
+        console.log('render…'); const v = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined,
+          tungguAudio: audio});
         console.log(`  ✓ ${v.keluaran} — ${v.lebar}x${v.tinggi}`);
         if (v.sampul) console.log(`  ✓ ${v.sampul} — sampul dari detik ${v.sampulDetik.toFixed(2)}`);
         cetakSubtitel(c);
@@ -380,6 +389,17 @@ async function jalankan() {
     }
     default: console.log(BANTUAN);
   }
+}
+
+/* `motion mix` sebagai proses anak (P8-05), dengan stdout/stderr diteruskan. Gerbang biayanya tetap
+   jalan; VO sudah dibuat `plan`, jadi perkiraannya nol. @param {string} dir */
+function mixAnak(dir) {
+  return new Promise((ok, gagal) => {
+    const p = spawn(process.execPath, [fileURLToPath(import.meta.url), 'mix', dir], {stdio: 'inherit', env: process.env});
+    p.once('error', gagal);
+    p.once('exit', (kode, sinyal) => (kode === 0 ? ok(undefined)
+      : gagal(new Error(`mix gagal (${sinyal || `kode ${kode}`}) — lihat log mix di atas`))));
+  });
 }
 
 /* Subtitle + naskah akhir di samping MP4 (P6-04). Video tanpa VO (bumper, logo) tidak punya
