@@ -73,8 +73,10 @@ Terakhir diperbarui: 5 November 2026 (Asia/Jakarta).
 4. **vps2 menjalankan `5d71b62` sejak 5 Nov 2026** (P6-05 templat, P6-07 cache VO, P6-08 webhook,
    P6-09 batalkan render; P6-10 hanya CLI). Cadangan pra-deploy `/root/backup-motionmcp/*-20261105045103.tgz`,
    image lama `motion-mcp:prev`. Terverifikasi: `/hidup` dan `/siap` 200 (dalam dan publik), `/metrik` dan
-   `/admin` 404 dari publik, 694 MP3 stok utuh, `cari_sfx` dan `templat/` ada di container. **Belum diuji**: render
-   sungguhan, webhook ke URL nyata, dan `batalkan_render` di produksi. `/admin` nonaktif karena `ADMIN_TOKEN`
+   `/admin` 404 dari publik, 694 MP3 stok utuh, `cari_sfx` dan `templat/` ada di container. **Render sungguhan gagal** sampai
+   `bwrap` diperbaiki (lihat `docs/isolasi-renderer.md`, "Prasyarat host Docker"): sysctl host + `security_opt`
+   di override vps2, dipasang 5 Nov 2026; `bwrap` dan Chromium lulus di container. **Belum diuji**: render
+   penuh sesudah perbaikan, webhook ke URL nyata, `batalkan_render`. `/admin` nonaktif karena `ADMIN_TOKEN`
    belum diisi di `.env.mcp` (keputusan pemilik).
 5. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
 
