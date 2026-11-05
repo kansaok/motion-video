@@ -15,7 +15,8 @@ lalu URL audionya diunggah ke sini.
      (bahasa `id`) → poll `creative_get_flow_run_status` sampai selesai → ambil URL audionya;
    - `unggah` `{jenis: "vo", no: <nomor baris>, url}`. Server memotong senyap kepala/ekor.
      `tempo` (0,5–2, bawaan 1) mempercepat tanpa mengubah nada; connector tidak punya `speed`.
-5. SFX: `cari_sfx` di stok (±700 bunyi, gratis) → pakai id-nya sebagai `"@stok/<id>"`.
+5. SFX: `cari_sfx` di stok (±700 bunyi, gratis; hasil terurut, kata Indonesia/Inggris sama-sama dikenali,
+   `mirip: "<id>"` untuk bunyi sejenis) → pakai id-nya sebagai `"@stok/<id>"`.
    Bunyi sendiri: `unggah` `{jenis: "sfx", nama, url}` lalu tulis `"@luar"`.
 6. Musik (opsional): `unggah` `{jenis: "musik", nama, url}`. Connector ElevenLabs terbatas tidak
    bisa membuat musik; pakai trek milik pengguna atau connector ElevenLabs penuh.

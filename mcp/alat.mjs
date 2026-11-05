@@ -216,12 +216,19 @@ export function buatServer(uid) {
     return teks({jenis, ...r});
   });
 
-  alat('cari_sfx', 'Cari bunyi di stok SFX (±700 bunyi, gratis). Semua kata harus cocok. Contoh: "whoosh", "pop", "impact", "ketik", "chime", "riser". '
+  alat('cari_sfx', 'Cari bunyi di stok SFX (±700 bunyi, gratis). Hasil diurutkan dari yang paling cocok (nama > cocok-untuk > '
+    + 'prompt > kategori); kata Indonesia dan Inggris sama-sama dikenali (kasir/cash register, klik/click, pintu/door). '
+    + 'Contoh: "whoosh cepat", "klik tombol", "kasir", "notifikasi", "riser". `mirip` = id stok untuk mencari bunyi serupa. '
     + 'Pakai hasilnya di config sebagai ["nama", "@stok/<id>"].',
-  {kata: z.string().max(100), maks: z.number().int().min(1).max(60).optional()},
-  async ({kata, maks = 25}) => {
-    const h = Stok.cari(kata).slice(0, maks).map((d) => ({id: d.id, detik: d.detik, kategori: d.kategori, cocok: d.cocok[0], prompt: d.prompt}));
-    return teks(h.length ? h : `tidak ada yang cocok dengan "${kata}" — coba satu kata (whoosh, pop, impact, chime, riser, ketik, klik)`);
+  {kata: z.string().max(100).optional(), mirip: z.string().max(120).optional(), maks: z.number().int().min(1).max(60).optional()},
+  async ({kata, mirip, maks = 25}) => {
+    if (!kata && !mirip) throw new Error('isi `kata` atau `mirip`');
+    const ringkas = (d) => ({id: d.id, detik: d.detik, kategori: d.kategori, cocok: d.cocok[0], prompt: d.prompt});
+    const h = (mirip ? Stok.mirip(mirip, undefined, maks) : Stok.cari(kata).slice(0, maks)).map(ringkas);
+    if (h.length) return teks(h);
+    const s = Stok.saran(kata);
+    return teks(`tidak ada yang cocok dengan "${kata ?? mirip}"${s.length ? ` — maksudnya: ${s.join(', ')}?` : ''} `
+      + '(stok tidak memuat semua bunyi; kalau memang tidak ada, generate lewat connector ElevenLabs)');
   }, {readOnlyHint: true});
 
   alat('simpan_config', 'Simpan config proyek (naskah VO + posisi, SFX, cue, musik, mixer). Skema lengkap ada di `panduan`. '

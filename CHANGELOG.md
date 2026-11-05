@@ -12,10 +12,13 @@ Aturan versi:
 ## [Belum dirilis]
 
 Hampir semua perubahan di bawah ada di CLI (`motion`). Di server MCP: perbaikan mixer (dipakai
-keduanya), parameter render parsial yang aditif (`scene`, `dari`, `sampai` di alat `render`), dan
-tautan subtitle di hasil `status_render`.
+keduanya), parameter render parsial yang aditif (`scene`, `dari`, `sampai` di alat `render`),
+tautan subtitle di hasil `status_render`, dan pencarian `cari_sfx` yang terurut (parameter `mirip`).
 
 ### Ditambahkan
+- Pencarian stok SFX terurut (nama > cocok-untuk > prompt > kategori), sinonim Indonesia–Inggris,
+  negasi di prompt diabaikan, saran kata untuk kueri kosong, `motion stok --mirip=<id>`; alat MCP
+  `cari_sfx` menerima `mirip` (aditif).
 - Subtitle `.srt`/`.vtt` + naskah akhir `-naskah.txt` di tiap render penuh (CLI dan MCP); MCP
   `status_render` memuat tautan unduhnya dan `/unduh` melayani `.srt`, `.vtt`, `.txt`.
 - `varian` di config + `motion render --semua-varian`: semua rasio dari satu master audio, OM_SCENES

@@ -26,7 +26,7 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
   motion plan   [folder]            generate VO lalu hitung posisi baris + durasi scene
   motion apply  [folder]            tulis durasi & jangkar hasil plan balik ke komposisi
   motion sfx    [folder]            generate berkas SFX yang belum ada
-  motion stok   <kata...>           cari SFX di stok (sfx-stok/) SEBELUM generate; --bangun kumpulkan ulang
+  motion stok   <kata...>           cari SFX di stok (sfx-stok/) SEBELUM generate, terurut; --mirip=<id>, --maks=<n>, --bangun
   motion music  [folder]            generate trek musik yang belum ada
   motion mix    [folder]            rakit master.wav + stem
   motion render [folder]            render MP4        (--frames=60 untuk uji cepat)
@@ -153,7 +153,17 @@ async function jalankan() {
     case 'sfx':   { const c = await Pipa.muat(dirProyek); console.log(`  ${await berbiaya(c, ['sfx'], () => Pipa.sfx(c))} bunyi baru (${(c.sfx || []).length} total)`); break; }
     case 'stok': {
       if (bendera.bangun) { const r = await Stok.bangun(); console.log(`  stok ✓ ${r.unik} bunyi unik dari ${r.kandidat} berkas → ${Stok.DIR}`); break; }
-      for (const d of Stok.cari(posisi.join(' '))) console.log(`${d.id}  ${d.detik}s  [${d.kategori.join(',')}]\n    cocok: ${d.cocok[0]}\n    ${d.prompt || ''}`);
+      /* Hasil diurutkan (P6-06), jadi yang teratas yang paling cocok; dulu semua yang memuat
+         kata itu dicetak tanpa urutan, ratusan baris untuk "klik". */
+      const kueri = posisi.join(' ');
+      const maks = Number(bendera.maks || 12);
+      const h = bendera.mirip ? Stok.mirip(String(bendera.mirip), undefined, maks) : Stok.cari(kueri);
+      for (const d of h.slice(0, maks)) console.log(`${d.id}  ${d.detik}s  [${d.kategori.join(',')}]\n    cocok: ${d.cocok[0]}\n    ${d.prompt || ''}`);
+      if (!bendera.mirip && h.length > maks) console.log(`  … ${h.length - maks} lagi (--maks=<n>)`);
+      if (!h.length) {
+        const s = Stok.saran(kueri);
+        console.log(`  tidak ada yang cocok dengan "${kueri}"${s.length ? ` — maksudnya: ${s.join(', ')}?` : ''}`);
+      }
       break;
     }
     case 'music': {

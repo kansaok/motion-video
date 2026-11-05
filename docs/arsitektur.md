@@ -70,7 +70,7 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `lib/render.mjs` | server statis + Chromium per frame + encode; `rentangFrame` (render parsial); `periksaVisual` (tata letak di komposisi hidup); `muatPlaywright`/`OPSI_CHROMIUM` (dipakai juga `doctor`) |
 | `lib/periksa.mjs` | verifikasi hasil akhir: masking, bus SFX, hening, lubang musik, peta level, sampul, STT |
 | `lib/jaring.mjs` | penjaga SSRF untuk unduhan dan halaman Chromium |
-| `lib/stok.mjs` | katalog `sfx-stok/` |
+| `lib/stok.mjs` | katalog `sfx-stok/`; pencarian terurut + sinonim (`SINONIM`, `BOBOT`), `mirip` (tf-idf), `saran` |
 | `mcp/server.mjs` | Express: `/mcp`, `/unduh`, `/hidup`, `/siap`, `/metrik`, retensi |
 | `mcp/alat.mjs` | definisi tool MCP dan skema zod `Config` (kontrak di `mcp/PANDUAN.md`) |
 | `mcp/proyek.mjs` | penyimpanan per akun, kuota, retensi, tautan bertanda tangan, `keConfig` |

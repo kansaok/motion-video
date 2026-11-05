@@ -21,7 +21,7 @@ Akses berbayar dikelola di bimp: menu **Tools → Motion MCP** (langganan, token
 | `buat_proyek` · `daftar_proyek` · `info_proyek` · `hapus_proyek` | kelola proyek |
 | `tulis_berkas` · `baca_berkas` · `impor_zip` | isi `src/` (komposisi HTML/JSX) |
 | `unggah` | audio VO/SFX/musik atau gambar dari URL https / base64 |
-| `cari_sfx` | cari di stok SFX (`sfx-stok/`, ±700 bunyi) |
+| `cari_sfx` | cari di stok SFX (`sfx-stok/`, ±700 bunyi): terurut, sinonim Indonesia–Inggris, `mirip` |
 | `simpan_config` | config JSON (naskah, cue, musik, mixer), divalidasi saat disimpan |
 | `cuplik` | gambar frame pada detik tertentu |
 | `render` · `status_render` | antrean render → tautan MP4 + sampul + subtitle `.srt`/`.vtt` + naskah + laporan; `scene` atau `dari`/`sampai` untuk potongan saja |

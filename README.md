@@ -96,7 +96,7 @@ export default {
 
 `sfx-stok/` menyimpan semua bunyi yang pernah dibuat (motion-engine + rama-animation), tanpa duplikat, lengkap dengan `katalog.json` / `KATALOG.md`: prompt asli, kategori, **cocok untuk apa**, dan proyek yang memakainya. Urutan kerja tiap butuh SFX:
 
-1. `motion stok <kata>` (contoh `motion stok whoosh dark`, `motion stok kasir`). Baca kolom "cocok untuk".
+1. `motion stok <kata>` (contoh `motion stok whoosh gelap`, `motion stok kasir`, `motion stok klik lembut`). Hasilnya diurutkan, yang teratas paling cocok: kata yang muncul di nama bunyi bernilai paling tinggi, lalu "cocok untuk" yang ditulis manusia, lalu prompt, lalu kategori. Kata Indonesia dan Inggris saling menemukan (kasir ↔ cash register, pintu ↔ door, cepat ↔ fast). Prompt yang menyangkal ("no click", "without impact") tidak dihitung cocok. Kalau tidak ada hasil, keluar saran kata terdekat. `motion stok --mirip=<id>` mencari bunyi sejenis dengan satu bunyi yang sudah cocok. Baca kolom "cocok untuk".
 2. Ketemu dan cocok → tulis di config `['nama', '@stok/<id>']`. `motion sfx` menyalinnya, tanpa biaya ElevenLabs.
 3. Tidak ketemu, atau bunyinya tidak cocok dengan adegan → tulis `['nama', detik, 'prompt']` seperti biasa. Generate tetap boleh.
 4. Sesudah proyek jadi, jalankan `motion stok --bangun` supaya bunyi baru masuk stok.
