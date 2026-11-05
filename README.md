@@ -283,6 +283,10 @@ Kalau durasi memang tidak boleh berubah: beri `maks` pada TIAP baris VO, lalu ba
 
 **Master dipakai ulang hanya bila SELURUH masukannya sama.** Render MCP dulu menjalankan mix penuh (ratakan semua sumber, sampai 40 lintasan loudness) di tiap render, termasuk sesudah revisi visual saja. Kuncinya (`mix.kunciMix`) memuat seluruh opsi `rakit` apa adanya, bukan daftar field pilihan (field baru yang lupa ditambahkan akan memberi master basi tanpa peringatan), sidik ISI tiap sumber (rsync dan salinan mempertahankan waktu ubah), dan sidik kode mixer sendiri. Berlaku hanya bila master dan ketiga stem masih ada. Kunci lama dibuang sebelum mix ulang: mix yang gagal di tengah sudah menimpa master, dan kunci lama yang tertinggal akan terbaca segar begitu config dikembalikan.
 
+**Perataan -6 dBFS dipasang di filtergraph, bukan ditulis ke MP3 baru.** Dulu tiap VO, SFX, dan musik ditulis ulang ke `vo/norm/`, `sfx/norm/`, `*-norm.mp3`: satu generasi encode MP3 lagi sebelum mix (TTS sudah MP3 128k), plus berkas antara yang memakan kuota MCP. Gainnya sama (puncak → -6 dBFS), kini `volume=<g>dB` di kepala rantai tiap masukan. Berkas norm lama dibuang saat mix.
+
+**`hening` membaca rentangnya sekali, dan berkas tak terbaca tidak lagi lolos.** Satu proses ffmpeg per jendela 20 ms (±110 proses untuk dua gate, 7,7 dtk) diganti satu dekode (0,15 dtk) dengan jendela dan ambang yang sama. Versi lama menganggap jendela tanpa audio sebagai senyap, jadi MP4 yang gagal dibaca lolos sebagai "senyap ✓".
+
 **A/B bus SFX di `check` tidak menyentuh `master.wav`.** Dulu master dan `stem/` ditimpa mix tanpa SFX lalu dipulihkan dengan mix ulang tanpa `finally`; `check` yang dihentikan di tengah meninggalkan master TANPA SFX untuk render berikutnya. Mix A/B kini ditulis ke `.master-tanpa-sfx.wav` dan dihapus sesudahnya.
 
 ## Berapa lama satu video
@@ -297,7 +301,7 @@ Diukur pada video 67,6 detik: 7 scene, 23 baris VO, 17 berkas SFX, 51 cue, 1 tre
 | `plan` | 29 dtk | 23 baris VO, ± 1,2 dtk masing-masing; hitungannya sendiri < 1 dtk |
 | `apply` | < 1 dtk | tulis durasi + kapsi |
 | `music` | 20 dtk | 1 trek 68 dtk |
-| `mix` | 9 dtk | ratakan semua sumber + 5 putaran loudness |
+| `mix` | 9 dtk | ratakan semua sumber + 5 putaran loudness (sejak P8-09 ±25% lebih cepat: tanpa MP3 antara, LUFS tanpa true peak) |
 | `render` | 1 mnt 50 dtk | 2.030 frame, ± 20 fps, plus encode |
 | `check` | 34 dtk | 2 mix ulang untuk A/B + STT |
 | **Total mesin** | **± 4,5 menit** | orientasi kedua: **+ 1,7 menit** (`render` saja) |

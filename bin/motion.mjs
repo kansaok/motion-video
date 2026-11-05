@@ -444,7 +444,8 @@ async function periksaDanLapor(c, opsi) {
       : 'rata, tanpa lubang ✓'}`);
   }
   for (const w of h.hening || []) {
-    const d = w.dapat ? `senyap ${w.dapat[0].toFixed(2)}-${w.dapat[1].toFixed(2)}s (${w.lama.toFixed(2)}s)` : 'TIDAK ADA senyap';
+    const d = w.galat ? `tidak terbaca (${w.galat})`
+      : w.dapat ? `senyap ${w.dapat[0].toFixed(2)}-${w.dapat[1].toFixed(2)}s (${w.lama.toFixed(2)}s)` : 'TIDAK ADA senyap';
     console.log(`  hening   minta ${w.minta[0].toFixed(2)}-${w.minta[1].toFixed(2)}s -> ${d} ${w.lolos ? '✓' : '✖'}`);
   }
   /* Visual: tata letak di komposisi hidup. Peringatan, bukan putusan: transisi yang sengaja

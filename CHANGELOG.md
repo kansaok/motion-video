@@ -58,6 +58,11 @@ render bisa bernilai `dibatalkan`.
   wadah, kapsi kosong (`periksa: {kapsi: '<selektor>'}`), dan frame hitam.
 
 ### Diubah
+- Perataan -6 dBFS tiap sumber kini di filtergraph mixer, bukan di MP3 baru (P8-09): VO, SFX, dan
+  musik tidak lagi di-encode MP3 dua kali sebelum mix, dan `vo/norm/`, `sfx/norm/`, `*-norm.mp3`
+  dibuang. Loop loudness mengukur LUFS tanpa true peak, `check`/laporan MCP mengukur LUFS + dBTP
+  dalam satu lintasan, dan `hening` mendekode rentangnya sekali. Terukur pada video sintetis 60 dtk
+  (20 VO, 45 cue): mix 17,7 → 13,2 dtk, `hening` 7,7 → 0,15 dtk, ringkasan MP4 1,9 → 0,7 dtk.
 - `mix` memakai ulang `master.wav` bila seluruh masukannya sama (P8-08): opsi mixer, posisi VO,
   cue, amplop, gate, isi tiap berkas sumber, dan kode mixer. Render MCP sesudah revisi visual saja,
   `scene`, atau `frames` tidak lagi menjalankan mix penuh. `motion mix --paksa` untuk mix ulang.
@@ -71,6 +76,8 @@ render bisa bernilai `dibatalkan`.
   trek musiknya.
 
 ### Diperbaiki
+- `check` meloloskan jendela hening pada MP4 yang tidak terbaca: tiap jendela 20 ms terbaca tanpa
+  audio, yaitu "senyap ✓". Kini gagal dengan sebabnya (P8-09).
 - `bin/srt.mjs` memposisikan subtitle di awal scene + `off`, tidak mengikuti `tata`: di mode `alir` dan
   saat jangkar mendorong baris, subtitle muncul sebelum suaranya.
 - Mix video tanpa satu pun cue SFX gagal dengan `amix=inputs=0`.
