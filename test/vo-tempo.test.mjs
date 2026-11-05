@@ -96,3 +96,12 @@ test('cache lintas proyek: entri lama dipakai hanya bila sah menurut tanggal dib
     assert.ok(cariCacheVo(b.kunci));
   } finally { process.env.MOTION_CACHE_VO = env; }
 });
+
+test('kalibrasi --kering melewati VO dari jendela regresi (terukur 1,2x terlalu cepat)', async () => {
+  const {kalibrasi} = await import('../lib/kering.mjs');
+  const sesudah = VO.regresiTempoMs + 3600_000, sebelum = VO.regresiTempoMs - 3600_000;
+  const rusak = voLama('kal-regresi', 1.2, sesudah);
+  assert.deepEqual(kalibrasi(rusak.c), {}, 'VO jendela regresi ikut kalibrasi');
+  const sah = voLama('kal-sah', 1.2, sebelum);
+  assert.equal(kalibrasi(sah.c).suaraUji.n, 1);
+});
