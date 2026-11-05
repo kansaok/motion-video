@@ -21,7 +21,8 @@ lalu URL audionya diunggah ke sini.
    bisa membuat musik; pakai trek milik pengguna atau connector ElevenLabs penuh.
 7. `simpan_config` (skema di bawah). Validasi langsung jalan: scene, SFX, dan ekspresi dicek.
 8. `render` dengan `frames: 60` untuk uji cepat, lalu `render` penuh. Poll `status_render`
-   tiap ±20 detik. Hasilnya tautan MP4 + sampul JPG (berlaku 7 hari) dan laporan durasi/audio.
+   tiap ±20 detik. Hasilnya tautan MP4 + sampul JPG + subtitle (`srt`, `vtt`) + naskah akhir (`naskah`,
+   teks) yang berlaku 7 hari, dan laporan durasi/audio. Subtitle mengikuti posisi suara sebenarnya.
    Untuk memeriksa SATU scene sesudah revisi, `render` dengan `scene: "<nama>"` (atau nomor mulai
    1), atau `dari`/`sampai` dalam detik video sesudah penempatan VO. Hanya frame rentang itu yang
    dirender, audio ikut dipotong, hasilnya berkas `-potong-<dari>-<sampai>.mp4` terpisah (tanpa

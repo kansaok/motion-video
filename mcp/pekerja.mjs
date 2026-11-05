@@ -48,6 +48,8 @@ async function kerjakan({uid, proyek, opsi}) {
     };
   }
   const r = await Pipa.render(c, {batasFrame: opsi?.frames, kemajuan: (jadi, totalFrame) => kirim({frame: jadi, totalFrame})});
+  // Subtitle + naskah akhir (P6-04): pelanggan mendapat MP4, sampul, dan SRT dari satu render.
+  const sub = c.vo.length ? Pipa.tulisSubtitel(c) : null;
   langkah('periksa');
   const h = await Pipa.periksa(c, {lengkap: false});
   Pr.sentuh(p);
@@ -55,6 +57,7 @@ async function kerjakan({uid, proyek, opsi}) {
   return {
     detik: r.detik, lebar: r.lebar, tinggi: r.tinggi,
     mp4: path.basename(r.keluaran), sampul: r.sampul ? path.basename(r.sampul) : null,
+    srt: sub && path.basename(sub.srt), vtt: sub && path.basename(sub.vtt), naskah: sub && path.basename(sub.naskah),
     laporan, vo,
     audio: {lufs: m.lufs, dbtp: m.dbtp, mp4_lufs: h.mp4?.lufs, mp4_dbtp: h.mp4?.dbtp},
     sampul_kontras: h.sampul ? +(h.sampul.rasio * 100).toFixed(0) : null,

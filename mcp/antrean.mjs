@@ -245,7 +245,8 @@ async function kerjakan(t) {
     const hasil = await jalankanPekerja(t, {onLangkah: langkah});
     t.hasil = {...hasil,
       mp4: Pr.tautan(t.uid, t.proyek, hasil.mp4),
-      sampul: hasil.sampul ? Pr.tautan(t.uid, t.proyek, hasil.sampul) : null};
+      sampul: hasil.sampul ? Pr.tautan(t.uid, t.proyek, hasil.sampul) : null,
+      ...Object.fromEntries(['srt', 'vtt', 'naskah'].filter((k) => hasil[k]).map((k) => [k, Pr.tautan(t.uid, t.proyek, hasil[k])]))};
     t.status = 'selesai';
   } catch (e) {
     t.status = 'gagal';

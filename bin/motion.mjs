@@ -38,6 +38,7 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
   motion speed  <suara...>          ukur kecepatan baca tiap suara SEBELUM menulis naskah
 
   motion render --komposisi=<html>  render orientasi lain dengan audio yang sama
+  motion render --semua-varian      komposisi utama + semua varian di config, satu laporan gabungan
   motion render --scene=<nama|no>   render satu scene saja, audio ikut dipotong (atau --dari=<dtk> --sampai=<dtk>)
   motion plan --kering · all --kering  hitung durasi, posisi, cue, dan biaya tanpa ElevenLabs dan tanpa
                                     menulis ke proyek (laporan di <folder>/kerja/kering.json)
@@ -54,8 +55,7 @@ const rp = (n) => n.toLocaleString('id-ID');
    hanya oleh `plan`. Gerbang biaya dipasang di semua pintu itu, bukan cuma yang namanya
    terdengar mahal. */
 const berbiaya = (c, langkah, kerja, o = {}) => Biaya.berbiaya(c, perintah, langkah, kerja, {ya: Boolean(bendera.ya), ...o});
-// 'Iklan CTWA Konektor 4x5.dc.html' -> 'iklan-ctwa-konektor-4x5'
-const namaPendek = (f) => path.basename(f).replace(/\.(dc\.)?html?$/i, '').replace(/\W+/g, '-').toLowerCase();
+const namaPendek = Pipa.namaPendek;
 
 async function jalankan() {
   /* Mode kering (P6-11): hitung semuanya tanpa ElevenLabs dan tanpa menulis ke proyek, kecuali
@@ -172,6 +172,15 @@ async function jalankan() {
     }
     case 'render': {
       const c = await Pipa.muat(dirProyek);
+      /* Semua rasio dari satu master audio (P6-03): komposisi utama + `varian`, bergiliran, tiap
+         MP4 dinilai dengan ambang `check`, satu laporan gabungan. */
+      if (bendera['semua-varian']) {
+        const h = await Pipa.renderVarian(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined, tab: bendera.tab && Number(bendera.tab)});
+        console.log(Pipa.laporVarian(h));
+        cetakSubtitel(c);   // timeline sama untuk semua rasio, jadi satu set subtitle melayani semuanya
+        if (h.some((x) => x.galat || x.masalah.length)) process.exitCode = 1;
+        break;
+      }
       // Satu proyek biasanya punya dua orientasi dengan audio yang sama persis. `jugaTulis`
       // sudah menyamakan durasi scene-nya, jadi sisanya cukup satu bendera — bukan menyunting
       // config bolak-balik dan berisiko meninggalkannya menunjuk orientasi yang salah.
@@ -195,6 +204,7 @@ async function jalankan() {
       console.log(`  ✓ ${r.keluaran} — ${r.lebar}x${r.tinggi}, ${Number(r.detik).toFixed(2)}s`
         + `${r.dari !== undefined ? ` (detik ${r.dari.toFixed(2)}-${r.sampai.toFixed(2)} video)` : ''}`);
       if (r.sampul) console.log(`  ✓ ${r.sampul} — sampul dari detik ${r.sampulDetik.toFixed(2)}`);
+      if (r.dari === undefined) cetakSubtitel(c);
       break;
     }
     case 'shot': {
@@ -241,6 +251,7 @@ async function jalankan() {
         console.log('render…'); const v = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined});
         console.log(`  ✓ ${v.keluaran} — ${v.lebar}x${v.tinggi}`);
         if (v.sampul) console.log(`  ✓ ${v.sampul} — sampul dari detik ${v.sampulDetik.toFixed(2)}`);
+        cetakSubtitel(c);
         console.log('check…'); await periksaDanLapor(c, {lengkap: !bendera.cepat, visual: true});
       }, {cetak: true});
       const b = await Pipa.biaya(t0 - 5 * 60 * 1000);
@@ -302,6 +313,14 @@ async function jalankan() {
     }
     default: console.log(BANTUAN);
   }
+}
+
+/* Subtitle + naskah akhir di samping MP4 (P6-04). Video tanpa VO (bumper, logo) tidak punya
+   subtitle; itu bukan galat. */
+function cetakSubtitel(c) {
+  if (!c.vo?.length) return;
+  const s = Pipa.tulisSubtitel(c);
+  console.log(`  ✓ ${s.srt} · ${path.basename(s.vtt)} · ${path.basename(s.naskah)} (${s.isyarat} isyarat)`);
 }
 
 // Dipakai `check` dan ekor `all` — satu tempat, supaya keduanya tidak pernah berbeda isi.

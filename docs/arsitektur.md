@@ -51,6 +51,8 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 
 | Berkas | Tanggung jawab |
 |---|---|
+| `lib/pipa.mjs` | satu pintu semua tahap rantai; `rentangScene`/`namaPotongan` (render parsial), `daftarVarian`/`renderVarian` (semua rasio, P6-03) |
+| `lib/subtitel.mjs` | `.srt`/`.vtt`/`-naskah.txt` dari penempatan `tata` yang sama dengan mixer (dipakai `render`, `bin/srt.mjs`, pekerja MCP) |
 | `lib/konstanta.mjs` | semua ambang audio, batas zip, batas bawaan MCP, beserta sebabnya |
 | `lib/tipe.mjs` | typedef JSDoc `Config`, `Scene`, `BarisVO` (hanya untuk `tsc`) |
 | `lib/env.mjs` | memuat `.env`, `wajib()` |

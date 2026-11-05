@@ -98,13 +98,14 @@ for (const jalur of ['/mcp', '/mcp/:token']) {
    pengguna tanpa token MCP, dan tidak bisa ditebak untuk proyek orang lain. */
 app.get('/unduh/:uid/:proyek/:berkas', (req, res) => {
   const {uid, proyek, berkas} = req.params;
-  if (!/\.(mp4|jpg)$/i.test(berkas) || !Pr.cekTautan(uid, proyek, berkas, req.query.exp, req.query.sig)) return res.status(403).end();
+  if (!/\.(mp4|jpg|srt|vtt|txt)$/i.test(berkas) || !Pr.cekTautan(uid, proyek, berkas, req.query.exp, req.query.sig)) return res.status(403).end();
   let f;
   // Proyek tidak ada atau jalur keluar dari proyek: jawab 404 agar keberadaan proyek tidak bocor.
   try { f = Pr.jalurAman(Pr.buka(uid, proyek).dir, berkas); } catch { return res.status(404).end(); }
   if (!existsSync(f)) return res.status(404).end();
   res.set({
-    'Content-Type': berkas.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg',
+    'Content-Type': {mp4: 'video/mp4', jpg: 'image/jpeg', srt: 'application/x-subrip; charset=utf-8',
+      vtt: 'text/vtt; charset=utf-8', txt: 'text/plain; charset=utf-8'}[path.extname(berkas).slice(1).toLowerCase()],
     'Content-Length': statSync(f).size,
     'Content-Disposition': `inline; filename="${path.basename(f)}"`,
     'Cache-Control': 'private, max-age=3600',

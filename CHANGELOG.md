@@ -12,9 +12,14 @@ Aturan versi:
 ## [Belum dirilis]
 
 Hampir semua perubahan di bawah ada di CLI (`motion`). Di server MCP: perbaikan mixer (dipakai
-keduanya) dan parameter render parsial yang aditif (`scene`, `dari`, `sampai` di alat `render`).
+keduanya), parameter render parsial yang aditif (`scene`, `dari`, `sampai` di alat `render`), dan
+tautan subtitle di hasil `status_render`.
 
 ### Ditambahkan
+- Subtitle `.srt`/`.vtt` + naskah akhir `-naskah.txt` di tiap render penuh (CLI dan MCP); MCP
+  `status_render` memuat tautan unduhnya dan `/unduh` melayani `.srt`, `.vtt`, `.txt`.
+- `varian` di config + `motion render --semua-varian`: semua rasio dari satu master audio, OM_SCENES
+  tiap varian dicek terhadap timeline sebelum render, satu laporan gabungan dengan ambang `check`.
 - Render parsial: `motion render --scene=<nama|no>` atau `--dari`/`--sampai`, dan parameter
   `scene`/`dari`/`sampai` di alat MCP `render`. Hanya frame rentang itu yang dirender, audio ikut
   dipotong, ke berkas `-potong-<dari>-<sampai>.mp4`; MP4 penuh dan sampulnya tidak tertimpa.
@@ -37,6 +42,8 @@ keduanya) dan parameter render parsial yang aditif (`scene`, `dari`, `sampai` di
   trek musiknya.
 
 ### Diperbaiki
+- `bin/srt.mjs` memposisikan subtitle di awal scene + `off`, tidak mengikuti `tata`: di mode `alir` dan
+  saat jangkar mendorong baris, subtitle muncul sebelum suaranya.
 - Mix video tanpa satu pun cue SFX gagal dengan `amix=inputs=0`.
 
 ## [1.1.0] - 2026-11-04

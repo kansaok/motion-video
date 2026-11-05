@@ -34,7 +34,7 @@ motion all proyek/video-baru                          # sampai MP4 + verifikasi
 | `motion apply` | tulis durasi + jangkar animasi + kapsi balik ke komposisi |
 | `motion sfx` / `motion music` | generate aset yang belum ada (yang sudah ada dilewati); `music` lalu mencetak peta level bed dan lubangnya |
 | `motion mix` | rakit `aset/master.wav` + `stem/` |
-| `motion render` | MP4 + `<keluaran>-sampul.jpg` (`--frames=60` untuk uji cepat) |
+| `motion render` | MP4 + `<keluaran>-sampul.jpg` + subtitle `<keluaran>.<bahasa>.srt`/`.vtt` + `<keluaran>-naskah.txt` (`--frames=60` untuk uji cepat) |
 | `motion render --scene=<nama\|no>` · `--dari=<dtk> --sampai=<dtk>` | render satu scene/rentang saja, audio ikut dipotong, ke `<keluaran>-potong-<dari>-<sampai>.mp4` (tanpa sampul; MP4 penuh tidak tertimpa) |
 | `motion render --komposisi=<html>` | orientasi lain, audio yang sama, tanpa menyunting config |
 | `motion check` | verifikasi hasil, termasuk frame 0 sebagai sampul dan tata letak di komposisi hidup (`--cepat` melewati STT + A/B) |
@@ -55,6 +55,8 @@ baris (`suara.speed`, `lafal`, model) membuat ulang seluruh VO tanpa bertanya, d
 dulu baru muncul sesudah kreditnya terbakar. Realisasi tiap perintah (selisih kredit terpakai
 akun) dicatat ke `<proyek>/biaya.json`; tarif SFX dan musik di `lib/konstanta.mjs` (`HARGA`)
 dikalibrasi dari catatan itu.
+
+**Subtitle ikut tiap render penuh.** `.srt` dan `.vtt` (akhiran bahasa dari `suara.bahasa`, bawaan `id`, dikenali YouTube sebagai label trek) dan naskah akhir `-naskah.txt`. Posisi baris diambil dari penempatan yang sama dengan mixer dan `timing.js`; `bin/srt.mjs` lama memakai awal scene + `off`, sehingga di mode `alir` atau saat `jangkar` mendorong baris mundur, subtitle muncul sebelum suaranya. Baris panjang dipecah di akhir kalimat lalu di koma (≤ 84 karakter, dua baris 42). `node bin/srt.mjs proyek/<nama>` menulis ulang untuk proyek lama.
 
 **Mode kering untuk melihat dampak dulu.** `--kering` menjalankan seluruh perhitungan `plan` (dan untuk `all`: status SFX, musik, cue) tanpa satu pun permintaan ke ElevenLabs dan tanpa menyentuh komposisi, aset, atau `timeline.json`. Durasi VO yang belum ada atau kuncinya basi **diperkirakan** dari jumlah karakter terlafal: kar/dtk dikalibrasi dari VO suara yang sama yang sudah ada di proyek, lalu `suara.kps` (hasil `motion speed`), lalu 16,3 kar/dtk × `speed`. Laporannya menandai tiap baris perkiraan dengan `≈` dan sumbernya; durasi TTS tidak deterministik, jadi angka itu untuk memutuskan, bukan untuk dikunci. Batas scene yang memotong kalimat, cue di luar video atau tanpa entri `sfx`, dan baris yang diperkirakan lewat `maks` ikut dilaporkan. Kode keluar 1 bila rencananya gagal.
 
@@ -282,7 +284,15 @@ Yang menghabiskan waktu bukan mesinnya. Sisanya adalah membaca komposisi untuk m
 
 ## Rasio untuk iklan Meta
 
-Satu master audio, satu `.jsx`, empat render. `motion render --komposisi=<html> --keluaran=<x>.mp4`.
+Satu master audio, satu `.jsx`, empat render. Tulis rasio lain di config, lalu satu perintah:
+
+```js
+jugaTulis: ['Iklan 4x5.dc.html', 'Iklan 1x1.dc.html', 'Iklan 16x9.dc.html'],   // durasi scene ikut apply
+varian: [{komposisi: 'Iklan 4x5.dc.html'}, {komposisi: 'Iklan 1x1.dc.html'},
+  {komposisi: 'Iklan 16x9.dc.html', keluaran: 'iklan-16x9.mp4', sampul: {detik: 2}}],
+```
+
+`motion render --semua-varian` merender komposisi utama lalu tiap varian secara bergiliran dengan `master.wav` yang sama, lalu mencetak satu tabel: rasio, piksel, durasi, LUFS, dBTP, kontras frame 0, sampul. Ambangnya sama dengan `motion check`, dan kode keluar 1 bila ada ✖. Sebelum Chromium dibuka, `OM_SCENES` tiap varian dibandingkan dengan timeline hasil `plan`. Varian yang lupa dimasukkan ke `jugaTulis` ditolak dengan sebabnya, karena kalau tidak, videonya berjalan dengan durasi brief di atas audio baru. Satu varian yang gagal tidak menghentikan yang lain. Satu rasio saja tetap bisa lewat `motion render --komposisi=<html> --keluaran=<x>.mp4`.
 
 | **Rasio** | **Piksel** | **Penempatan Meta** |
 |---|---|---|
