@@ -2,8 +2,8 @@
 
 Server ini merender **komposisi HTML** menjadi MP4 (Chromium per frame + ffmpeg), lengkap dengan
 voice-over, SFX, musik, kapsi yang mengikuti suara, dan mix -14 LUFS / -1 dBTP.
-Server ini **tidak** membuat suara. VO dibuat dengan connector ElevenLabs milik pengguna di Claude,
-lalu URL audionya diunggah ke sini.
+VO dibuat server dengan kunci ElevenLabs milik pengguna (`kunci_elevenlabs` + `buat_vo`), atau dengan
+connector ElevenLabs milik pengguna di Claude lalu URL audionya diunggah ke sini.
 
 ## Alur
 
@@ -13,7 +13,12 @@ lalu URL audionya diunggah ke sini.
    naskah lewat `simpan_config`, lalu lanjut ke langkah 3.
 2. Tulis komposisi dengan `tulis_berkas` (atau `impor_zip` untuk zip Claude Design).
 3. `cuplik` beberapa detik untuk melihat tata letak. Perbaiki dan ulangi sampai rapi.
-4. VO, satu berkas per baris naskah:
+4. VO, satu berkas per baris naskah. Paling ringkas bila pengguna punya kunci API ElevenLabs:
+   `kunci_elevenlabs` `{kunci}` sekali per akun (disimpan terenkripsi, tidak pernah dikembalikan; ingatkan
+   pengguna bahwa kunci yang ditempel di percakapan tersimpan di riwayat chat), lalu `buat_vo`
+   `{proyek, suara: {id, speed?, stability?, similarity?, style?, seed?}, lafal?}` membuat semua baris
+   naskah config di server. Baris yang sudah dibuat dengan permintaan sama dilewati tanpa biaya; ubah
+   `seed` untuk take baru. Tanpa kunci, pakai connector:
    - connector ElevenLabs: `creative_list_voices` → pilih suara → `creative_generate_speech`
      (bahasa `id`) → poll `creative_get_flow_run_status` sampai selesai → ambil URL audionya;
    - `unggah_vo` `{baris: [{no, url}, …]}` untuk semua baris sekaligus (maks 60; hasil per baris, ulangi

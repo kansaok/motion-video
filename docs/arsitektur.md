@@ -26,7 +26,8 @@ flowchart LR
   SFX, dan musik digenerate lewat ElevenLabs (`lib/el.mjs`).
 - **MCP**: config adalah JSON (`config.json`); ekspresi detik berupa string dihitung oleh
   `mcp/ekspresi.mjs`, lalu `Pr.keConfig` mengubahnya menjadi objek config yang sama dengan CLI.
-  Server **tidak** membuat audio; semua audio diunggah (`suara.luar`, `@luar`, `musik.luar`).
+  Render tidak membuat audio; semua audio diunggah (`suara.luar`, `@luar`, `musik.luar`), kecuali VO yang
+  dibuat alat `buat_vo` di proses server dengan kunci ElevenLabs pelanggan (`mcp/rahasia.mjs`, P8-12).
 - Render MCP selalu di proses anak dalam sandbox bubblewrap (`antrean.perintahPekerja`); server
   HTTP sendiri tidak pernah menjalankan Chromium atau ffmpeg berat.
 
@@ -84,6 +85,7 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `mcp/pekerja.mjs` | proses anak: menjalankan pipa atau cuplik |
 | `mcp/skema.mjs` | `versiSkema` dan migrasi config lama |
 | `mcp/log.mjs`, `metrik.mjs`, `sehat.mjs` | log JSON, Prometheus, kesiapan |
+| `mcp/rahasia.mjs` | kunci ElevenLabs pelanggan (BYOK) terenkripsi per uid, untuk `kunci_elevenlabs`/`buat_vo` (P8-12) |
 | `mcp/auth.mjs`, `env.mjs` | verifikasi token ke bimp, rahasia wajib produksi |
 
 ## Di mana setiap cek berada

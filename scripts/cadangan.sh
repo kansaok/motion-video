@@ -8,6 +8,8 @@
 # Default bekerja lewat `docker exec` ke container motion-mcp (CONTAINER=...). Set DATA_DIR
 # untuk bekerja langsung pada direktori lokal (uji pemulihan, mesin tanpa Docker).
 #
+# Kunci ElevenLabs pelanggan (DATA/rahasia/, BYOK P8-12) SENGAJA tidak ikut: lebih sedikit salinan
+# rahasia; sesudah pemulihan pelanggan cukup menyimpan ulang kuncinya (kunci_elevenlabs).
 # Yang disimpan: meta.json, config.json, render.json, src/, dan aset/ unggahan (VO berbayar,
 # SFX/musik/gambar milik pelanggan tidak dapat dibuat ulang server). Yang dibuang: hasil antara
 # yang dibuat ulang tiap render (stem/, cuplikan/, master.wav, norm/) dan MP4/sampul hasil render.

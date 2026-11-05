@@ -19,6 +19,10 @@ render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
 
+- MCP BYOK (P8-12): `kunci_elevenlabs` menyimpan kunci ElevenLabs pelanggan terenkripsi (AES-256-GCM,
+  `KUNCI_ENKRIPSI`, terikat uid, di luar folder proyek) dan `buat_vo` membuat VO semua baris di server.
+  Kunci per permintaan (`EL.denganKunci`), tidak pernah masuk sandbox render; cache VO lintas proyek
+  selalu mati di server MCP (dipakai bersama semua akun).
 - Waktu per kata VO (P8-10, opt-in `suara.waktuKata: true`, CLI): TTS `with-timestamps`, waktu kata naskah
   di `vo-NN.mp3.kata.json` (bersidik MP3), `VO_TIMING[].kata` di `timing.js` untuk kapsi kata-demi-kata,
   dan subtitle yang dipotong tepat di batas kata. Ikut cache VO lintas proyek.
