@@ -172,3 +172,9 @@ test('argumen sandbox memuat NODE_CHANNEL_FD=3 (tanpanya pekerja keluar kode 0 t
   assert.equal(argumen[i - 1], '--setenv');
   assert.equal(argumen[i + 1], '3');
 });
+
+test('lingkungan pekerja meneruskan lokasi browser Playwright (tanpanya Chromium tak ditemukan di sandbox)', () => {
+  const env = lingkunganPekerja({PATH: '/bin', PLAYWRIGHT_BROWSERS_PATH: '/ms-playwright', BIMP_SERVICE_KEY: 'rahasia'});
+  assert.equal(env.PLAYWRIGHT_BROWSERS_PATH, '/ms-playwright');
+  assert.ok(!('BIMP_SERVICE_KEY' in env));
+});

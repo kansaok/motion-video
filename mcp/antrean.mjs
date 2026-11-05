@@ -61,7 +61,10 @@ export function perintahPekerja(t, {bwrap = '/usr/bin/bwrap', node = process.exe
 /* Pekerja menjalankan HTML pelanggan lewat Chromium. Ia hanya menerima konfigurasi teknis
    render; token BIMP dan tautan unduh tetap tinggal di proses server HTTP. */
 const ENV_PEKERJA = ['PATH', 'HOME', 'TMPDIR', 'DATA_DIR', 'NODE_ENV', 'WORKERS',
-  'MOTION_PLAYWRIGHT', 'MOTION_VIEWPORT', 'MOTION_ENCODER', 'MOTION_BLOKIR_PRIVAT'];
+  'MOTION_PLAYWRIGHT', 'MOTION_VIEWPORT', 'MOTION_ENCODER', 'MOTION_BLOKIR_PRIVAT',
+  /* Tanpa ini --clearenv membuat Playwright mencari Chromium di $HOME/.cache (HOME=/tmp di sandbox)
+     dan cuplik gagal "Executable doesn't exist" (vps2 5 Nov 2026). Bukan rahasia: hanya lokasi. */
+  'PLAYWRIGHT_BROWSERS_PATH'];
 export function lingkunganPekerja(env = process.env) {
   return Object.fromEntries(ENV_PEKERJA.filter((nama) => env[nama] !== undefined).map((nama) => [nama, env[nama]]));
 }
