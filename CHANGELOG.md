@@ -62,6 +62,9 @@ render bisa bernilai `dibatalkan`.
 - `bin/srt.mjs` memposisikan subtitle di awal scene + `off`, tidak mengikuti `tata`: di mode `alir` dan
   saat jangkar mendorong baris, subtitle muncul sebelum suaranya.
 - Mix video tanpa satu pun cue SFX gagal dengan `amix=inputs=0`.
+- `motion check` menimpa `master.wav` dan `stem/` dengan mix tanpa SFX untuk A/B lalu memulihkannya
+  tanpa `finally`; check yang dihentikan di tengah meninggalkan master tanpa SFX. A/B kini ditulis
+  ke berkas sendiri, sekaligus hemat satu mix penuh (P8-02).
 
 ## [1.1.0] - 2026-11-04
 

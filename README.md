@@ -276,6 +276,8 @@ Kalau durasi memang tidak boleh berubah: beri `maks` pada TIAP baris VO, lalu ba
 
 **Direktori frame mengandung PID.** Dua rantai render yang tidak sengaja jalan bersamaan pernah melaporkan "900 frame ✓" padahal MP4-nya 2 detik.
 
+**A/B bus SFX di `check` tidak menyentuh `master.wav`.** Dulu master dan `stem/` ditimpa mix tanpa SFX lalu dipulihkan dengan mix ulang tanpa `finally`; `check` yang dihentikan di tengah meninggalkan master TANPA SFX untuk render berikutnya. Mix A/B kini ditulis ke `.master-tanpa-sfx.wav` dan dihapus sesudahnya.
+
 ## Berapa lama satu video
 
 Diukur pada video 67,6 detik: 7 scene, 23 baris VO, 17 berkas SFX, 51 cue, 1 trek musik. Mesin 24 core, render 6 tab.
