@@ -21,12 +21,13 @@ Akses berbayar dikelola di bimp: menu **Tools → Motion MCP** (langganan, token
 | `buat_proyek` · `daftar_proyek` · `info_proyek` · `hapus_proyek` | kelola proyek |
 | `tulis_berkas` · `baca_berkas` · `impor_zip` | isi `src/` (komposisi HTML/JSX) |
 | `unggah` | audio VO/SFX/musik atau gambar dari URL https / base64 |
+| `unggah_vo` | banyak baris VO (maks 60) dalam satu panggilan; hasil per baris |
 | `daftar_templat` · `pakai_templat` | templat komposisi siap pakai (iklan, testimoni, trailer, tutorial) → proyek baru dengan config tervalidasi |
 | `cari_sfx` | cari di stok SFX (`sfx-stok/`, ±700 bunyi): terurut, sinonim Indonesia–Inggris, `mirip` |
 | `simpan_config` | config JSON (naskah, cue, musik, mixer), divalidasi saat disimpan |
 | `cuplik` | gambar frame pada detik tertentu |
 | `batalkan_render` | hentikan render milik sendiri yang antre/jalan; status `dibatalkan` |
-| `render` · `status_render` | antrean render → tautan MP4 + sampul + subtitle `.srt`/`.vtt` + naskah + laporan; `webhook` (https publik, ditandatangani HMAC) pengganti polling; `scene` atau `dari`/`sampai` untuk potongan saja |
+| `render` · `status_render` | antrean render → tautan MP4 + sampul + subtitle `.srt`/`.vtt` + naskah + laporan; `webhook` (https publik, ditandatangani HMAC) pengganti polling; `scene` atau `dari`/`sampai` untuk potongan saja; `draf` (540p 15 fps, review); `semua_rasio` (utama + `jugaTulis`, satu master) |
 
 Config proyek lokal (`motion.config.mjs`) berisi fungsi JS. Di server bersama itu berarti
 menjalankan kode pelanggan, jadi config di MCP berupa JSON dan detik cue ditulis sebagai ekspresi

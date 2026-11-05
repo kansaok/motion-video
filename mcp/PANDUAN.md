@@ -16,7 +16,9 @@ lalu URL audionya diunggah ke sini.
 4. VO, satu berkas per baris naskah:
    - connector ElevenLabs: `creative_list_voices` → pilih suara → `creative_generate_speech`
      (bahasa `id`) → poll `creative_get_flow_run_status` sampai selesai → ambil URL audionya;
-   - `unggah` `{jenis: "vo", no: <nomor baris>, url}`. Server memotong senyap kepala/ekor.
+   - `unggah_vo` `{baris: [{no, url}, …]}` untuk semua baris sekaligus (maks 60; hasil per baris, ulangi
+     hanya yang `galat`), atau `unggah` `{jenis: "vo", no: <nomor baris>, url}` satu per satu. Server
+     memotong senyap kepala/ekor.
      `tempo` (0,5–2, bawaan 1) mempercepat tanpa mengubah nada; connector tidak punya `speed`.
 5. SFX: `cari_sfx` di stok (±700 bunyi, gratis; hasil terurut, kata Indonesia/Inggris sama-sama dikenali,
    `mirip: "<id>"` untuk bunyi sejenis) → pakai id-nya sebagai `"@stok/<id>"`.
@@ -43,6 +45,11 @@ lalu URL audionya diunggah ke sini.
    waktu-konstan) dan waktunya ≤ 5 menit. `rahasia` hanya dikembalikan sekali di jawaban `render`;
    simpan. Pengiriman diulang sampai 3 kali untuk galat jaringan/5xx/429, redirect tidak diikuti;
    keadaannya ada di `status_render.webhook` (`keadaan`, `http`, `percobaan`, `galat`).
+   Semua rasio sekaligus (9:16, 4:5, 1:1, 16:9): tulis komposisi rasio lain di src, daftarkan di `jugaTulis`
+   config (durasi scene-nya ikut disesuaikan), lalu `render` dengan `semua_rasio: true`. Satu master audio
+   untuk semua; hasilnya `varian: [{komposisi, rasio, mp4, sampul, mp4_lufs, mp4_dbtp, sampul_kontras,
+   masalah} | {komposisi, galat}]`. Satu rasio yang gagal tidak menghentikan yang lain. Bisa digabung
+   dengan `draf`, tidak dengan `scene`/`dari`/`sampai`.
    Render yang salah config atau macet: `batalkan_render` (`render` atau `proyek`). Yang antre langsung
    keluar; yang jalan dihentikan; statusnya `dibatalkan` dan render baru bisa langsung dikirim.
 

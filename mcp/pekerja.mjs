@@ -33,6 +33,7 @@ async function kerjakan({uid, proyek, opsi}) {
   /* Potongan (P6-02): rentang dihitung dari timeline yang baru saja ditulis `terap`. Berkasnya
      terpisah dari MP4 penuh, dan potongan lama dibuang dulu supaya tidak menumpuk di kuota. */
   const parsial = opsi?.scene !== undefined || opsi?.dari !== undefined || opsi?.sampai !== undefined;
+  if (opsi?.semuaRasio && !parsial) return semuaRasio(c, p, opsi, {laporan, vo, m});
   /* Draf (P8-07): 540p 15 fps ke `-draf.mp4` (nama dipasang Pipa.render), boleh digabung dengan
      potongan. Seperti potongan: tanpa sampul, subtitle, dan periksa, dan MP4 penuh tidak tertimpa. */
   const draf = Boolean(opsi?.draf);
@@ -68,6 +69,37 @@ async function kerjakan({uid, proyek, opsi}) {
     audio: {lufs: m.lufs, dbtp: m.dbtp, mp4_lufs: h.mp4?.lufs, mp4_dbtp: h.mp4?.dbtp},
     sampul_kontras: h.sampul ? +(h.sampul.rasio * 100).toFixed(0) : null,
     masking: c.vo.length ? h.masking : null,
+  };
+}
+
+/* Semua rasio (P8-11): komposisi utama + `jugaTulis` dari satu master, lewat Pipa.renderVarian yang
+   sama dengan `motion render --semua-varian` (OM_SCENES tiap varian dicek terhadap timeline sebelum
+   Chromium dibuka; satu varian gagal tidak menghentikan yang lain). Nama keluaran dibuat server dari
+   id proyek, bukan dari kiriman pelanggan. `langkah('render')` dikirim sebelum tiap rasio: watchdog
+   induk mereset jam "macet" di sana, jadi jeda encode + buka Chromium antar-rasio tidak dibaca macet.
+   @param {any} c @param {any} p @param {any} opsi @param {{laporan: any, vo: any, m: any}} o */
+async function semuaRasio(c, p, opsi, {laporan, vo, m}) {
+  const draf = Boolean(opsi.draf);
+  const varian = (c.jugaTulis || []).map((/** @type {string} */ k) => ({komposisi: k, keluaran: `${p.meta.id}-${Pipa.namaPendek(k)}.mp4`}));
+  const h = await Pipa.renderVarian({...c, varian}, {batasFrame: opsi.frames, draf,
+    log: () => kirim({langkah: 'render'}), kemajuan: (/** @type {number} */ jadi, /** @type {number} */ totalFrame) => kirim({frame: jadi, totalFrame})});
+  const [utama] = h;
+  if (utama.galat) throw new Error(`komposisi utama ${utama.komposisi}: ${utama.galat}`);
+  const sub = !draf && c.vo.length ? Pipa.tulisSubtitel(c) : null;
+  Pr.sentuh(p);
+  const ringkas = (/** @type {any} */ x) => ({komposisi: x.komposisi, ...(x.galat ? {galat: x.galat} : {
+    rasio: x.rasio, lebar: x.lebar, tinggi: x.tinggi, detik: +x.detik.toFixed(3), mp4: path.basename(x.keluaran),
+    sampul: x.sampul ? path.basename(x.sampul) : null, mp4_lufs: x.mp4?.lufs, mp4_dbtp: x.mp4?.dbtp,
+    sampul_kontras: x.kontras === null ? null : +(x.kontras * 100).toFixed(0), masalah: x.masalah})});
+  const u = /** @type {any} */ (ringkas(utama));
+  return {
+    ...(draf ? {draf: true} : {}),
+    detik: u.detik, lebar: u.lebar, tinggi: u.tinggi, mp4: u.mp4, sampul: u.sampul,
+    srt: sub && path.basename(sub.srt), vtt: sub && path.basename(sub.vtt), naskah: sub && path.basename(sub.naskah),
+    laporan, vo,
+    audio: {lufs: m.lufs, dbtp: m.dbtp, mp4_lufs: u.mp4_lufs, mp4_dbtp: u.mp4_dbtp},
+    sampul_kontras: u.sampul_kontras,
+    varian: h.map(ringkas),
   };
 }
 

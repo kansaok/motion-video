@@ -19,6 +19,9 @@ render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
 
+- Alat MCP `render` menerima `semua_rasio` (P8-11): komposisi utama + tiap komposisi di `jugaTulis`
+  dari satu master audio, hasil `varian` dengan tautan dan nilai tiap rasio; batas waktu render
+  dikalikan jumlah rasio. Alat baru `unggah_vo`: banyak baris VO dalam satu panggilan, hasil per baris.
 - Mode draf (P8-07): `motion render --draf` dan `draf: true` di alat MCP `render`. 540p, 15 fps, x264
   `veryfast` ke `-draf.mp4` terpisah, tanpa sampul, subtitle, dan pemeriksaan; separuh frame yang
   difoto dengan seperempat pikselnya. Nama draf dipasang di satu pintu (`Pipa.opsiRender`), jadi

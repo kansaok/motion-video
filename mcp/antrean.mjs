@@ -288,11 +288,15 @@ export async function kerjakan(t, {jalankan = jalankanPekerja} = {}) {
   const ac = new AbortController();
   pengendali.set(t.id, ac);
   try {
-    const hasil = await jalankan(t, {onLangkah: langkah, batal: ac.signal});
+    // Semua rasio (P8-11): satu render per komposisi, jadi batas total ikut dikalikan.
+    const hasil = await jalankan(t, {onLangkah: langkah, batal: ac.signal,
+      batasMs: Pr.BATAS.renderMenit * 60_000 * Math.max(1, Number(t.opsi?.rasio) || 1)});
+    const tautan = (/** @type {string | null | undefined} */ f) => (f ? Pr.tautan(t.uid, t.proyek, f) : null);
     t.hasil = {...hasil,
-      mp4: Pr.tautan(t.uid, t.proyek, hasil.mp4),
-      sampul: hasil.sampul ? Pr.tautan(t.uid, t.proyek, hasil.sampul) : null,
-      ...Object.fromEntries(['srt', 'vtt', 'naskah'].filter((k) => hasil[k]).map((k) => [k, Pr.tautan(t.uid, t.proyek, hasil[k])]))};
+      mp4: tautan(hasil.mp4),
+      sampul: tautan(hasil.sampul),
+      ...Object.fromEntries(['srt', 'vtt', 'naskah'].filter((k) => hasil[k]).map((k) => [k, tautan(hasil[k])])),
+      ...(hasil.varian ? {varian: hasil.varian.map((/** @type {any} */ v) => ({...v, mp4: tautan(v.mp4), sampul: tautan(v.sampul)}))} : {})};
     t.status = 'selesai';
   } catch (e) {
     t.status = e.dibatalkan ? 'dibatalkan' : 'gagal';

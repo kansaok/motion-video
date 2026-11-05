@@ -17,6 +17,7 @@ import {kesiapan} from './sehat.mjs';
 import {migrasiConfig} from './skema.mjs';
 import * as W from './webhook.mjs';
 import * as Tpl from '../lib/templat.mjs';
+import {kolam} from '../lib/kolam.mjs';
 
 // Versi yang diumumkan ke klien MCP mengikuti package.json; lihat CHANGELOG.md.
 const VERSI = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
@@ -218,6 +219,40 @@ export function buatServer(uid) {
     return teks({jenis, ...r});
   });
 
+  /* Unggah banyak baris VO (P8-11). Satu video 23 baris dulu berarti 23 panggilan `unggah` di atas
+     23 generate + poll connector. Tiap baris diproses sama persis dengan `unggah` jenis vo
+     (simpanVo, kuota per berkas); yang gagal dilaporkan per baris dan tidak menggagalkan baris lain,
+     supaya klien cukup mengulang yang gagal. Laju dihitung satu token per 5 baris. */
+  alat('unggah_vo', 'Unggah BANYAK baris VO sekaligus (maks 60) dari URL https atau base64 — sama dengan `unggah` jenis "vo" '
+    + 'per baris (senyap kepala/ekor dipotong, `tempo` opsional), tetapi satu panggilan. Hasil per baris; baris yang gagal '
+    + 'disebut dengan sebabnya tanpa menggagalkan baris lain — ulangi hanya yang gagal.',
+  {proyek: Proyek, baris: z.array(z.object({
+    no: z.number().int().min(1).max(99), url: z.string().url().optional(), base64: z.string().optional(),
+    tempo: z.number().min(0.5).max(2).optional(),
+  }).strict()).min(1).max(60)},
+  async ({proyek, baris}) => {
+    const no = baris.map((b) => b.no);
+    if (new Set(no).size !== no.length) throw new Error('nomor VO ganda di `baris`');
+    const tanpaIsi = baris.filter((b) => !b.url === !b.base64).map((b) => b.no);
+    if (tanpaIsi.length) throw new Error(`tiap baris butuh tepat satu dari url/base64: VO ${tanpaIsi.join(', ')}`);
+    for (let i = 0; i < Math.ceil(baris.length / 5); i++) batasiLaju(uid, 'unggah');
+    const p = Pr.buka(uid, proyek);
+    /** @type {Array<Record<string, any>>} */
+    const hasil = [];
+    // Unduhan bersamaan (3), pemangkasan per baris; galat ditangkap per baris, jadi kolam tidak berhenti.
+    await kolam(baris, 3, async (b, i) => {
+      try {
+        const buf = await Pr.ambilIsi({url: b.url, base64: b.base64});
+        Pr.periksaKuota(p, buf.length);
+        hasil[i] = {no: b.no, ...Pr.simpanVo(p, b.no, buf, b.tempo)};
+      } catch (e) { hasil[i] = {no: b.no, galat: String(e.message || e).slice(0, 300)}; }
+      return true;
+    });
+    Pr.sentuh(p);
+    const gagal = hasil.filter((h) => h.galat);
+    return teks({berhasil: hasil.length - gagal.length, gagal: gagal.length, vo: hasil});
+  });
+
   alat('cari_sfx', 'Cari bunyi di stok SFX (±700 bunyi, gratis). Hasil diurutkan dari yang paling cocok (nama > cocok-untuk > '
     + 'prompt > kategori); kata Indonesia dan Inggris sama-sama dikenali (kasir/cash register, klik/click, pintu/door). '
     + 'Contoh: "whoosh cepat", "klik tombol", "kasir", "notifikasi", "riser". `mirip` = id stok untuk mencari bunyi serupa. '
@@ -319,16 +354,21 @@ export function buatServer(uid) {
     + 'Kembali segera dengan id render; poll status_render. `frames` (misal 60) untuk uji cepat beberapa detik pertama. '
     + '`scene` (nama atau nomor mulai 1) atau `dari`/`sampai` (detik video sesudah penempatan VO) merender potongan saja, '
     + 'audio ikut dipotong, ke berkas terpisah tanpa sampul dan tanpa pemeriksaan; MP4 penuh tidak tertimpa. '
+    + '`semua_rasio: true` merender komposisi utama DAN tiap komposisi di `jugaTulis` config (4:5, 1:1, 16:9) dari satu master '
+    + 'audio; hasilnya `varian` berisi tautan MP4 + sampul + nilai tiap rasio. '
     + '`draf: true` untuk review cepat: 540p, 15 fps, ke berkas `-draf` terpisah tanpa sampul, subtitle, dan pemeriksaan '
     + '(boleh digabung dengan `scene`/`dari`/`sampai`); jangan kirim draf ke iklan. '
     + '`webhook` (https publik) dipanggil POST saat render selesai/gagal, ditandatangani dengan rahasia yang dikembalikan di sini.',
   {proyek: Proyek, frames: z.number().int().min(1).max(600).optional(),
     scene: z.union([z.string().min(1).max(120), z.number().int().min(1)]).optional(),
     dari: z.number().min(0).optional(), sampai: z.number().positive().optional(),
-    draf: z.boolean().optional(),
+    draf: z.boolean().optional(), semua_rasio: z.boolean().optional(),
     webhook: z.string().max(W.WEBHOOK.maksPanjangUrl).optional()},
-  async ({proyek, frames, scene, dari, sampai, draf, webhook}) => {
+  async ({proyek, frames, scene, dari, sampai, draf, semua_rasio: semuaRasio, webhook}) => {
     if (scene !== undefined && (dari !== undefined || sampai !== undefined)) throw new Error('pakai `scene` ATAU `dari`/`sampai`, bukan keduanya');
+    if (semuaRasio && (scene !== undefined || dari !== undefined || sampai !== undefined)) {
+      throw new Error('`semua_rasio` merender video utuh; potongan (`scene`/`dari`/`sampai`) hanya untuk satu komposisi');
+    }
     if (dari !== undefined && sampai !== undefined && sampai <= dari) throw new Error('`sampai` harus lebih besar dari `dari`');
     // URL privat/http ditolak SEBELUM apa pun, bukan sesudah render beberapa menit.
     if (webhook) await W.periksaWebhook(webhook);
@@ -339,7 +379,14 @@ export function buatServer(uid) {
     // Tolak di pintu masuk: render yang diterima saat disk hampir penuh gagal di tengah encode.
     const k = kesiapan({dir: Pr.DATA});
     if (!k.siap) throw new Error(`server belum siap menerima render: ${k.alasan.join('; ')} — coba lagi nanti`);
-    const t = A.kirim(uid, p, {frames, scene, dari, sampai, draf, webhook});
+    /* Semua rasio (P8-11): komposisi utama + `jugaTulis`, yang memang daftar komposisi berdurasi scene
+       sama (Pipa.terap menulis OM_SCENES-nya). `rasio` = jumlah render, untuk batas waktu total. */
+    let rasio;
+    if (semuaRasio) {
+      rasio = 1 + (/** @type {{jugaTulis?: string[]}} */ (j).jugaTulis || []).length;
+      if (rasio < 2) throw new Error('`semua_rasio` butuh komposisi rasio lain di `jugaTulis` config (misal "Video 4x5.dc.html")');
+    }
+    const t = A.kirim(uid, p, {frames, scene, dari, sampai, draf, webhook, ...(rasio ? {semuaRasio: true, rasio} : {})});
     return teks({render: t.id, status: t.status,
       catatan: webhook ? 'webhook akan dipanggil saat selesai/gagal; status_render tetap bisa dipoll' : 'poll status_render tiap ±20 detik',
       ...(webhook ? {webhook: {rahasia: W.rahasiaWebhook(t.id),
