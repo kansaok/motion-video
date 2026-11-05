@@ -64,10 +64,9 @@ Rincian per tugas: `RENCANA-PERBAIKAN.md` Fase 8 + tabel catatan hasil.
   paralel (62,5 → 22,3 dtk terhadap server tiruan), P8-07 mode draf, P8-08 cache master, P8-09 mix/check
   lebih ringan (+ `hening` lama meloloskan MP4 tak terbaca), P8-10 waktu per kata (opt-in), P8-11 MCP
   `semua_rasio` + `unggah_vo`, P8-12 kemajuan render di `status_render` + `motion kirim`.
-- **Tes Chromium BELUM dijalankan untuk satu pun commit Fase 8** (render dilarang di mesin kerja,
-  rama-tuf tidak terjangkau dari sana). P8-01 (viewport), P8-03, P8-07 mengubah `lib/render.mjs`:
-  jalankan `npm test` penuh di rama-tuf sebelum merge. Tes Chromium baru: `test/viewport.test.mjs`,
-  `test/draf.test.mjs`.
+- Tes Chromium: `npm test` penuh dijalankan di mesin kerja dengan izin Rama (5 Nov): 215 tes, 214 lulus,
+  1 dilewati. Bug viewport P8-01 dibuktikan di Chromium (kode lama: frame 1080x1600, zona kapsi hilang).
+  rama-tuf (ffmpeg 8.1.1) belum: tes warna P8-03 sebaiknya juga dijalankan di sana.
 - Belum: P8-05/P8-06 (inti render, tunggu tes Chromium), P8-10 dijadikan bawaan sesudah satu panggilan
   sungguhan ke with-timestamps, sisa P8-12 (stok musik, varian hook, brand kit, overlay zona aman,
   multi-bahasa).
