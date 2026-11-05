@@ -54,6 +54,9 @@ render bisa bernilai `dibatalkan`.
   wadah, kapsi kosong (`periksa: {kapsi: '<selektor>'}`), dan frame hitam.
 
 ### Diubah
+- `mix` memakai ulang `master.wav` bila seluruh masukannya sama (P8-08): opsi mixer, posisi VO,
+  cue, amplop, gate, isi tiap berkas sumber, dan kode mixer. Render MCP sesudah revisi visual saja,
+  `scene`, atau `frames` tidak lagi menjalankan mix penuh. `motion mix --paksa` untuk mix ulang.
 - VO dan SFX dibuat bersamaan (P8-04): paling banyak 3 permintaan ElevenLabs sekaligus
   (`MOTION_EL_PARALEL`), dibatasi bersama di `el.kirim` sehingga `motion all` membuat SFX dan VO
   serentak. Permintaan pertama tetap berjalan sendirian, jadi kunci salah atau kuota habis

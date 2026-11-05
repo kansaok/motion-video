@@ -205,8 +205,9 @@ async function jalankan() {
     }
     case 'mix': {
       const c = await Pipa.muat(dirProyek);
-      const r = await berbiaya(c, ['vo'], () => Pipa.mix(c));
-      console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`);
+      const r = await berbiaya(c, ['vo'], () => Pipa.mix(c, {paksa: Boolean(bendera.paksa)}));
+      console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`
+        + `${r.cache ? ' · dari cache (audio tidak berubah; --paksa untuk mix ulang)' : ''}`);
       break;
     }
     case 'render': {
@@ -291,7 +292,8 @@ async function jalankan() {
         const bed = Pipa.laporBed(Pipa.periksaBed(c));
         if (bed) console.log(bed);
         console.log('mix…');    const r = await Pipa.mix(c);
-        console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`);
+        console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`
+          + `${r.cache ? ' · dari cache' : ''}`);
         console.log('render…'); const v = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined});
         console.log(`  ✓ ${v.keluaran} — ${v.lebar}x${v.tinggi}`);
         if (v.sampul) console.log(`  ✓ ${v.sampul} — sampul dari detik ${v.sampulDetik.toFixed(2)}`);

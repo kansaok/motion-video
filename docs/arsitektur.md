@@ -40,7 +40,7 @@ flowchart LR
 | terap | `terap`, `tulisTiming` | `pipa.mjs`, `komposisi.mjs` | `OM_SCENES`, `timing.js`, JSX v1 (dari `.asli`) |
 | SFX | `sfx` | `sfx.mjs`, `stok.mjs` | `aset/sfx/*.mp3` + `.kunci` |
 | musik | `musik` | `musik.mjs` | `aset/<nama>.mp3` + `.kunci` |
-| mix | `mix` → `mix.rakit` | `pipa.mjs`, `mix.mjs` | `aset/master.wav`, `stem/*.wav` |
+| mix | `mix` → `mix.rakit` | `pipa.mjs`, `mix.mjs` | `aset/master.wav` + `.kunci` + `.hasil.json`, `stem/*.wav` |
 | render | `render` → `render.render` | `render.mjs` | `<keluaran>.mp4`, `-sampul.jpg` |
 | periksa | `periksa` | `periksa.mjs` | laporan (tanpa berkas) |
 
