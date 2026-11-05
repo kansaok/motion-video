@@ -153,3 +153,22 @@ test('putar mencatat durasi, memberi estimasi, dan membuang tugas terminal lama'
   antrean.bersihkan();
   assert.equal(antrean.tugas.size, 1);
 });
+
+test('sandbox meneruskan saluran IPC pekerja: proses sungguhan lewat --clearenv menerima tugas dan membalas', async () => {
+  const fx = (n) => new URL(`./fixtures/${n}`, import.meta.url).pathname;
+  const langkah = [];
+  const hasil = await jalankanPekerja({...tugas, dir: process.cwd()}, {
+    batasMs: 15_000,
+    onLangkah: (n) => langkah.push(n),
+    sandbox: {bwrap: fx('bwrap-tiruan.sh'), berkas: fx('pekerja-ipc.mjs'), ada: () => true},
+  });
+  assert.deepEqual(hasil, {diterima: 'promo-123'});
+  assert.deepEqual(langkah, ['mix']);
+});
+
+test('argumen sandbox memuat NODE_CHANNEL_FD=3 (tanpanya pekerja keluar kode 0 tanpa hasil)', () => {
+  const {argumen} = perintahPekerja({...tugas, dir: process.cwd()}, {ada: () => true});
+  const i = argumen.indexOf('NODE_CHANNEL_FD');
+  assert.equal(argumen[i - 1], '--setenv');
+  assert.equal(argumen[i + 1], '3');
+});

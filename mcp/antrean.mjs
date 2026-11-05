@@ -48,6 +48,12 @@ export function perintahPekerja(t, {bwrap = '/usr/bin/bwrap', node = process.exe
   args.push('--bind', proyek, proyek, '--chdir', '/app', '--clearenv');
   for (const [nama, nilai] of Object.entries(lingkunganPekerja())) args.push('--setenv', nama, nilai);
   // HOME tidak diwariskan: profil Chromium sementara tidak boleh menyentuh home server.
+  /* Saluran IPC ke server adalah fd 3 (stdio 'ipc' di jalankanPekerja), dan Node memberi tahu
+     anaknya lewat NODE_CHANNEL_FD. `--clearenv` membuangnya: pekerja tak punya `process.send`,
+     tak pernah menerima tugas, dan keluar dengan kode 0 dalam ~140 ms ("berhenti tanpa hasil
+     (kode 0)", vps2 5 Nov 2026). Sandbox P2-03 tak pernah merender sampai ini; tesnya memakai
+     proses tiruan. Teruskan persis dua variabel itu, bukan seluruh env. */
+  args.push('--setenv', 'NODE_CHANNEL_FD', '3', '--setenv', 'NODE_CHANNEL_SERIALIZATION_MODE', 'json');
   args.push('--setenv', 'HOME', '/tmp', node, berkas);
   return {perintah: bwrap, argumen: args};
 }
@@ -187,13 +193,13 @@ export function bersihkanTmpYatim({direktoriTmp = os.tmpdir(), umurMs = 6 * 3600
  * @param {{buatProses?: typeof spawn, onLangkah?: (langkah: string) => void,
  *   onKemajuan?: (frame: number, totalFrame?: number) => void, batasMs?: number, macetMs?: number,
  *   bunuhGrup?: (pid: number) => void, buatKerja?: () => string, hapusKerja?: (dir: string) => void,
- *   batal?: AbortSignal}} [opsi]
+ *   batal?: AbortSignal, sandbox?: Parameters<typeof perintahPekerja>[1]}} [opsi]
  */
 export function jalankanPekerja(t, {
   buatProses = spawn, onLangkah = () => {}, onKemajuan = () => {},
   batasMs = Pr.BATAS.renderMenit * 60_000, macetMs = Pr.BATAS.renderMacetDetik * 1_000,
   bunuhGrup = (pid) => process.kill(-pid, 'SIGKILL'), buatKerja = buatDirKerja, hapusKerja = hapusDirKerja,
-  batal,
+  batal, sandbox = {},
 } = {}) {
   return new Promise((selesai, gagal) => {
     let tuntas = false, timerBatas, watchdog, renderMulai = 0, frameTerakhir = 0;
@@ -217,7 +223,7 @@ export function jalankanPekerja(t, {
        di luar langkah frame (mix, encode) hanya berhenti oleh batas total atau restart container. */
     const padaBatal = () => hentikan(`dibatalkan${batal?.reason ? `: ${batal.reason}` : ''}`, true);
     let perintah;
-    try { dirKerja = buatKerja(); perintah = perintahPekerja(t, {dirKerja}); } catch (e) { akhir(gagal, e); return; }
+    try { dirKerja = buatKerja(); perintah = perintahPekerja(t, {dirKerja, ...sandbox}); } catch (e) { akhir(gagal, e); return; }
     const anak = buatProses(perintah.perintah, perintah.argumen, {
       detached: true, env: lingkunganPekerja(), stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
     });

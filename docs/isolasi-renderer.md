@@ -48,3 +48,13 @@ berhasil, tetapi melonggarkan seluruh host; konfigurasi di atas menggantikannya.
 
 Kembalikan ke tertutup penuh: hapus `security_opt` di override (render gagal lagi). Perbaikan
 lanjutan yang lebih kuat: pisahkan renderer jadi container sendiri tanpa rahasia (tanpa `bwrap`).
+
+## Saluran IPC melewati `--clearenv` (ditemukan 5 Nov 2026)
+
+Setelah namespace berhasil, render tetap gagal: "pekerja render berhenti tanpa hasil (kode 0)" dalam
+~140 ms. Sebabnya `--clearenv` membuang `NODE_CHANNEL_FD`, sehingga pekerja tidak punya
+`process.send`, tidak pernah menerima tugas, dan keluar bersih. Sandbox P2-03 tak pernah merender sejak
+ditulis; tesnya memakai proses tiruan. Kini `perintahPekerja` meneruskan `NODE_CHANNEL_FD=3` dan
+`NODE_CHANNEL_SERIALIZATION_MODE=json`, dan `test/antrean.test.mjs` menjalankan proses sungguhan lewat
+`test/fixtures/bwrap-tiruan.sh` (meniru `--clearenv`/`--setenv` dan fd warisan). Bukti dengan bwrap
+asli di container produksi: tanpa perbaikan "TANPA IPC"; dengan perbaikan tugas diterima dan dibalas.
