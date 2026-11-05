@@ -8,6 +8,7 @@ import * as K from '../lib/komposisi.mjs';
 import * as T from '../lib/tata.mjs';
 import * as Stok from '../lib/stok.mjs';
 import * as Biaya from '../lib/biaya.mjs';
+import * as Kirim from '../lib/kirim.mjs';
 import {cuplik} from '../lib/render.mjs';
 import {AKAR} from '../lib/env.mjs';
 
@@ -35,6 +36,8 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
   motion check  [folder]            verifikasi hasil  (--cepat untuk lewati STT + A/B)
   motion shot   [folder] <detik...> cuplik frame dari komposisi hidup
   motion all    [folder]            plan -> apply -> sfx -> music -> mix -> render -> check
+  motion kirim  [folder]            salin MP4 + sampul + subtitle + naskah.md ke ~/Videos/Ads/<Merek>/<Angle>/
+                                    (--merek= --angle= atau "kirim" di config; --timpa, --paksa)
   motion cost   [jam]               biaya ElevenLabs beberapa jam terakhir
   motion voices [cari]              daftar suara
   motion speed  <suara...>          ukur kecepatan baca tiap suara SEBELUM menulis naskah
@@ -42,6 +45,8 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
   motion render --komposisi=<html>  render orientasi lain dengan audio yang sama
   motion render --semua-varian      komposisi utama + semua varian di config, satu laporan gabungan
   motion render --scene=<nama|no>   render satu scene saja, audio ikut dipotong (atau --dari=<dtk> --sampai=<dtk>)
+  motion render --draf              review cepat 540p 15 fps ke <keluaran>-draf.mp4
+  motion mix --paksa                mix ulang walau masukannya sama
   motion plan --kering · all --kering  hitung durasi, posisi, cue, dan biaya tanpa ElevenLabs dan tanpa
                                     menulis ke proyek (laporan di <folder>/kerja/kering.json)
 
@@ -304,6 +309,20 @@ async function jalankan() {
       }, {cetak: true});
       const b = await Pipa.biaya(t0 - 5 * 60 * 1000);
       console.log(`biaya   ${rp(b.total)} kredit ≈ Rp${rp(b.rupiah)} · sisa kuota ${rp(b.kuota.sisa)}`);
+      break;
+    }
+    case 'kirim': {
+      /* Hasil akhir ke ~/Videos/Ads/<Merek>/<Angle>/ (P8-12, lib/kirim.mjs): nama baku per rasio,
+         sampul, subtitle, naskah.md. Gerbang mutu = ambang `check`; tidak menimpa tanpa --timpa. */
+      const c = await Pipa.muat(dirProyek, {kering: true});
+      const r = Kirim.kirim(c, {merek: String(bendera.merek || c.kirim?.merek || ''), angle: String(bendera.angle || c.kirim?.angle || ''),
+        timpa: Boolean(bendera.timpa), paksa: Boolean(bendera.paksa)});
+      for (const b of r.berkas) {
+        console.log(`  ${b.masalah.length ? '!' : '✓'} ${b.rasio.padEnd(5)} ${path.basename(b.ke)}${b.sampul ? ' + sampul' : ''}`
+          + ` · ${b.lufs} LUFS · ${b.dbtp} dBTP${b.masalah.length ? ` — ${b.masalah.join('; ')}` : ''}`);
+      }
+      console.log(`  ${r.sub ? `${r.sub} subtitle · ` : ''}naskah.md
+  → ${r.tujuan}`);
       break;
     }
     case 'cost': {

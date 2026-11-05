@@ -19,6 +19,10 @@ render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
 
+- `motion kirim` (P8-12): MP4 tiap rasio, sampul, dan subtitle ke `~/Videos/Ads/<Merek>/<Angle>/` dengan
+  nama `<merek>-<angle>-<rasio>.mp4`, plus `naskah.md` (VO per detik dari penempatan yang sama dengan
+  mixer, musik, SFX, teks layar, angka mutu). Gerbang mutu memakai ambang `check`; berkas tujuan yang
+  sudah ada dan isinya beda tidak ditimpa tanpa `--timpa`.
 - `status_render` memuat `kemajuan` selama render: frame, persen, perkiraan sisa detik, dan rasio
   ke-berapa untuk `semua_rasio` (P8-12). Pesan frame dari pekerja dulu hanya dibaca watchdog.
 - Alat MCP `render` menerima `semua_rasio` (P8-11): komposisi utama + tiap komposisi di `jugaTulis`

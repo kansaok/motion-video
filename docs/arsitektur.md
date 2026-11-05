@@ -61,6 +61,8 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `lib/templat.mjs`, `templat/` | pustaka templat: daftar, salin ke folder (CLI), berkas + config untuk `pakai_templat` (MCP) |
 | `lib/kering.mjs` | `--kering`: perkiraan durasi VO (kalibrasi proyek / `suara.kps` / bawaan), rencana, cue, biaya tanpa ElevenLabs |
 | `lib/doktor.mjs` | `motion doctor`: cek prasyarat mesin (Node, ffmpeg, Playwright/Chromium, `.env`, disk/tmpfs, ElevenLabs) |
+| `lib/kolam.mjs` | kolam kerja + perintis + semafor untuk generate ElevenLabs bersamaan (P8-04) |
+| `lib/kirim.mjs` | `motion kirim`: salin hasil ke `~/Videos/Ads/<Merek>/<Angle>/`, `naskah.md`, gerbang mutu (P8-12) |
 | `lib/cachevo.mjs` | cache VO lintas proyek berkunci `.kunci` VO (termasuk konteks tetangga) |
 | `lib/biaya.mjs` | perkiraan biaya sebelum generate, gerbang `BIAYA_MAKS_USD`/`--ya`, `biaya.json` |
 | `lib/lafal.mjs` | ejaan akronim dan domain untuk TTS |

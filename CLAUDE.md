@@ -54,6 +54,7 @@ Peta berkas lengkap dan tabel "gejala → berkas": `docs/arsitektur.md`. Konvens
 - Hasil akhir untuk dikirim: `~/Videos/Ads/<Merek>/<Angle>/`
 - Nama berkas: `<merek>-<angle>-<rasio>.mp4`, contoh `rama-digital-era-agi-9x16.mp4`
 - Tiap folder angle memuat `naskah.md`: VO per detik, teks layar, musik, SFX, angka mutu
+- `motion kirim --merek=<Merek> --angle=<Angle> proyek/<nama>` mengerjakan tiga baris di atas sekaligus (nama, rasio, sampul, subtitle, `naskah.md`, gerbang mutu); jangan menyalin tangan
 
 ## Build, test, render: di `rama-tuf`
 
