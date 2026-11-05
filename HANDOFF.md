@@ -52,6 +52,26 @@ Terakhir diperbarui: 5 November 2026 (Asia/Jakarta).
 - **P7-01..P7-04**: README/CLAUDE/AGENTS/IKLAN/katalog/docs dalam Markdown (`.docx` di
   `.docx` asli dihapus sesudah verifikasi; masih ada di riwayat git), `docs/arsitektur.md`, `proyek/README.md`, `CONTRIBUTING.md`.
 
+## Fase 8 (branch `p8-perbaikan-hasil`, 5 Nov 2026, belum di-push/merge/deploy)
+
+Rincian per tugas: `RENCANA-PERBAIKAN.md` Fase 8 + tabel catatan hasil.
+
+- **P8-13 regresi VO (PENTING)**: sejak 9e0bff6 (4 Nov 18:34 WIB) VO CLI ber-speed ≠ 1 dipercepat dua
+  kali (speed API + atempo), Cahaya 1,2 → ±1,44x. Diperbaiki; VO dari jendela itu dibuat ulang otomatis
+  pada `plan` berikutnya (gerbang biaya biasa). **Periksa proyek dan video kirim di rama-tuf yang VO-nya
+  dibuat sesudah waktu itu.**
+- Selesai dan diuji tanpa Chromium: P8-02 A/B check tidak menimpa master, P8-03 warna BT.709, P8-04 VO/SFX
+  paralel (62,5 → 22,3 dtk terhadap server tiruan), P8-07 mode draf, P8-08 cache master, P8-09 mix/check
+  lebih ringan (+ `hening` lama meloloskan MP4 tak terbaca), P8-10 waktu per kata (opt-in), P8-11 MCP
+  `semua_rasio` + `unggah_vo`, P8-12 kemajuan render di `status_render` + `motion kirim`.
+- **Tes Chromium BELUM dijalankan untuk satu pun commit Fase 8** (render dilarang di mesin kerja,
+  rama-tuf tidak terjangkau dari sana). P8-01 (viewport), P8-03, P8-07 mengubah `lib/render.mjs`:
+  jalankan `npm test` penuh di rama-tuf sebelum merge. Tes Chromium baru: `test/viewport.test.mjs`,
+  `test/draf.test.mjs`.
+- Belum: P8-05/P8-06 (inti render, tunggu tes Chromium), P8-10 dijadikan bawaan sesudah satu panggilan
+  sungguhan ke with-timestamps, sisa P8-12 (stok musik, varian hook, brand kit, overlay zona aman,
+  multi-bahasa).
+
 ## Belum dikerjakan / prioritas berikutnya
 
 1. **Operasional VPS** (butuh izin; skill `vps2`): firewall `DOCKER-USER` + `limit_req` nginx
