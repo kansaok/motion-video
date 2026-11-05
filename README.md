@@ -288,6 +288,8 @@ Kalau durasi memang tidak boleh berubah: beri `maks` pada TIAP baris VO, lalu ba
 
 **`hening` membaca rentangnya sekali, dan berkas tak terbaca tidak lagi lolos.** Satu proses ffmpeg per jendela 20 ms (±110 proses untuk dua gate, 7,7 dtk) diganti satu dekode (0,15 dtk) dengan jendela dan ambang yang sama. Versi lama menganggap jendela tanpa audio sebagai senyap, jadi MP4 yang gagal dibaca lolos sebagai "senyap ✓".
 
+**`speed` hanya diterapkan API, tidak lagi ditambah `atempo`.** Penyatuan pemangkasan VO (P3-02, 4 Nov 2026 18:34 WIB) ikut mengirim `suara.speed` sebagai `atempo` di jalur TTS CLI; VO ber-speed 1,2 keluar ±1,44x tanpa satu peringatan, karena kuncinya sama persis dengan kunci versi benar. `tempo` hanya untuk unggahan MCP (connector tidak punya speed). Kunci VO kini membawa versi pangkas; VO lama yang tidak mungkin terkena (speed 1, atau dibuat sebelum commit itu) dipakai tanpa biaya, sisanya dibuat ulang. Aturan "VO ini segar" ada di satu tempat (`vo.segarVo`/`cariCacheVo`), dipakai `vo`, perkiraan biaya, dan `--kering`.
+
 **A/B bus SFX di `check` tidak menyentuh `master.wav`.** Dulu master dan `stem/` ditimpa mix tanpa SFX lalu dipulihkan dengan mix ulang tanpa `finally`; `check` yang dihentikan di tengah meninggalkan master TANPA SFX untuk render berikutnya. Mix A/B kini ditulis ke `.master-tanpa-sfx.wav` dan dihapus sesudahnya.
 
 ## Berapa lama satu video

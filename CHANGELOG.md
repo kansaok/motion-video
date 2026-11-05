@@ -85,6 +85,13 @@ render bisa bernilai `dibatalkan`.
   trek musiknya.
 
 ### Diperbaiki
+- **VO CLI dipercepat dua kali sejak 4 Nov 2026 18:34 WIB** (commit 9e0bff6, P3-02): pemangkasan TTS
+  ikut memakai `suara.speed` sebagai `atempo`, padahal speed sudah diterapkan API. VO ber-speed 1,2
+  (suara kampanye Cahaya) keluar ±1,44x dan scene memendek mengikutinya. Unggahan MCP tidak terkena
+  (`tempo` di sana memang untuk unggahan). Kunci VO kini membawa `pangkas: 2`; VO lama tanpa penanda
+  tetap dipakai tanpa biaya bila speed 1 atau dibuat sebelum regresi, sisanya (dan entri cache VO
+  lintas proyek dari jendela itu) dibuat ulang pada `plan` berikutnya, lewat gerbang biaya biasa.
+  **Video yang dirender dari VO jendela itu perlu diperiksa ulang** (P8-13).
 - `check` meloloskan jendela hening pada MP4 yang tidak terbaca: tiap jendela 20 ms terbaca tanpa
   audio, yaitu "senyap ✓". Kini gagal dengan sebabnya (P8-09).
 - `bin/srt.mjs` memposisikan subtitle di awal scene + `off`, tidak mengikuti `tata`: di mode `alir` dan
