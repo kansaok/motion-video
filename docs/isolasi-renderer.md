@@ -29,13 +29,22 @@ karena direktori akun B tidak ada dalam mount namespace renderer.
 `bwrap` di dalam container GAGAL pada konfigurasi bawaan Docker + Ubuntu 24.04: render mati 9 ms
 dengan "pekerja render berhenti tanpa hasil (kode 1)" dan log `bwrap: No permissions to create new
 namespace`. `/siap` tetap 200 karena tidak menjalankan render, jadi cek pasca-deploy WAJIB memuat
-satu render uji. Diuji di vps2: `bwrap` hanya jalan bila keempatnya ada bersama.
+satu render uji.
 
-| Lapisan | Pengaturan |
-|---|---|
-| Host | `kernel.apparmor_restrict_unprivileged_userns = 0` (`/etc/sysctl.d/60-motion-userns.conf`) |
-| Container | `security_opt: [seccomp=unconfined, apparmor=unconfined, systempaths=unconfined]` |
+Yang dipasang di vps2 (berkas di `scripts/vps2/`), diuji bertahap di container sementara:
 
-Harganya: sysctl berlaku untuk seluruh host, dan container kehilangan filter syscall + profil
-AppArmor Docker. Perbaikan lanjutan yang layak: profil seccomp khusus (bawaan Docker + syscall
-namespace) menggantikan `seccomp=unconfined`. Kembalikan: sysctl ke 1, hapus `security_opt`.
+| Lapisan | Pengaturan | Sebab |
+|---|---|---|
+| seccomp | `scripts/vps2/seccomp-motion.json` = bawaan Docker + `clone clone3 unshare setns mount umount2 pivot_root sethostname` tanpa syarat CAP_SYS_ADMIN | `unshare` dan `mount` bawaan hanya untuk CAP_SYS_ADMIN |
+| AppArmor | `scripts/vps2/apparmor-motion-mcp` → `/etc/apparmor.d/motion-mcp` = docker-default + `userns`, `mount`, `umount`, `pivot_root`; larangan tulis `/proc/sys` dan `/sys` dipertahankan | izin `userns` per profil, jadi sysctl host tetap 1 |
+| Container | `systempaths=unconfined` | `bwrap --proc /proc` memasang procfs baru; ditolak bila `/proc` ditutup Docker |
+| Host | `kernel.apparmor_restrict_unprivileged_userns = 1` (bawaan Ubuntu) | tidak perlu dilonggarkan |
+
+Galat yang muncul saat salah satu kurang (urutan diuji): `No permissions to create new namespace`
+(seccomp/AppArmor), `Failed to make / slave` (systempaths), `Can't mount proc` (AppArmor),
+`setting up uid map` (AppArmor unconfined + sysctl 1), `pivot_root: Permission denied` (aturan
+`pivot_root` di profil). Mulanya kombinasi `seccomp=unconfined, apparmor=unconfined` + sysctl 0
+berhasil, tetapi melonggarkan seluruh host; konfigurasi di atas menggantikannya.
+
+Kembalikan ke tertutup penuh: hapus `security_opt` di override (render gagal lagi). Perbaikan
+lanjutan yang lebih kuat: pisahkan renderer jadi container sendiri tanpa rahasia (tanpa `bwrap`).

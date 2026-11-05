@@ -74,9 +74,11 @@ Terakhir diperbarui: 5 November 2026 (Asia/Jakarta).
    P6-09 batalkan render; P6-10 hanya CLI). Cadangan pra-deploy `/root/backup-motionmcp/*-20261105045103.tgz`,
    image lama `motion-mcp:prev`. Terverifikasi: `/hidup` dan `/siap` 200 (dalam dan publik), `/metrik` dan
    `/admin` 404 dari publik, 694 MP3 stok utuh, `cari_sfx` dan `templat/` ada di container. **Render sungguhan gagal** sampai
-   `bwrap` diperbaiki (lihat `docs/isolasi-renderer.md`, "Prasyarat host Docker"): sysctl host + `security_opt`
-   di override vps2, dipasang 5 Nov 2026; `bwrap` dan Chromium lulus di container. **Belum diuji**: render
-   penuh sesudah perbaikan, webhook ke URL nyata, `batalkan_render`. `/admin` nonaktif karena `ADMIN_TOKEN`
+   `bwrap` diperbaiki; 5 Nov 2026 dipasang seccomp + AppArmor khusus (`scripts/vps2/`, sysctl host tetap 1,
+   detail di `docs/isolasi-renderer.md`). `bwrap` dan Chromium bersandbox lulus di container, healthy.
+   **Belum diuji**: render penuh sesudah perbaikan (Chromium DI DALAM bwrap), webhook ke URL nyata,
+   `batalkan_render`. Tugas baru yang disarankan: renderer sebagai container terpisah tanpa rahasia.
+   `/admin` nonaktif karena `ADMIN_TOKEN`
    belum diisi di `.env.mcp` (keputusan pemilik).
 5. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
 
