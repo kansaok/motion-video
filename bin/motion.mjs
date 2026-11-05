@@ -13,7 +13,7 @@ import {AKAR} from '../lib/env.mjs';
 
 const [perintah, ...arg] = process.argv.slice(2);
 const bendera = Object.fromEntries(arg.filter((a) => a.startsWith('--'))
-  .map((a) => { const [k, v] = a.slice(2).split('='); return [k, v ?? true]; }));
+  .map((a) => { const i = a.indexOf('='); const [k, v] = i < 0 ? [a.slice(2)] : [a.slice(2, i), a.slice(i + 1)]; return [k, v ?? true]; }));
 const posisi = arg.filter((a) => !a.startsWith('--'));
 // `shot` menyelipkan detik di antara argumen posisi, dan folder tidak pernah berupa angka.
 const dirProyek = path.resolve(posisi.find((a) => !/^[\d.]+$/.test(a)) || process.cwd());
@@ -23,6 +23,7 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
 
   motion doctor                     periksa prasyarat mesin (--luring tanpa ElevenLabs, --cepat tanpa luncur Chromium)
   motion init <file.zip> <folder>   bongkar zip, deteksi komposisi, tulis kerangka config
+  motion init --design=<tautan> <folder>   sama, dari tautan Claude Design (sekali: node bin/impor-design.mjs --masuk)
   motion init --templat[=<nama>] <folder>  daftar templat, atau mulai proyek dari templat
   motion plan   [folder]            generate VO lalu hitung posisi baris + durasi scene
   motion apply  [folder]            tulis durasi & jangkar hasil plan balik ke komposisi
@@ -87,12 +88,26 @@ async function jalankan() {
         console.log('  ganti naskah VO dan isi src/isi.js (teks layar), lalu: motion plan --kering, motion all');
         break;
       }
-      const zip = path.resolve(posisi[0]);
-      const tujuan = path.resolve(posisi[1] || path.join(process.cwd(), path.basename(zip, '.zip')));
-      if (!existsSync(zip)) throw new Error(`zip tidak ada: ${zip}`);
-      mkdirSync(tujuan, {recursive: true});
-      const {src, html, jsx} = Pipa.bongkar(zip, tujuan);
-      console.log(`  dibongkar ke ${src}`);
+      /* `--design=<tautan|projectId>`: ambil dari Claude Design (P6-10), lalu lanjut sama seperti zip.
+         Bentuk: motion init --design=<tautan> <folder>. */
+      let src, html, jsx, tujuan;
+      if (bendera.design) {
+        if (bendera.design === true) throw new Error('pakai: motion init --design=<tautan|projectId> <folder>');
+        tujuan = path.resolve(posisi[0] || path.join(process.cwd(), 'design-baru'));
+        const {jalankan} = await import('./impor-design.mjs');
+        await jalankan([String(bendera.design), tujuan, ...(bendera.profil ? [`--profil=${bendera.profil}`] : []), ...(bendera.cdp ? [`--cdp=${bendera.cdp}`] : [])]);
+        src = path.join(tujuan, 'src');
+        ({html, jsx} = K.temukan(src));
+        // Galat jelas bila respons endpoint tidak memuat komposisi: tanpa OM_SCENES tidak ada yang bisa dirender.
+        if (!html.length) throw new Error('proyek Design terunduh, tetapi tidak ada .html ber-OM_SCENES — periksa bahwa itu proyek komposisi motion');
+      } else {
+        const zip = path.resolve(posisi[0]);
+        tujuan = path.resolve(posisi[1] || path.join(process.cwd(), path.basename(zip, '.zip')));
+        if (!existsSync(zip)) throw new Error(`zip tidak ada: ${zip}`);
+        mkdirSync(tujuan, {recursive: true});
+        ({src, html, jsx} = Pipa.bongkar(zip, tujuan));
+        console.log(`  dibongkar ke ${src}`);
+      }
       console.log(`  komposisi ber-OM_SCENES: ${html.join(' · ')}`);
       /* Satu zip sering memuat lebih dari satu VIDEO, bukan cuma orientasi lain dari video
          yang sama. Yang membedakan keduanya adalah .jsx utamanya, BUKAN namanya: dua angle

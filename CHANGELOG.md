@@ -18,6 +18,8 @@ tautan subtitle di hasil `status_render`, pencarian `cari_sfx` yang terurut (par
 render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
+
+- `motion init --design=<tautan|projectId>` dan `bin/impor-design.mjs` (P6-10): impor proyek Claude Design tanpa zip, hanya CLI.
 - Templat komposisi `templat/` (iklan, testimoni, trailer, tutorial): `motion init --templat=<nama>` dan alat
   MCP `daftar_templat`/`pakai_templat`. Kontrak v2, teks layar di `src/isi.js`, config CLI dan MCP setara.
 - Alat MCP `batalkan_render` dan dasbor admin `/admin` (aktif bila `ADMIN_TOKEN` >= 32 karakter):

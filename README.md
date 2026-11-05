@@ -122,14 +122,16 @@ Siapa pun yang punya tautan itu bisa melihat dan mengunduh (peran pembaca). Isin
 
 ## Impor dari tautan Claude Design, tanpa zip
 
-`DesignSync` butuh `/design-login`, dan perintah itu tidak jalan di sesi non-interaktif. Jalur yang terbukti (Konektor Promo, 29 Sep 2026): Chrome Rama yang sudah login ke claude.ai.
+```sh
+node bin/impor-design.mjs --masuk                       # sekali: login claude.ai di jendela Chromium, sesi disimpan di ~/.motion/profil-claude
+motion init --design=<tautan|projectId> proyek/<nama>   # unduh ke src/, lalu deteksi + kerangka config seperti dari zip
+```
 
-1. Buka tab `https://claude.ai/robots.txt`. Halaman Design yang berat membuat JavaScript di tab macet.
-2. Dari tab itu, panggil `POST /design/anthropic.omelette.api.v1alpha.OmeletteService/ListFiles` dan `.../GetFile` dengan JSON `{projectId, path}`. Isi berkas kembali sebagai base64.
-3. Gabung semua berkas jadi satu JSON dan unduh sekali. `fetch` ke `127.0.0.1` dari halaman claude.ai menggantung tanpa galat, jadi server penerima lokal tidak bisa dipakai.
-4. Hapus `<style data-omelette-injected>` dan `<script data-omelette-injected>` dari tiap `.html`. `GetFile` mengembalikan versi yang disajikan editor, 21 KB, bukan berkas 1,6 KB aslinya.
+`--cdp=http://127.0.0.1:9222` memakai Chrome yang sudah berjalan dan login (sesi Rama). `DesignSync` butuh `/design-login` yang tidak jalan di sesi non-interaktif; kalau itu berubah, ganti `bukaSumber` di `bin/impor-design.mjs` saja.
 
-Kolom `size` di `ListFiles` bisa basi. Percayai panjang isi `GetFile`.
+Yang dilakukan skrip (jalur terbukti Konektor Promo, 29 Sep 2026): buka `https://claude.ai/robots.txt` (halaman Design yang berat membuat JavaScript macet), lalu dari halaman itu `POST /design/anthropic.omelette.api.v1alpha.OmeletteService/ListFiles` dan `/GetFile` dengan `{projectId, path}`; isi kembali sebagai base64. Server lokal tidak bisa dipakai: `fetch` ke `127.0.0.1` dari claude.ai menggantung tanpa galat.
+
+Validasi (`lib/imporDesain.mjs`): `<style|script data-omelette-injected>` dibuang dari tiap `.html` (`GetFile` mengembalikan versi editor 21 KB, bukan berkas 1,6 KB aslinya); jalur dari server ditolak bila traversal/tersembunyi/ganda; batas 2000 berkas dan 300 MB; hasil harus memuat `.html` ber-`OM_SCENES`. Kolom `size` di `ListFiles` bisa basi, jadi panjang isi `GetFile` yang dipercaya. Respons yang bentuknya berubah menggagalkan impor dengan menyebut kunci yang diterima. Bentuk respons yang diasumsikan ada di kepala `lib/imporDesain.mjs`.
 
 ## Render di `rama-tuf`: `TMPDIR` di disk
 
