@@ -19,6 +19,9 @@ render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
 
+- Satu video, banyak bahasa (P8-12): `motion salin --ke= --bahasa= --suara=` dan alat MCP `salin_proyek`.
+  Komposisi versi `.asli`, SFX, dan musik ikut; VO tidak; naskah diganti per baris, durasi scene
+  menyesuaikan VO baru.
 - MCP BYOK (P8-12): `kunci_elevenlabs` menyimpan kunci ElevenLabs pelanggan terenkripsi (AES-256-GCM,
   `KUNCI_ENKRIPSI`, terikat uid, di luar folder proyek) dan `buat_vo` membuat VO semua baris di server.
   Kunci per permintaan (`EL.denganKunci`), tidak pernah masuk sandbox render; cache VO lintas proyek

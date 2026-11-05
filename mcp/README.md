@@ -22,6 +22,7 @@ Akses berbayar dikelola di bimp: menu **Tools → Motion MCP** (langganan, token
 | `tulis_berkas` · `baca_berkas` · `impor_zip` | isi `src/` (komposisi HTML/JSX) |
 | `unggah` | audio VO/SFX/musik atau gambar dari URL https / base64 |
 | `unggah_vo` | banyak baris VO (maks 60) dalam satu panggilan; hasil per baris |
+| `salin_proyek` | proyek untuk bahasa/angle lain: komposisi asli + SFX + musik, naskah pengganti per nomor baris, tanpa VO |
 | `kunci_elevenlabs` · `buat_vo` | BYOK: kunci ElevenLabs pelanggan disimpan terenkripsi (`KUNCI_ENKRIPSI`), lalu server membuat VO semua baris langsung; kunci tidak pernah masuk sandbox render |
 | `daftar_templat` · `pakai_templat` | templat komposisi siap pakai (iklan, testimoni, trailer, tutorial) → proyek baru dengan config tervalidasi |
 | `cari_sfx` | cari di stok SFX (`sfx-stok/`, ±700 bunyi): terurut, sinonim Indonesia–Inggris, `mirip` |

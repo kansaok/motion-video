@@ -43,6 +43,7 @@ motion all proyek/video-baru                          # sampai MP4 + verifikasi
 | `motion shot <detik...>` | cuplik frame dari komposisi hidup, tanpa render penuh |
 | `motion all` | seluruh rantai sampai `check`; perkiraan biaya di awal, laporan biaya di akhir |
 | `motion speed <suara...>` | ukur kar/dtk tiap suara **sebelum** menulis naskah |
+| `motion salin --ke=<folder> [--bahasa=en] [--suara=<id>]` | proyek untuk bahasa atau angle lain: komposisi versi `.asli` (sebelum durasi disesuaikan), SFX, dan musik beserta `.kunci` ikut; VO dan `timing.js` tidak. Config baru meng-import config asal (musik/SFX/cue satu sumber) dan hanya mengganti naskah (larik `NASKAH`), suara, bahasa; lafal, `dengar`, `maks` bahasa asal dibuang. Durasi scene menyesuaikan VO baru lewat `tata`. Musik yang `detik`-nya bergantung pada total video dibuat ulang bila durasinya berubah |
 | `motion kirim --merek=<Merek> --angle=<Angle>` | salin MP4 tiap rasio + sampul + subtitle ke `~/Videos/Ads/<Merek>/<Angle>/` (`MOTION_KIRIM`) sebagai `<merek>-<angle>-<rasio>.mp4` dan tulis `naskah.md` (VO per detik, musik, SFX, teks layar, angka mutu). Gerbang mutu = ambang `check` (`--paksa` dicatat di naskah); berkas yang sudah ada dan beda tidak ditimpa tanpa `--timpa`; draf/potongan tidak ikut. `kirim: {merek, angle}` di config menggantikan bendera |
 | `motion cost [jam]` · `motion voices [cari]` | biaya ElevenLabs · katalog suara |
 

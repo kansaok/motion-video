@@ -63,6 +63,7 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `lib/kering.mjs` | `--kering`: perkiraan durasi VO (kalibrasi proyek / `suara.kps` / bawaan), rencana, cue, biaya tanpa ElevenLabs |
 | `lib/doktor.mjs` | `motion doctor`: cek prasyarat mesin (Node, ffmpeg, Playwright/Chromium, `.env`, disk/tmpfs, ElevenLabs) |
 | `lib/kolam.mjs` | kolam kerja + perintis + semafor untuk generate ElevenLabs bersamaan (P8-04) |
+| `lib/salin.mjs` | proyek untuk bahasa/angle lain: `salinSrc` (dari `.asli`), `salinAsetNonVo`, `salinCli` (CLI `motion salin`, MCP `salin_proyek`) (P8-12) |
 | `lib/kirim.mjs` | `motion kirim`: salin hasil ke `~/Videos/Ads/<Merek>/<Angle>/`, `naskah.md`, gerbang mutu (P8-12) |
 | `lib/cachevo.mjs` | cache VO lintas proyek berkunci `.kunci` VO (termasuk konteks tetangga) |
 | `lib/biaya.mjs` | perkiraan biaya sebelum generate, gerbang `BIAYA_MAKS_USD`/`--ya`, `biaya.json` |

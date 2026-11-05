@@ -391,6 +391,31 @@ export function buatServer(uid) {
     }
   });
 
+  /* Bahasa/angle lain (P8-12): komposisi asli + SFX + musik ikut, VO tidak. Durasi scene menyesuaikan
+     VO baru sendiri saat render (tata), jadi terjemahan yang lebih panjang tidak memotong apa pun. */
+  alat('salin_proyek', 'Salin proyek jadi proyek baru untuk BAHASA lain atau angle lain dari video yang sama. Komposisi (versi '
+    + 'asli sebelum durasi disesuaikan), config, SFX, dan musik ikut; VO TIDAK. `vo`: naskah pengganti per nomor baris '
+    + '(misal terjemahan). Teks layar (src/isi.js atau komposisi) diganti terpisah lewat tulis_berkas. Sesudahnya: buat_vo '
+    + 'atau unggah VO dengan suara bahasa itu, lalu render; durasi scene menyesuaikan VO baru sendiri.',
+  {proyek: Proyek, nama: z.string().min(1).max(80),
+    vo: z.array(z.object({no: z.number().int().min(1).max(99), text: z.string().min(1).max(600)}).strict()).max(60).optional()},
+  async ({proyek, nama, vo}) => {
+    const asal = Pr.buka(uid, proyek);
+    const j = /** @type {any} */ (Pr.bacaConfig(asal));
+    const ganti = new Map((vo || []).map((l) => [l.no, l.text]));
+    const asing = [...ganti.keys()].filter((n) => !(j.vo || []).some((/** @type {any} */ l) => l.no === n));
+    if (asing.length) throw new Error(`nomor VO tidak ada di config asal: ${asing.join(', ')}`);
+    const config = {...j, vo: (j.vo || []).map((/** @type {any} */ l) => (ganti.has(l.no) ? {...l, text: ganti.get(l.no)} : l))};
+    const meta = Pr.salin(uid, asal, nama);
+    const p = Pr.buka(uid, meta.id);
+    try {
+      const h = simpanConfig(p, config);
+      return teks({proyek: meta.id, dari: proyek, ...h, naskahDiganti: ganti.size,
+        belumDiganti: config.vo.filter((/** @type {any} */ l) => !ganti.has(l.no)).map((/** @type {any} */ l) => l.no),
+        catatan: 'VO belum ada: buat_vo atau unggah_vo dengan suara bahasa ini, ganti teks layar, lalu render'});
+    } catch (e) { Pr.hapus(uid, meta.id); throw e; }
+  });
+
   alat('simpan_config', 'Simpan config proyek (naskah VO + posisi, SFX, cue, musik, mixer). Skema lengkap ada di `panduan`. '
     + 'Divalidasi terhadap komposisi saat disimpan.',
   {proyek: Proyek, config: z.record(z.any()).describe('objek config, lihat panduan')},

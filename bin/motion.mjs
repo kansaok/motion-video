@@ -11,6 +11,7 @@ import * as T from '../lib/tata.mjs';
 import * as Stok from '../lib/stok.mjs';
 import * as Biaya from '../lib/biaya.mjs';
 import * as Kirim from '../lib/kirim.mjs';
+import * as Salin from '../lib/salin.mjs';
 import {cuplik} from '../lib/render.mjs';
 import {AKAR} from '../lib/env.mjs';
 
@@ -38,6 +39,8 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
   motion check  [folder]            verifikasi hasil  (--cepat untuk lewati STT + A/B)
   motion shot   [folder] <detik...> cuplik frame dari komposisi hidup
   motion all    [folder]            plan -> apply -> sfx -> music -> mix -> render -> check
+  motion salin  [folder] --ke=<baru> proyek untuk bahasa/angle lain: komposisi asli + SFX + musik, tanpa VO
+                                    (--bahasa=en --suara=<id>; naskah diterjemahkan di config baru)
   motion kirim  [folder]            salin MP4 + sampul + subtitle + naskah.md ke ~/Videos/Ads/<Merek>/<Angle>/
                                     (--merek= --angle= atau "kirim" di config; --timpa, --paksa)
   motion cost   [jam]               biaya ElevenLabs beberapa jam terakhir
@@ -318,6 +321,16 @@ async function jalankan() {
       }, {cetak: true});
       const b = await Pipa.biaya(t0 - 5 * 60 * 1000);
       console.log(`biaya   ${rp(b.total)} kredit ≈ Rp${rp(b.rupiah)} · sisa kuota ${rp(b.kuota.sisa)}`);
+      break;
+    }
+    case 'salin': {
+      /* Proyek untuk bahasa/angle lain (P8-12, lib/salin.mjs): komposisi asli, SFX, musik ikut; VO tidak.
+         Config baru meng-import config asal dan hanya mengganti naskah (larik NASKAH), suara, bahasa. */
+      if (!bendera.ke) throw new Error('butuh --ke=<folder proyek baru>');
+      const c = await Pipa.muat(dirProyek, {kering: true});
+      const r = Salin.salinCli(dirProyek, path.resolve(String(bendera.ke)), {bahasa: bendera.bahasa && String(bendera.bahasa),
+        suara: bendera.suara && String(bendera.suara), vo: c.vo.map((l) => ({no: l.no, text: l.text}))});
+      console.log(`  ✓ ${r.ke}\n  terjemahkan NASKAH di motion.config.mjs dan teks layar di src/, lalu motion plan --kering`);
       break;
     }
     case 'kirim': {

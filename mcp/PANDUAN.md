@@ -62,6 +62,15 @@ connector ElevenLabs milik pengguna di Claude lalu URL audionya diunggah ke sini
 Yang perlu dicek di laporan: `mp4_lufs` di -14 ±1, `mp4_dbtp` ≤ -1,0, `sampul_kontras` ≥ 75%
 (frame 0 = sampul Reels/TikTok, jadi scene pertama jangan dibuka dengan fade dari hitam).
 
+## Bahasa atau angle lain
+
+`salin_proyek` `{proyek, nama, vo: [{no, text}, …]}` membuat proyek baru dari proyek yang sudah jadi:
+komposisi versi asli (sebelum durasi disesuaikan), config, SFX, dan musik ikut; VO tidak. Terjemahkan
+naskah lewat `vo` (nomor yang tidak disebut tetap teks asal, dan disebut di `belumDiganti`), ganti teks layar
+lewat `tulis_berkas` (`src/isi.js` di templat), buat VO dengan suara bahasa itu (`buat_vo` dengan
+`suara.bahasa`, atau unggah), lalu `render`. Durasi scene menyesuaikan VO baru sendiri, jadi terjemahan yang
+lebih panjang tidak memotong apa pun.
+
 ## Kontrak komposisi
 
 Satu berkas `.html` (nama bebas, misal `Video 9x16.dc.html`) di akar `src/`:
