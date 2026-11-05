@@ -272,8 +272,13 @@ async function jalankan() {
       const awal = Biaya.perkiraan(c, ['vo', 'sfx', 'musik']);
       const musikAwal = awal.rincian.filter((b) => b.jenis === 'musik').reduce((a, b) => a + b.kredit, 0);
       await berbiaya(c, ['vo', 'sfx', 'musik'], async () => {
-        console.log('sfx…');    await Pipa.sfx(c);
-        console.log('plan…');   const {scenes, asli, total} = await Pipa.rencana(c);
+        /* SFX dan VO saling bebas, jadi dibuat bersamaan (P8-04); batas permintaan bersama ada di
+           `el.kirim`. allSettled, bukan all: galat satu tahap tidak boleh meninggalkan tahap lain
+           masih menulis berkas di belakang galat yang sudah dicetak. */
+        console.log('sfx + plan…');
+        const [hSfx, hRencana] = await Promise.allSettled([Pipa.sfx(c), Pipa.rencana(c)]);
+        for (const h of [hSfx, hRencana]) if (h.status === 'rejected') throw h.reason;
+        const {scenes, asli, total} = /** @type {PromiseFulfilledResult<Awaited<ReturnType<typeof Pipa.rencana>>>} */ (hRencana).value;
         console.log(T.laporan(scenes, asli, c.vo, total));
         console.log('apply…');  const a = await Pipa.terap(c);
         console.log(`  ${a.html} html · ${a.kapsi} kapsi · ${a.jangkar} jangkar`);

@@ -299,6 +299,8 @@ Diukur pada video 67,6 detik: 7 scene, 23 baris VO, 17 berkas SFX, 51 cue, 1 tre
 | `check` | 34 dtk | 2 mix ulang untuk A/B + STT |
 | **Total mesin** | **± 4,5 menit** | orientasi kedua: **+ 1,7 menit** (`render` saja) |
 
+Sejak P8-04 (5 Nov 2026) `sfx` dan `plan` berjalan bersamaan dengan 3 permintaan sekaligus: 23 VO + 17 SFX terukur 22,3 dtk terhadap server tiruan berlatensi 1,2 dtk, dari 62,5 dtk berurutan. Lebih dari 3 tidak lebih cepat (5: 22,8 dtk): sisanya pemangkasan ffmpeg sinkron per berkas, yang menahan event loop.
+
 Biaya ElevenLabs satu video: **± Rp11.500**.
 
 Yang menghabiskan waktu bukan mesinnya. Sisanya adalah membaca komposisi untuk mencari beat animasi, menulis naskah, dan memetakan cue — dan itu **satu-satunya bagian yang benar-benar perlu dipikir**. Semua yang di bawah ini ada supaya bagian itu tidak dipakai untuk hal lain.
@@ -371,4 +373,4 @@ MOTION_PLAYWRIGHT=/path/ke/repo-yang-punya-playwright motion render proyek/video
 
 `.env` masuk `.gitignore`. Jangan di-commit dan jangan diunggah ke Drive. Berkas contoh hanya berisi nama variabel kosong.
 
-Penyetel yang boleh dikosongkan: `MOTION_ENV` (jalur `.env` lain), `WORKERS` (tab render, default 6), `MOTION_VIEWPORT` (default `2200x2400`; turunkan kalau Chromium mati karena memori), `MOTION_ENCODER`, `FFLOG`, `MOTION_CACHE_VO` (jalur cache VO lintas proyek, bawaan `~/.motion/cache-vo`; `off` untuk mematikan).
+Penyetel yang boleh dikosongkan: `MOTION_ENV` (jalur `.env` lain), `WORKERS` (tab render, default 6), `MOTION_VIEWPORT` (default `2200x2400`; turunkan kalau Chromium mati karena memori), `MOTION_ENCODER`, `FFLOG`, `MOTION_CACHE_VO` (jalur cache VO lintas proyek, bawaan `~/.motion/cache-vo`; `off` untuk mematikan), `MOTION_EL_PARALEL` (permintaan ElevenLabs bersamaan, bawaan 3; batas konkurensi akun: Starter 3, Creator 5, Pro 10).

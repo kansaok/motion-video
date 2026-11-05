@@ -54,6 +54,11 @@ render bisa bernilai `dibatalkan`.
   wadah, kapsi kosong (`periksa: {kapsi: '<selektor>'}`), dan frame hitam.
 
 ### Diubah
+- VO dan SFX dibuat bersamaan (P8-04): paling banyak 3 permintaan ElevenLabs sekaligus
+  (`MOTION_EL_PARALEL`), dibatasi bersama di `el.kirim` sehingga `motion all` membuat SFX dan VO
+  serentak. Permintaan pertama tetap berjalan sendirian, jadi kunci salah atau kuota habis
+  berhenti di baris pertama seperti dulu. Terukur dengan server tiruan berlatensi 1,2 dtk:
+  23 VO + 17 SFX dari 62,5 dtk menjadi 22,3 dtk.
 - Galat ElevenLabs digolongkan: 429/5xx/timeout diulang dengan menghormati `Retry-After`; 4xx
   lain tidak; kuota/kredit habis menghentikan rantai. Pesan galat menyebut baris VO, SFX, atau
   trek musiknya.
