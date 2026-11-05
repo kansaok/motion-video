@@ -17,7 +17,9 @@ const lavfi = (keluar, sumber) => execFileSync('ffmpeg', ['-y', '-v', 'error', '
 function proyek(dir) {
   const aset = path.join(dir, 'aset');
   mkdirSync(path.join(aset, 'sfx'), {recursive: true});
-  lavfi(path.join(aset, 'sfx', 'desir.mp3'), 'anoisesrc=d=0.5:c=pink:a=0.6');
+  // Deterministik dan memenuhi jendela ukur busHidup (0,8 dtk): derau tanpa `seed` membuat selisih
+  // A/B jatuh tepat di ambang 1 dB pada sebagian run.
+  lavfi(path.join(aset, 'sfx', 'desir.mp3'), 'anoisesrc=d=0.8:c=pink:a=0.6:seed=7');
   lavfi(path.join(aset, 'bed.mp3'), 'sine=frequency=220:duration=8');
   writeFileSync(path.join(dir, 'timeline.json'), JSON.stringify([{name: 'A', dur: 4}, {name: 'B', dur: 4}]));
   return /** @type {any} */ ({
