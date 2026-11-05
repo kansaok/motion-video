@@ -60,16 +60,17 @@ Rincian per tugas: `RENCANA-PERBAIKAN.md` Fase 8 + tabel catatan hasil.
   kali (speed API + atempo), Cahaya 1,2 → ±1,44x. Diperbaiki; VO dari jendela itu dibuat ulang otomatis
   pada `plan` berikutnya (gerbang biaya biasa). **Periksa proyek dan video kirim di rama-tuf yang VO-nya
   dibuat sesudah waktu itu.**
-- Selesai dan diuji tanpa Chromium: P8-02 A/B check tidak menimpa master, P8-03 warna BT.709, P8-04 VO/SFX
-  paralel (62,5 → 22,3 dtk terhadap server tiruan), P8-07 mode draf, P8-08 cache master, P8-09 mix/check
-  lebih ringan (+ `hening` lama meloloskan MP4 tak terbaca), P8-10 waktu per kata (opt-in), P8-11 MCP
-  `semua_rasio` + `unggah_vo`, P8-12 kemajuan render di `status_render` + `motion kirim`.
-- Tes Chromium: `npm test` penuh dijalankan di mesin kerja dengan izin Rama (5 Nov): 215 tes, 214 lulus,
-  1 dilewati. Bug viewport P8-01 dibuktikan di Chromium (kode lama: frame 1080x1600, zona kapsi hilang).
+- Selesai: P8-01 viewport, P8-02 A/B check, P8-03 warna BT.709, P8-04 VO/SFX paralel (62,5 → 22,3 dtk,
+  server tiruan), P8-05 `motion all` render selagi musik + mix (43-45 → 30-32 dtk), P8-07 mode draf, P8-08
+  cache master, P8-09 mix/check lebih ringan, P8-10 waktu per kata (opt-in), P8-11 MCP `semua_rasio` +
+  `unggah_vo`, P8-12: kemajuan di `status_render`, `motion kirim`, BYOK (`kunci_elevenlabs` + `buat_vo`),
+  bahasa lain (`motion salin`, `salin_proyek`). P8-06 (encode selama capture) diukur dan dibantah di 8 core.
+- Tes: `npm test` penuh (termasuk Chromium) di mesin kerja dengan izin Rama: 221 lulus, 1 dilewati.
   rama-tuf (ffmpeg 8.1.1) belum: tes warna P8-03 sebaiknya juga dijalankan di sana.
-- Belum: P8-05/P8-06 (inti render, tunggu tes Chromium), P8-10 dijadikan bawaan sesudah satu panggilan
-  sungguhan ke with-timestamps, sisa P8-12 (stok musik, varian hook, brand kit, overlay zona aman,
-  multi-bahasa).
+- Deploy MCP (vps2) belum: isi `KUNCI_ENKRIPSI` di `.env.mcp` untuk BYOK; alat baru `unggah_vo`,
+  `salin_proyek`, `kunci_elevenlabs`, `buat_vo`, parameter `draf`/`semua_rasio`.
+- Belum: P8-10 dijadikan bawaan sesudah satu panggilan sungguhan ke with-timestamps; templat yang memakai
+  `VO_TIMING[].kata`; brand kit per akun (skema perlu disepakati); stok musik (butuh trek berlisensi).
 
 ## Belum dikerjakan / prioritas berikutnya
 
