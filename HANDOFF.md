@@ -70,9 +70,12 @@ Terakhir diperbarui: 5 November 2026 (Asia/Jakarta).
    Nama kunci respons (`files[].path`, `content`) dan format tautan masih asumsi dari README.
    Login sekali: `node bin/impor-design.mjs --masuk` (sudah dijalankan 5 Nov di mesin ini, belum
    terbukti sesinya login) atau `--cdp` ke Chrome berport debug.
-4. **Belum ter-deploy ke vps2** (masih `035ab32`): P6-05 templat (`4b19080`), P6-07 cache VO, P6-08
-   webhook, P6-09 batalkan render + `/admin` (`7b8e942`), P6-10 (CLI saja). Deploy butuh skill `vps2`;
-   `/admin` aktif hanya bila `ADMIN_TOKEN` (>= 32 karakter) diisi.
+4. **vps2 menjalankan `5d71b62` sejak 5 Nov 2026** (P6-05 templat, P6-07 cache VO, P6-08 webhook,
+   P6-09 batalkan render; P6-10 hanya CLI). Cadangan pra-deploy `/root/backup-motionmcp/*-20261105045103.tgz`,
+   image lama `motion-mcp:prev`. Terverifikasi: `/hidup` dan `/siap` 200 (dalam dan publik), `/metrik` dan
+   `/admin` 404 dari publik, 694 MP3 stok utuh, `cari_sfx` dan `templat/` ada di container. **Belum diuji**: render
+   sungguhan, webhook ke URL nyata, dan `batalkan_render` di produksi. `/admin` nonaktif karena `ADMIN_TOKEN`
+   belum diisi di `.env.mcp` (keputusan pemilik).
 5. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
 
 ## Verifikasi terakhir
