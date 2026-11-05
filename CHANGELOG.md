@@ -19,6 +19,8 @@ render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
 
+- `status_render` memuat `kemajuan` selama render: frame, persen, perkiraan sisa detik, dan rasio
+  ke-berapa untuk `semua_rasio` (P8-12). Pesan frame dari pekerja dulu hanya dibaca watchdog.
 - Alat MCP `render` menerima `semua_rasio` (P8-11): komposisi utama + tiap komposisi di `jugaTulis`
   dari satu master audio, hasil `varian` dengan tautan dan nilai tiap rasio; batas waktu render
   dikalikan jumlah rasio. Alat baru `unggah_vo`: banyak baris VO dalam satu panggilan, hasil per baris.

@@ -81,8 +81,11 @@ async function kerjakan({uid, proyek, opsi}) {
 async function semuaRasio(c, p, opsi, {laporan, vo, m}) {
   const draf = Boolean(opsi.draf);
   const varian = (c.jugaTulis || []).map((/** @type {string} */ k) => ({komposisi: k, keluaran: `${p.meta.id}-${Pipa.namaPendek(k)}.mp4`}));
+  // Langkah 'render' rasio pertama sudah dikirim kerjakan(); renderVarian memanggil `log` sebelum TIAP
+  // rasio, jadi yang pertama dilewati supaya hitungan rasio di status_render tidak lebih satu.
+  let ke = 0;
   const h = await Pipa.renderVarian({...c, varian}, {batasFrame: opsi.frames, draf,
-    log: () => kirim({langkah: 'render'}), kemajuan: (/** @type {number} */ jadi, /** @type {number} */ totalFrame) => kirim({frame: jadi, totalFrame})});
+    log: () => { if (ke++) kirim({langkah: 'render'}); }, kemajuan: (/** @type {number} */ jadi, /** @type {number} */ totalFrame) => kirim({frame: jadi, totalFrame})});
   const [utama] = h;
   if (utama.galat) throw new Error(`komposisi utama ${utama.komposisi}: ${utama.galat}`);
   const sub = !draf && c.vo.length ? Pipa.tulisSubtitel(c) : null;

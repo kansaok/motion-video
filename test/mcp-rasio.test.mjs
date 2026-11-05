@@ -109,3 +109,33 @@ test('unggah_vo: banyak baris dalam satu panggilan; baris yang gagal dilaporkan 
     assert.match((await panggil('unggah_vo', {proyek: p.meta.id, baris: [{no: 4}]})).teks, /tepat satu dari url\/base64: VO 4/);
   } finally { await tutup(); }
 });
+
+test('hitungKemajuan: persen dan sisa dari laju sejak langkah render; rasio hanya bila lebih dari satu', () => {
+  assert.deepEqual(A.hitungKemajuan({frame: 60, totalFrame: 300, mulaiMs: 0, sekarangMs: 20_000}),
+    {frame: 60, totalFrame: 300, persen: 20, sisaDetik: 80});
+  assert.deepEqual(A.hitungKemajuan({frame: 300, totalFrame: 300, mulaiMs: 0, sekarangMs: 1000, rasioKe: 2, rasioDari: 4}),
+    {frame: 300, totalFrame: 300, persen: 100, sisaDetik: 0, rasioKe: 2, rasioDari: 4});
+  assert.deepEqual(A.hitungKemajuan({frame: 60, mulaiMs: 0, sekarangMs: 1000, rasioKe: 1, rasioDari: 1}), {frame: 60});
+});
+
+test('kerjakan: kemajuan frame sampai ke status selama render, per rasio, dan hilang sesudah selesai', async () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'motion-kemajuan-'));
+  try {
+    const t = {id: 'r-maju1', uid: 9, proyek: 'p', dir, status: 'antre', opsi: {semuaRasio: true, rasio: 2}};
+    /** @type {any[]} */
+    const terlihat = [];
+    await A.kerjakan(t, {jalankan: async (_t, o) => {
+      o.onLangkah('render');
+      o.onKemajuan(60, 120);
+      terlihat.push({...t.kemajuan});
+      o.onLangkah('render');                                   // rasio kedua
+      o.onKemajuan(60, 120);
+      terlihat.push({...t.kemajuan});
+      return {mp4: 'p.mp4'};
+    }});
+    assert.deepEqual([terlihat[0].frame, terlihat[0].persen, terlihat[0].rasioKe, terlihat[0].rasioDari], [60, 50, 1, 2]);
+    assert.equal(typeof terlihat[0].sisaDetik, 'number');
+    assert.deepEqual([terlihat[1].rasioKe, terlihat[1].persen], [2, 50]);
+    assert.equal(t.kemajuan, undefined);
+  } finally { rmSync(dir, {recursive: true, force: true}); }
+});

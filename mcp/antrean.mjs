@@ -277,19 +277,44 @@ export function pencatatLangkah({amati = (detik, label) => M.langkahDetik.amati(
   };
 }
 
+/* Kemajuan frame untuk `status_render` (P8-12). Pekerja sudah mengirim {frame, totalFrame} tiap 60
+   frame, tetapi dulu hanya watchdog yang membacanya: pelanggan yang mem-poll cuma melihat
+   `langkah: "render"` selama beberapa menit. `sisaDetik` = laju sejak langkah render rasio ini
+   dimulai (termasuk membuka Chromium, jadi cenderung melebih-lebihkan), tidak termasuk encode.
+   @param {{frame: number, totalFrame?: number, mulaiMs: number, sekarangMs: number, rasioKe?: number, rasioDari?: number}} o */
+export function hitungKemajuan({frame, totalFrame, mulaiMs, sekarangMs, rasioKe, rasioDari}) {
+  const detik = Math.max(0.001, (sekarangMs - mulaiMs) / 1000);
+  const total = Number(totalFrame) || 0;
+  return {
+    frame, ...(total ? {totalFrame: total, persen: Math.min(100, Math.round((frame / total) * 100)),
+      sisaDetik: Math.max(0, Math.round((total - frame) / (frame / detik)))} : {}),
+    ...(rasioDari && rasioDari > 1 ? {rasioKe, rasioDari} : {}),
+  };
+}
+
 /** @param {any} t @param {{jalankan?: typeof jalankanPekerja}} [o] */
 export async function kerjakan(t, {jalankan = jalankanPekerja} = {}) {
   t.status = 'jalan'; t.mulai = new Date().toISOString();
   const jejak = pencatatLangkah(), t0 = Date.now();
+  // Satu rasio = satu langkah 'render' (P8-11); kemajuan dihitung ulang per rasio.
+  const rasioDari = Math.max(1, Number(t.opsi?.rasio) || 1);
+  let mulaiRender = 0, rasioKe = 0;
   const langkah = (s) => {
+    if (s === 'render') { mulaiRender = Date.now(); rasioKe++; t.kemajuan = rasioDari > 1 ? {frame: 0, rasioKe, rasioDari} : {frame: 0}; }
+    else delete t.kemajuan;
     jejak.ganti(s); t.langkah = s; simpanStatus(t);
     Log.info('render langkah', {uid: t.uid, render: t.id, proyek: t.proyek, langkah: s, ms: Date.now() - t0});
+  };
+  const kemajuan = (/** @type {number} */ frame, /** @type {number | undefined} */ totalFrame) => {
+    t.kemajuan = hitungKemajuan({frame, totalFrame, mulaiMs: mulaiRender || Date.now(), sekarangMs: Date.now(),
+      rasioKe: Math.min(rasioKe, rasioDari), rasioDari});
+    simpanStatus(t);
   };
   const ac = new AbortController();
   pengendali.set(t.id, ac);
   try {
     // Semua rasio (P8-11): satu render per komposisi, jadi batas total ikut dikalikan.
-    const hasil = await jalankan(t, {onLangkah: langkah, batal: ac.signal,
+    const hasil = await jalankan(t, {onLangkah: langkah, onKemajuan: kemajuan, batal: ac.signal,
       batasMs: Pr.BATAS.renderMenit * 60_000 * Math.max(1, Number(t.opsi?.rasio) || 1)});
     const tautan = (/** @type {string | null | undefined} */ f) => (f ? Pr.tautan(t.uid, t.proyek, f) : null);
     t.hasil = {...hasil,
@@ -311,6 +336,7 @@ export async function kerjakan(t, {jalankan = jalankanPekerja} = {}) {
     Log.info('render berakhir', {uid: t.uid, render: t.id, proyek: t.proyek, status: t.status, ms: Date.now() - t0});
     t.selesai = new Date().toISOString();
     t.langkah = t.status;
+    delete t.kemajuan;
     simpanStatus(t);
     // Tidak ditunggu: penerima yang lambat tidak boleh menahan render berikutnya di antrean.
     if (t.opsi?.webhook) kabariWebhook(t).catch((e) => Log.galat('webhook gagal', {render: t.id, galat: e}));
