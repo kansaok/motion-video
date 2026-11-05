@@ -276,6 +276,8 @@ Kalau durasi memang tidak boleh berubah: beri `maks` pada TIAP baris VO, lalu ba
 
 **Direktori frame mengandung PID.** Dua rantai render yang tidak sengaja jalan bersamaan pernah melaporkan "900 frame ✓" padahal MP4-nya 2 detik.
 
+**MP4 ditulis BT.709 dan ditandai.** Frame JPEG Chromium adalah BT.601; dulu dikonversi dengan matriks BT.601 tanpa tanda, sementara Chrome, iOS, Android, dan aplikasi Meta membaca video HD tak bertanda sebagai BT.709. Didekode seperti pemutar (ffmpeg 6.1.1): hijau WhatsApp #25D366 (37,211,102) tampil 22,186,99, merah #E53935 (229,57,53) tampil 244,72,50. Konversi lewat RGB ke BT.709 rentang TV memberi selisih ≤ 3. `-sampul.jpg` yang dicuplik dari MP4 ikut dikonversi balik; tanpa itu #25D366 jadi 50,238,104.
+
 **A/B bus SFX di `check` tidak menyentuh `master.wav`.** Dulu master dan `stem/` ditimpa mix tanpa SFX lalu dipulihkan dengan mix ulang tanpa `finally`; `check` yang dihentikan di tengah meninggalkan master TANPA SFX untuk render berikutnya. Mix A/B kini ditulis ke `.master-tanpa-sfx.wav` dan dihapus sesudahnya.
 
 ## Berapa lama satu video

@@ -65,6 +65,9 @@ render bisa bernilai `dibatalkan`.
 - `motion check` menimpa `master.wav` dan `stem/` dengan mix tanpa SFX untuk A/B lalu memulihkannya
   tanpa `finally`; check yang dihentikan di tengah meninggalkan master tanpa SFX. A/B kini ditulis
   ke berkas sendiri, sekaligus hemat satu mix penuh (P8-02).
+- Warna MP4 bergeser di pemutar: frame dikonversi BT.601 tanpa tanda, sementara pemutar membaca
+  video HD tak bertanda sebagai BT.709 (#25D366 tampil 22,186,99). MP4 kini BT.709 bertanda,
+  termasuk gambar sampul yang ditempel dan `-sampul.jpg` (P8-03).
 
 ## [1.1.0] - 2026-11-04
 
