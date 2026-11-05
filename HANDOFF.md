@@ -1,6 +1,6 @@
 # Handoff pekerjaan motion-engine
 
-Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
+Terakhir diperbarui: 5 November 2026 (Asia/Jakarta).
 
 ## Sudah dikerjakan
 
@@ -66,13 +66,20 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
    render, P6-09 batalkan render + dasbor admin, P6-05 templat selesai. Server MCP di vps2
    menjalankan `035ab32` sejak 5 Nov 2026 (render parsial, subtitle, `cari_sfx` terurut; `/siap` 200). Berikutnya
    sesuai kebutuhan produk (P6-10 impor Claude Design: butuh profil login Chrome; perlu keputusan).
-3. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
+3. **P6-10 menunggu uji dengan proyek Design nyata** (`830c778`): `motion init --design=<tautan>`.
+   Nama kunci respons (`files[].path`, `content`) dan format tautan masih asumsi dari README.
+   Login sekali: `node bin/impor-design.mjs --masuk` (sudah dijalankan 5 Nov di mesin ini, belum
+   terbukti sesinya login) atau `--cdp` ke Chrome berport debug.
+4. **Belum ter-deploy ke vps2** (masih `035ab32`): P6-05 templat (`4b19080`), P6-07 cache VO, P6-08
+   webhook, P6-09 batalkan render + `/admin` (`7b8e942`), P6-10 (CLI saja). Deploy butuh skill `vps2`;
+   `/admin` aktif hanya bila `ADMIN_TOKEN` (>= 32 karakter) diisi.
+5. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
 
 ## Verifikasi terakhir
 
 ```sh
 npm ci                       # node_modules wajib ada; tanpa ini test/laju gagal impor SDK MCP
-npm test                     # 163 tes: 162 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
+npm test                     # 169 tes: 168 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
 npm run periksa:tipe         # tsc --noEmit bersih
 npm run periksa:playwright   # versi 1.64.1 selaras dengan Dockerfile
 git diff --check
