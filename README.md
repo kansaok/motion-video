@@ -208,6 +208,8 @@ Ini mengenai sebagian besar kata Indonesia dan tidak pernah terlihat kecuali bar
 
 `maks` **per baris VO: durasi TTS tidak deterministik.** Satu baris yang DIPENDEKKAN lima karakter pernah keluar 0,4 detik LEBIH panjang, karena konteks kalimat tetangganya ikut berubah. Di slot iklan yang ketat itu cukup memelarkan satu scene. `maks` mengubah batas jadi kontrak: generate ulang dengan seed berbeda sampai muat, dan kalau tidak pernah muat, pakai take terpendek lalu **katakan** — bukan diam-diam lewat.
 
+**Cache VO lintas proyek.** Baris yang permintaannya sama persis dengan yang pernah dibuat di proyek mana pun di mesin ini (teks terlafal, suara, model, seed, parameter suara, `maks`/`dengar`, DAN kalimat sebelum/sesudahnya) disalin dari `~/.motion/cache-vo/` tanpa memanggil ElevenLabs. Ini menghemat proyek yang disalin untuk angle atau rasio lain dan kalimat penutup yang berulang. Konteks tetangga sengaja ikut kunci, karena alasan yang sama dengan `maks` di atas: tetangga yang berubah mengubah intonasi dan durasi. Perkiraan biaya menghitung baris dari cache sebagai gratis, mencetak "hemat N kredit", dan mencatatnya di `biaya.json`. `--kering` memakai durasi persisnya. VO lama yang segar ikut mengisi cache saat `plan`/`mix`/`check` dijalankan. Cache per mesin: `rama-tuf` punya cache sendiri. `MOTION_CACHE_VO=off` mematikannya. `plan` dengan VO yang dihapus tetap mengambil dari cache; untuk benar-benar meminta take baru, ubah `seed`.
+
 `dengar` **per baris VO: take diterima hanya kalau transkripnya cocok.** Ejaan yang sama bisa benar di satu seed dan salah di seed lain ("Chat Wulan" -> "Jadwulan"). `dengar: /chat wulan/i` membuat `vo` mengulang dengan seed lain sampai cocok; `coba` per baris menaikkan batasnya (bawaan 4). Tiap take menambah satu panggilan STT (±Rp150).
 
 **Hasil generator SFX diperiksa sebelum diterima.** Satu prompt yang sah pernah kembali nyaris senyap; trim menghabiskan sisanya dan berkas 253 byte tetap ditulis seolah berhasil. Kegagalannya baru muncul di `mix`, sebagai `Error opening input files: Invalid argument` — tanpa menyebut berkas mana atau kenapa.
@@ -350,4 +352,4 @@ MOTION_PLAYWRIGHT=/path/ke/repo-yang-punya-playwright motion render proyek/video
 
 `.env` masuk `.gitignore`. Jangan di-commit dan jangan diunggah ke Drive. Berkas contoh hanya berisi nama variabel kosong.
 
-Penyetel yang boleh dikosongkan: `MOTION_ENV` (jalur `.env` lain), `WORKERS` (tab render, default 6), `MOTION_VIEWPORT` (default `2200x2400`; turunkan kalau Chromium mati karena memori), `MOTION_ENCODER`, `FFLOG`.
+Penyetel yang boleh dikosongkan: `MOTION_ENV` (jalur `.env` lain), `WORKERS` (tab render, default 6), `MOTION_VIEWPORT` (default `2200x2400`; turunkan kalau Chromium mati karena memori), `MOTION_ENCODER`, `FFLOG`, `MOTION_CACHE_VO` (jalur cache VO lintas proyek, bawaan `~/.motion/cache-vo`; `off` untuk mematikan).

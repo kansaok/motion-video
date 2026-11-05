@@ -24,7 +24,8 @@ Akses berbayar dikelola di bimp: menu **Tools → Motion MCP** (langganan, token
 | `cari_sfx` | cari di stok SFX (`sfx-stok/`, ±700 bunyi): terurut, sinonim Indonesia–Inggris, `mirip` |
 | `simpan_config` | config JSON (naskah, cue, musik, mixer), divalidasi saat disimpan |
 | `cuplik` | gambar frame pada detik tertentu |
-| `render` · `status_render` | antrean render → tautan MP4 + sampul + subtitle `.srt`/`.vtt` + naskah + laporan; `scene` atau `dari`/`sampai` untuk potongan saja |
+| `batalkan_render` | hentikan render milik sendiri yang antre/jalan; status `dibatalkan` |
+| `render` · `status_render` | antrean render → tautan MP4 + sampul + subtitle `.srt`/`.vtt` + naskah + laporan; `webhook` (https publik, ditandatangani HMAC) pengganti polling; `scene` atau `dari`/`sampai` untuk potongan saja |
 
 Config proyek lokal (`motion.config.mjs`) berisi fungsi JS. Di server bersama itu berarti
 menjalankan kode pelanggan, jadi config di MCP berupa JSON dan detik cue ditulis sebagai ekspresi

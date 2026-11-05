@@ -80,6 +80,10 @@ Semua rahasia ada di `.env.mcp` (tidak di-commit). Sesudah mengubahnya: `docker 
 | `UNDUH_RAHASIA` | semua tautan unduh MP4 yang sudah dibagikan langsung tidak berlaku | `openssl rand -hex 32`; tautan di `status_render` tersimpan saat render dan ikut tidak berlaku, jadi pelanggan perlu `render` ulang untuk tautan baru. Rotasi saat sepi |
 | `BIMP_SERVICE_KEY` | verifikasi token gagal sampai kedua sisi sama | ganti bersamaan dengan `MOTION_MCP_SERVICE_KEY` di `.env` API bimp, lalu `php artisan config:cache` di sana |
 | `MCP_DEV_TOKEN` | — | harus kosong di produksi; server menolak start bila terisi |
+| `ADMIN_TOKEN` | sesi dasbor `/admin` harus login ulang; rahasia webhook TIDAK terpengaruh | `openssl rand -hex 32`; kosong = dasbor mati (404); < 32 karakter = server menolak start |
+
+Rahasia webhook render diturunkan dari `UNDUH_RAHASIA` + id render, jadi rotasi `UNDUH_RAHASIA` juga
+membuat penerima webhook render yang sudah diantrekan tidak bisa memverifikasi kiriman berikutnya.
 
 Server menolak start di produksi bila `UNDUH_RAHASIA` < 32 karakter atau rahasia wajib kosong
 (`mcp/env.mjs`), jadi rotasi yang salah ketik terlihat sebagai container yang tidak mau naik,
@@ -95,3 +99,17 @@ Endpoint, metrik, dan format log: `mcp/README.md` bagian Pemantauan. Yang perlu 
 - `motion_antrean_panjang` mendekati `ANTRE_MAKS` dalam waktu lama.
 
 Log galat render: `docker logs motion-mcp 2>&1 | grep '"level":"error"'`.
+
+## Render macet: batalkan, jangan restart
+
+`docker restart motion-mcp` memutus SEMUA render dan sesi MCP pelanggan. Untuk satu render yang
+macet (watchdog hanya menjaga langkah frame; mix/encode yang menggantung baru berhenti oleh
+batas total):
+
+- Dasbor `https://motion.bi1mp.id/admin` (isi `ADMIN_TOKEN` di `.env.mcp`, nama pengguna bebas,
+  sandi = token). Halaman memuat antrean, render yang jalan beserta langkahnya, riwayat 30 render,
+  pemakaian disk per akun (⚠ di atas 90% kuota), dan tombol **batalkan** per render. Diperbarui
+  otomatis tiap 15 detik.
+- Pembatalan mematikan seluruh grup proses pekerja (bwrap, node, Chromium, ffmpeg), menghapus
+  direktori kerjanya, dan menandai render `dibatalkan` (webhook render ikut dipanggil).
+- Pelanggan bisa membatalkan render miliknya sendiri lewat alat MCP `batalkan_render`.

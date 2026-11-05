@@ -60,6 +60,7 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `lib/el.mjs` | klien ElevenLabs: TTS, SFX, musik, STT, kuota; golongan galat dan percobaan ulang |
 | `lib/kering.mjs` | `--kering`: perkiraan durasi VO (kalibrasi proyek / `suara.kps` / bawaan), rencana, cue, biaya tanpa ElevenLabs |
 | `lib/doktor.mjs` | `motion doctor`: cek prasyarat mesin (Node, ffmpeg, Playwright/Chromium, `.env`, disk/tmpfs, ElevenLabs) |
+| `lib/cachevo.mjs` | cache VO lintas proyek berkunci `.kunci` VO (termasuk konteks tetangga) |
 | `lib/biaya.mjs` | perkiraan biaya sebelum generate, gerbang `BIAYA_MAKS_USD`/`--ya`, `biaya.json` |
 | `lib/lafal.mjs` | ejaan akronim dan domain untuk TTS |
 | `lib/komposisi.mjs` | baca/tulis `OM_SCENES`, deteksi kontrak v1/v2, penambal JSX v1 |
@@ -74,7 +75,9 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `mcp/server.mjs` | Express: `/mcp`, `/unduh`, `/hidup`, `/siap`, `/metrik`, retensi |
 | `mcp/alat.mjs` | definisi tool MCP dan skema zod `Config` (kontrak di `mcp/PANDUAN.md`) |
 | `mcp/proyek.mjs` | penyimpanan per akun, kuota, retensi, tautan bertanda tangan, `keConfig` |
-| `mcp/antrean.mjs` | antrean render, sandbox bwrap, watchdog, cuplik bergiliran |
+| `mcp/antrean.mjs` | antrean render, sandbox bwrap, watchdog, cuplik bergiliran; `kabariWebhook` sesudah tugas berakhir; `batalkan` (antre dikeluarkan, jalan dihentikan via sinyal) |
+| `mcp/admin.mjs` | dasbor `/admin` (Basic `ADMIN_TOKEN`, CSRF per tombol, semua teks di-escape, CSP tanpa skrip) |
+| `mcp/webhook.mjs` | webhook render: validasi URL (https, publik), tanda HMAC per render, kirim ke IP yang diperiksa, ulang 5xx/429 |
 | `mcp/pekerja.mjs` | proses anak: menjalankan pipa atau cuplik |
 | `mcp/skema.mjs` | `versiSkema` dan migrasi config lama |
 | `mcp/log.mjs`, `metrik.mjs`, `sehat.mjs` | log JSON, Prometheus, kesiapan |

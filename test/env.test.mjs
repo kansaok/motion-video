@@ -15,6 +15,9 @@ test('produksi menolak setiap rahasia wajib yang kosong atau pendek', () => {
   assert.throws(() => periksaLingkungan({...lengkap, BIMP_API_URL: ''}), /BIMP_API_URL/);
   assert.throws(() => periksaLingkungan({...lengkap, BIMP_SERVICE_KEY: ''}), /BIMP_SERVICE_KEY/);
   assert.throws(() => periksaLingkungan({...lengkap, MCP_DEV_TOKEN: 'hanya-lokal'}), /MCP_DEV_TOKEN/);
+  // Dasbor admin opsional: kosong boleh, diisi pendek tidak.
+  assert.throws(() => periksaLingkungan({...lengkap, ADMIN_TOKEN: 'admin123'}), /ADMIN_TOKEN/);
+  assert.doesNotThrow(() => periksaLingkungan({...lengkap, ADMIN_TOKEN: 'x'.repeat(32)}));
 });
 
 test('produksi menerima konfigurasi lengkap dan pengembangan tidak dipaksa', () => {

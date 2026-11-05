@@ -15,6 +15,7 @@ import * as Log from './log.mjs';
 import * as M from './metrik.mjs';
 import {kesiapan} from './sehat.mjs';
 import {migrasiConfig} from './skema.mjs';
+import * as W from './webhook.mjs';
 
 // Versi yang diumumkan ke klien MCP mengikuti package.json; lihat CHANGELOG.md.
 const VERSI = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
@@ -293,13 +294,17 @@ export function buatServer(uid) {
   alat('render', 'Masukkan proyek ke antrean render: tempatkan VO, sesuaikan durasi scene, mix audio, render MP4, periksa. '
     + 'Kembali segera dengan id render; poll status_render. `frames` (misal 60) untuk uji cepat beberapa detik pertama. '
     + '`scene` (nama atau nomor mulai 1) atau `dari`/`sampai` (detik video sesudah penempatan VO) merender potongan saja, '
-    + 'audio ikut dipotong, ke berkas terpisah tanpa sampul dan tanpa pemeriksaan; MP4 penuh tidak tertimpa.',
+    + 'audio ikut dipotong, ke berkas terpisah tanpa sampul dan tanpa pemeriksaan; MP4 penuh tidak tertimpa. '
+    + '`webhook` (https publik) dipanggil POST saat render selesai/gagal, ditandatangani dengan rahasia yang dikembalikan di sini.',
   {proyek: Proyek, frames: z.number().int().min(1).max(600).optional(),
     scene: z.union([z.string().min(1).max(120), z.number().int().min(1)]).optional(),
-    dari: z.number().min(0).optional(), sampai: z.number().positive().optional()},
-  async ({proyek, frames, scene, dari, sampai}) => {
+    dari: z.number().min(0).optional(), sampai: z.number().positive().optional(),
+    webhook: z.string().max(W.WEBHOOK.maksPanjangUrl).optional()},
+  async ({proyek, frames, scene, dari, sampai, webhook}) => {
     if (scene !== undefined && (dari !== undefined || sampai !== undefined)) throw new Error('pakai `scene` ATAU `dari`/`sampai`, bukan keduanya');
     if (dari !== undefined && sampai !== undefined && sampai <= dari) throw new Error('`sampai` harus lebih besar dari `dari`');
+    // URL privat/http ditolak SEBELUM apa pun, bukan sesudah render beberapa menit.
+    if (webhook) await W.periksaWebhook(webhook);
     batasiLaju(uid, 'render');
     const p = Pr.buka(uid, proyek);
     const j = Pr.bacaConfig(p);
@@ -307,8 +312,11 @@ export function buatServer(uid) {
     // Tolak di pintu masuk: render yang diterima saat disk hampir penuh gagal di tengah encode.
     const k = kesiapan({dir: Pr.DATA});
     if (!k.siap) throw new Error(`server belum siap menerima render: ${k.alasan.join('; ')} — coba lagi nanti`);
-    const t = A.kirim(uid, p, {frames, scene, dari, sampai});
-    return teks({render: t.id, status: t.status, catatan: 'poll status_render tiap ±20 detik'});
+    const t = A.kirim(uid, p, {frames, scene, dari, sampai, webhook});
+    return teks({render: t.id, status: t.status,
+      catatan: webhook ? 'webhook akan dipanggil saat selesai/gagal; status_render tetap bisa dipoll' : 'poll status_render tiap ±20 detik',
+      ...(webhook ? {webhook: {rahasia: W.rahasiaWebhook(t.id),
+        verifikasi: 'X-Motion-Tanda = "sha256=" + hex(HMAC-SHA256(rahasia, X-Motion-Waktu + "." + body mentah)); tolak bila X-Motion-Waktu > 5 menit'}} : {})});
   });
 
   alat('status_render', 'Status render: antre (dengan urutan), jalan (dengan langkah), selesai (tautan MP4 + sampul + laporan), atau gagal (galat).',
@@ -318,6 +326,16 @@ export function buatServer(uid) {
       if (!t) throw new Error('render tidak ditemukan — sebutkan `render` atau `proyek`');
       return teks(t);
     }, {readOnlyHint: true});
+
+  alat('batalkan_render', 'Batalkan render milik sendiri yang masih antre atau sedang jalan (misal macet, atau config salah). '
+    + 'Yang antre langsung dikeluarkan; yang jalan dihentikan beserta Chromium/ffmpeg-nya, lalu status_render menjadi "dibatalkan". '
+    + 'Webhook render (bila ada) ikut dipanggil.',
+  {render: z.string().max(40).optional(), proyek: Proyek.optional()},
+  async ({render, proyek}) => {
+    const id = render || (proyek ? A.statusProyek(Pr.buka(uid, proyek))?.id : null);
+    if (!id) throw new Error('sebutkan `render` atau `proyek`');
+    return teks(A.batalkan(uid, id));
+  });
 
   return s;
 }

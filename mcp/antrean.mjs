@@ -11,6 +11,7 @@ import os from 'node:os';
 import * as Pr from './proyek.mjs';
 import * as Log from './log.mjs';
 import * as M from './metrik.mjs';
+import * as W from './webhook.mjs';
 
 const PARALEL = Number(process.env.RENDER_PARALEL || 1);
 const BERKAS_PEKERJA = fileURLToPath(new URL('./pekerja.mjs', import.meta.url));
@@ -63,14 +64,21 @@ const simpanStatus = (t) => {
   try { writeFileSync(path.join(t.dir, 'render.json'), JSON.stringify({...t, dir: undefined}, null, 1)); } catch { /* proyek sudah dihapus */ }
 };
 
+const TERMINAL = ['selesai', 'gagal', 'dibatalkan'];
+/* Pengendali batal tugas yang sedang jalan, di luar objek tugas: tugas diserialisasi ke
+   render.json dan `status_render`, AbortController tidak. */
+const pengendali = new Map();
+
 export function buatAntrean({paralel = PARALEL, maks = Pr.BATAS.antreMaks, kerjakanTugas = kerjakan,
-  simpan = simpanStatus, tunda = setImmediate, sekarang = () => Date.now(), durasiAwal = []} = {}) {
+  simpan = simpanStatus, tunda = setImmediate, sekarang = () => Date.now(), durasiAwal = [],
+  hentikanJalan = (t, alasan) => pengendali.get(t.id)?.abort(alasan),
+  padaDibatalkan = (t) => { if (t.opsi?.webhook) kabariWebhook(t).catch((e) => Log.galat('webhook gagal', {render: t.id, galat: e})); }} = {}) {
   const tugas = new Map(), antre = [], durasi = durasiAwal.slice(-10);
   let jalan = 0;
   const rata = () => durasi.length ? durasi.reduce((a, b) => a + b, 0) / durasi.length : null;
   const bersihkan = () => {
     const batas = sekarang() - 3600e3;
-    for (const [id, t] of tugas) if ((t.status === 'selesai' || t.status === 'gagal') && Date.parse(t.selesai || '') < batas) tugas.delete(id);
+    for (const [id, t] of tugas) if (TERMINAL.includes(t.status) && Date.parse(t.selesai || '') < batas) tugas.delete(id);
   };
   const status = (uid, id) => {
     bersihkan();
@@ -112,7 +120,24 @@ export function buatAntrean({paralel = PARALEL, maks = Pr.BATAS.antreMaks, kerja
     tugas.set(t.id, t); antre.push(t); simpan(t); tunda(putar);
     return t;
   };
-  return {kirim, status, statusProyek, putar, bersihkan, tugas, antre, jumlahJalan: () => jalan};
+  /* Batalkan (P6-09). Yang masih antre cukup dikeluarkan; yang jalan dihentikan lewat sinyal ke
+     `jalankanPekerja`, dan `kerjakan` yang menulis status akhirnya. Pelanggan hanya tugasnya
+     sendiri; admin semua. */
+  const batalkan = (uid, id, {admin = false, alasan = admin ? 'oleh admin' : 'oleh pemilik'} = {}) => {
+    const t = tugas.get(id);
+    if (!t || (!admin && t.uid !== Number(uid))) throw new Error(`render ${id} tidak ditemukan (atau sudah lebih dari sejam selesai)`);
+    if (TERMINAL.includes(t.status)) throw new Error(`render ${id} sudah ${t.status}`);
+    if (t.status === 'antre') {
+      antre.splice(antre.indexOf(t), 1);
+      Object.assign(t, {status: 'dibatalkan', langkah: 'dibatalkan', galat: `dibatalkan ${alasan}`, selesai: new Date(sekarang()).toISOString()});
+      simpan(t);
+      padaDibatalkan(t);
+    } else {
+      hentikanJalan(t, alasan);
+    }
+    return {render: t.id, status: t.status === 'jalan' ? 'menghentikan' : t.status};
+  };
+  return {kirim, status, statusProyek, putar, bersihkan, batalkan, tugas, antre, jumlahJalan: () => jalan};
 }
 
 /* Cuplik ditunggu langsung oleh panggilan alat, jadi tidak boleh ikut antre di belakang render
@@ -161,12 +186,14 @@ export function bersihkanTmpYatim({direktoriTmp = os.tmpdir(), umurMs = 6 * 3600
  * @param {any} t
  * @param {{buatProses?: typeof spawn, onLangkah?: (langkah: string) => void,
  *   onKemajuan?: (frame: number, totalFrame?: number) => void, batasMs?: number, macetMs?: number,
- *   bunuhGrup?: (pid: number) => void, buatKerja?: () => string, hapusKerja?: (dir: string) => void}} [opsi]
+ *   bunuhGrup?: (pid: number) => void, buatKerja?: () => string, hapusKerja?: (dir: string) => void,
+ *   batal?: AbortSignal}} [opsi]
  */
 export function jalankanPekerja(t, {
   buatProses = spawn, onLangkah = () => {}, onKemajuan = () => {},
   batasMs = Pr.BATAS.renderMenit * 60_000, macetMs = Pr.BATAS.renderMacetDetik * 1_000,
   bunuhGrup = (pid) => process.kill(-pid, 'SIGKILL'), buatKerja = buatDirKerja, hapusKerja = hapusDirKerja,
+  batal,
 } = {}) {
   return new Promise((selesai, gagal) => {
     let tuntas = false, timerBatas, watchdog, renderMulai = 0, frameTerakhir = 0;
@@ -176,14 +203,19 @@ export function jalankanPekerja(t, {
       tuntas = true;
       clearTimeout(timerBatas);
       clearInterval(watchdog);
+      batal?.removeEventListener('abort', padaBatal);
       // Frame dan profil Chromium tidak dibutuhkan lagi, berhasil ataupun gagal.
       if (dirKerja) try { hapusKerja(dirKerja); } catch (e) { Log.galat('direktori kerja pekerja tidak dapat dihapus', {dir: dirKerja, galat: e}); }
       fn(nilai);
     };
-    const hentikan = (pesan) => {
+    const hentikan = (pesan, dibatalkan = false) => {
       try { bunuhGrup(anak.pid); } catch (e) { Log.galat('pekerja render tidak dapat dihentikan', {pid: anak.pid, galat: e}); }
-      akhir(gagal, new Error(pesan));
+      akhir(gagal, Object.assign(new Error(pesan), {dibatalkan}));
     };
+    /* Pembatalan (P6-09) memakai jalur yang sama dengan watchdog: seluruh grup proses (bwrap,
+       node, Chromium, ffmpeg) dimatikan, direktori kerja dihapus. Tanpa ini render yang macet
+       di luar langkah frame (mix, encode) hanya berhenti oleh batas total atau restart container. */
+    const padaBatal = () => hentikan(`dibatalkan${batal?.reason ? `: ${batal.reason}` : ''}`, true);
     let perintah;
     try { dirKerja = buatKerja(); perintah = perintahPekerja(t, {dirKerja}); } catch (e) { akhir(gagal, e); return; }
     const anak = buatProses(perintah.perintah, perintah.argumen, {
@@ -206,6 +238,8 @@ export function jalankanPekerja(t, {
     anak.once('exit', (kode, sinyal) => {
       if (!tuntas) akhir(gagal, new Error(`pekerja render berhenti tanpa hasil (${sinyal || `kode ${kode}`})`));
     });
+    if (batal?.aborted) { padaBatal(); return; }
+    batal?.addEventListener('abort', padaBatal, {once: true});
     timerBatas = setTimeout(() => hentikan('melebihi batas waktu render'), batasMs);
     watchdog = setInterval(() => {
       if (renderMulai && Date.now() - renderMulai > macetMs) hentikan('render macet: jumlah frame tidak bertambah');
@@ -234,25 +268,30 @@ export function pencatatLangkah({amati = (detik, label) => M.langkahDetik.amati(
   };
 }
 
-async function kerjakan(t) {
+/** @param {any} t @param {{jalankan?: typeof jalankanPekerja}} [o] */
+export async function kerjakan(t, {jalankan = jalankanPekerja} = {}) {
   t.status = 'jalan'; t.mulai = new Date().toISOString();
   const jejak = pencatatLangkah(), t0 = Date.now();
   const langkah = (s) => {
     jejak.ganti(s); t.langkah = s; simpanStatus(t);
     Log.info('render langkah', {uid: t.uid, render: t.id, proyek: t.proyek, langkah: s, ms: Date.now() - t0});
   };
+  const ac = new AbortController();
+  pengendali.set(t.id, ac);
   try {
-    const hasil = await jalankanPekerja(t, {onLangkah: langkah});
+    const hasil = await jalankan(t, {onLangkah: langkah, batal: ac.signal});
     t.hasil = {...hasil,
       mp4: Pr.tautan(t.uid, t.proyek, hasil.mp4),
       sampul: hasil.sampul ? Pr.tautan(t.uid, t.proyek, hasil.sampul) : null,
       ...Object.fromEntries(['srt', 'vtt', 'naskah'].filter((k) => hasil[k]).map((k) => [k, Pr.tautan(t.uid, t.proyek, hasil[k])]))};
     t.status = 'selesai';
   } catch (e) {
-    t.status = 'gagal';
+    t.status = e.dibatalkan ? 'dibatalkan' : 'gagal';
     t.galat = String(e.message || e).slice(0, 1500);
-    Log.galat('render gagal', {uid: t.uid, render: t.id, proyek: t.proyek, langkah: t.langkah, galat: t.galat});
+    if (e.dibatalkan) Log.info('render dibatalkan', {uid: t.uid, render: t.id, proyek: t.proyek, langkah: t.langkah});
+    else Log.galat('render gagal', {uid: t.uid, render: t.id, proyek: t.proyek, langkah: t.langkah, galat: t.galat});
   } finally {
+    pengendali.delete(t.id);
     jejak.selesai();
     M.renderTotal.tambah({status: t.status});
     M.renderDetik.amati((Date.now() - t0) / 1000);
@@ -260,11 +299,38 @@ async function kerjakan(t) {
     t.selesai = new Date().toISOString();
     t.langkah = t.status;
     simpanStatus(t);
+    // Tidak ditunggu: penerima yang lambat tidak boleh menahan render berikutnya di antrean.
+    if (t.opsi?.webhook) kabariWebhook(t).catch((e) => Log.galat('webhook gagal', {render: t.id, galat: e}));
   }
+}
+
+/* Webhook (P6-08) sesudah tugas selesai/gagal. Hasilnya (tanpa rahasia) ikut `status_render`.
+   @param {any} t */
+export async function kabariWebhook(t, {kirim = W.kirimWebhook, simpan = simpanStatus} = {}) {
+  const isi = {peristiwa: `render.${t.status}`, render: t.id, proyek: t.proyek, status: t.status, selesai: t.selesai,
+    ...(t.status === 'selesai' ? {hasil: t.hasil} : {galat: t.galat})};
+  t.webhook = {keadaan: 'mengirim'};
+  simpan(t);
+  const r = await kirim(t.opsi.webhook, isi, W.rahasiaWebhook(t.id));
+  // `keadaan` terpisah dari kode HTTP: `{status: ..., ...r}` dulu tertimpa `r.status` (200).
+  t.webhook = {keadaan: r.terkirim ? 'terkirim' : 'gagal', ...(r.status ? {http: r.status} : {}), percobaan: r.percobaan,
+    ...(r.galat ? {galat: r.galat} : {})};
+  simpan(t);
+  Log.info('webhook', {uid: t.uid, render: t.id, terkirim: r.terkirim, status: r.status, percobaan: r.percobaan});
+  return r;
 }
 
 const antrean = buatAntrean();
 export const kirim = (...argumen) => antrean.kirim(...argumen);
 export const status = (...argumen) => antrean.status(...argumen);
 export const statusProyek = (...argumen) => antrean.statusProyek(...argumen);
+export const batalkan = (...argumen) => antrean.batalkan(...argumen);
+/** Hentikan tugas yang sedang jalan lewat pengendalinya (dipakai tes dan `batalkan`). @param {string} id */
+export const hentikanTugas = (id, alasan = 'uji') => pengendali.get(id)?.abort(alasan);
+/** Untuk dasbor admin: semua tugas di memori (antre, jalan, terminal < 1 jam), urutan antre. */
+export const daftarTugas = () => {
+  antrean.bersihkan();
+  return [...antrean.tugas.values()].map((t) => ({...t, dir: undefined,
+    urutan: t.status === 'antre' ? antrean.antre.indexOf(t) + 1 : undefined}));
+};
 export const ringkasAntrean = () => ({antre: antrean.antre.length, jalan: antrean.jumlahJalan()});

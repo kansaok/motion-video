@@ -13,9 +13,19 @@ Aturan versi:
 
 Hampir semua perubahan di bawah ada di CLI (`motion`). Di server MCP: perbaikan mixer (dipakai
 keduanya), parameter render parsial yang aditif (`scene`, `dari`, `sampai` di alat `render`),
-tautan subtitle di hasil `status_render`, dan pencarian `cari_sfx` yang terurut (parameter `mirip`).
+tautan subtitle di hasil `status_render`, pencarian `cari_sfx` yang terurut (parameter `mirip`), dan
+`webhook` di alat `render`, `batalkan_render`, dan dasbor `/admin`. Semuanya aditif; status
+render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
+- Alat MCP `batalkan_render` dan dasbor admin `/admin` (aktif bila `ADMIN_TOKEN` >= 32 karakter):
+  antrean, render jalan, riwayat, disk per akun, tombol batalkan (CSRF per render). Status render baru
+  `dibatalkan`; pembatalan mematikan seluruh grup proses pekerja tanpa restart container.
+- Alat MCP `render` menerima `webhook`: POST bertanda tangan HMAC (`X-Motion-Waktu`, `X-Motion-Tanda`)
+  saat render selesai/gagal; hanya https ke alamat publik, IP dipatok saat kirim (anti DNS rebinding),
+  tanpa redirect, maksimal 3 percobaan; keadaannya di `status_render.webhook`.
+- Cache VO lintas proyek (`~/.motion/cache-vo`, `MOTION_CACHE_VO`): baris dengan permintaan identik
+  (termasuk kalimat tetangga) tidak dibayar ulang; perkiraan biaya dan `biaya.json` mencatat hematnya.
 - Pencarian stok SFX terurut (nama > cocok-untuk > prompt > kategori), sinonim Indonesia–Inggris,
   negasi di prompt diabaikan, saran kata untuk kueri kosong, `motion stok --mirip=<id>`; alat MCP
   `cari_sfx` menerima `mirip` (aditif).

@@ -17,6 +17,7 @@ import * as Log from './log.mjs';
 import * as M from './metrik.mjs';
 import * as A from './antrean.mjs';
 import {kesiapan, diskBebasMb} from './sehat.mjs';
+import {pasangAdmin} from './admin.mjs';
 
 try {
   periksaLingkungan();
@@ -30,6 +31,10 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', true);
 app.use(express.json({limit: `${Pr.BATAS.unduhMb * 1.4 + 2}mb`}));
+
+// Dasbor admin (P6-09): 404 kecuali ADMIN_TOKEN diisi; lihat mcp/admin.mjs.
+pasangAdmin(app, {token: process.env.ADMIN_TOKEN, daftarTugas: A.daftarTugas, batalkan: A.batalkan, DATA: Pr.DATA,
+  pakai: (uid) => Pr.pemakaianAkun(uid), kuotaMb: Pr.BATAS.kuotaMb, log: (p, d) => Log.info(p, d)});
 
 /* /hidup: proses menjawab. /siap: alat render ada dan disk DATA cukup. /sehat dipakai
    HEALTHCHECK Docker dan berarti sama dengan /siap, supaya disk yang hampir penuh tampak

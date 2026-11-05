@@ -29,6 +29,16 @@ lalu URL audionya diunggah ke sini.
    dirender, audio ikut dipotong, hasilnya berkas `-potong-<dari>-<sampai>.mp4` terpisah (tanpa
    sampul, tanpa pemeriksaan audio MP4; `potongan` di hasil menyebut rentangnya). MP4 penuh tidak
    tertimpa; potongan sebelumnya diganti.
+   Pengganti polling: `render` dengan `webhook: "https://…"` (host publik; http, kredensial di URL,
+   dan alamat jaringan dalam ditolak). Saat render selesai/gagal server mengirim POST JSON
+   `{peristiwa: "render.selesai"|"render.gagal", render, proyek, status, selesai, hasil | galat}`
+   dengan header `X-Motion-Waktu` (detik unix) dan `X-Motion-Tanda: sha256=<hex>`. Verifikasi:
+   `hex(HMAC-SHA256(rahasia, X-Motion-Waktu + "." + body mentah))` sama dengan tandanya (bandingkan
+   waktu-konstan) dan waktunya ≤ 5 menit. `rahasia` hanya dikembalikan sekali di jawaban `render`;
+   simpan. Pengiriman diulang sampai 3 kali untuk galat jaringan/5xx/429, redirect tidak diikuti;
+   keadaannya ada di `status_render.webhook` (`keadaan`, `http`, `percobaan`, `galat`).
+   Render yang salah config atau macet: `batalkan_render` (`render` atau `proyek`). Yang antre langsung
+   keluar; yang jalan dihentikan; statusnya `dibatalkan` dan render baru bisa langsung dikirim.
 
 Yang perlu dicek di laporan: `mp4_lufs` di -14 ±1, `mp4_dbtp` ≤ -1,0, `sampul_kontras` ≥ 75%
 (frame 0 = sampul Reels/TikTok, jadi scene pertama jangan dibuka dengan fade dari hitam).
