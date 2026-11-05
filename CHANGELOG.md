@@ -19,6 +19,9 @@ render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
 
+- Waktu per kata VO (P8-10, opt-in `suara.waktuKata: true`, CLI): TTS `with-timestamps`, waktu kata naskah
+  di `vo-NN.mp3.kata.json` (bersidik MP3), `VO_TIMING[].kata` di `timing.js` untuk kapsi kata-demi-kata,
+  dan subtitle yang dipotong tepat di batas kata. Ikut cache VO lintas proyek.
 - `motion kirim` (P8-12): MP4 tiap rasio, sampul, dan subtitle ke `~/Videos/Ads/<Merek>/<Angle>/` dengan
   nama `<merek>-<angle>-<rasio>.mp4`, plus `naskah.md` (VO per detik dari penempatan yang sama dengan
   mixer, musik, SFX, teks layar, angka mutu). Gerbang mutu memakai ambang `check`; berkas tujuan yang
