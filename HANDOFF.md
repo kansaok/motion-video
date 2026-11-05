@@ -62,7 +62,7 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
    `vps2:/root/backup-motionmcp/`, image lama `motion-mcp:prev`. Server bukan checkout git:
    kirim dengan rsync dan **jangan hapus `sfx-stok/*.mp3`** (tidak ada di git).
 2. **Fase 6**: P6-01 `motion doctor`, P6-11 `--kering`, P6-02 render parsial selesai. Server MCP di vps2
-   masih 1.1.0 tanpa parameter render parsial; deploy ulang bila dibutuhkan pelanggan. Berikutnya
+   menjalankan `9820af0` sejak 5 Nov 2026 (render parsial aktif, `/siap` 200). Berikutnya
    sesuai kebutuhan produk (P6-04 subtitle, P6-08 webhook, P6-09 batalkan render).
 3. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
 
