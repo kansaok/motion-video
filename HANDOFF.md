@@ -73,11 +73,15 @@ Terakhir diperbarui: 5 November 2026 (Asia/Jakarta).
 4. **vps2 menjalankan `5d71b62` sejak 5 Nov 2026** (P6-05 templat, P6-07 cache VO, P6-08 webhook,
    P6-09 batalkan render; P6-10 hanya CLI). Cadangan pra-deploy `/root/backup-motionmcp/*-20261105045103.tgz`,
    image lama `motion-mcp:prev`. Terverifikasi: `/hidup` dan `/siap` 200 (dalam dan publik), `/metrik` dan
-   `/admin` 404 dari publik, 694 MP3 stok utuh, `cari_sfx` dan `templat/` ada di container. **Render sungguhan gagal** sampai
-   `bwrap` diperbaiki; 5 Nov 2026 dipasang seccomp + AppArmor khusus (`scripts/vps2/`, sysctl host tetap 1,
-   detail di `docs/isolasi-renderer.md`). `bwrap` dan Chromium bersandbox lulus di container, healthy.
-   **Belum diuji**: render penuh sesudah perbaikan (Chromium DI DALAM bwrap), webhook ke URL nyata,
-   `batalkan_render`. Tugas baru yang disarankan: renderer sebagai container terpisah tanpa rahasia.
+   `/admin` 404 dari publik, 694 MP3 stok utuh, `cari_sfx` dan `templat/` ada di container. **Render lewat sandbox bwrap berjalan** sejak 5 Nov 2026 (`1011727`).
+   Tiga lapis penyebab ditemukan berurutan, semuanya sudah dibenahi: (1) namespace diblokir Docker + Ubuntu
+   (seccomp/AppArmor khusus di `scripts/vps2/`, sysctl host tetap 1; `docs/isolasi-renderer.md`);
+   (2) `--clearenv` membuang `NODE_CHANNEL_FD` sehingga pekerja keluar kode 0 tanpa hasil;
+   (3) `--clearenv` membuang `PLAYWRIGHT_BROWSERS_PATH`. Terverifikasi di container produksi: cuplik 3,1 dtk dan
+   render uji 60 frame (32,5 dtk video, Chromium `chromiumSandbox` di dalam bwrap). **Belum diuji**: render
+   penuh lewat alat MCP dari claude.ai, webhook ke URL nyata, `batalkan_render`. Perhatikan: satu uji
+   Chromium-di-bwrap berakhir dengan assertion libuv (kode 134) SESUDAH selesai; tidak terulang di pekerja
+   asli, tetap dipantau. Tugas baru yang disarankan: renderer sebagai container terpisah tanpa rahasia.
    `/admin` nonaktif karena `ADMIN_TOKEN`
    belum diisi di `.env.mcp` (keputusan pemilik).
 5. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
