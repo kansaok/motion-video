@@ -30,6 +30,7 @@ Dokumen kerja untuk agent (dan manusia). Sumbernya adalah audit kode pada 4 Nov 
 - Fase 5: Audio, musik, dan pemeriksaan
 - Fase 6: Fitur baru
 - Fase 7: Dokumentasi & kebersihan repo
+- Fase 8: Hasil, kecepatan, dan nilai jual (audit 5 Nov 2026)
 - Lampiran: urutan eksekusi, definisi selesai, catatan hasil
 
 ---
@@ -325,6 +326,62 @@ Urut dari nilai/biaya terbaik. Tiap fitur harus ada tesnya dan satu paragraf di 
 
 ---
 
+## Fase 8: Hasil, kecepatan, dan nilai jual
+
+Sumber: audit 5 Nov 2026 atas `lib/render.mjs`, `lib/pipa.mjs`, `lib/mix.mjs`, `lib/vo.mjs`, `lib/sfx.mjs`,
+`lib/periksa.mjs`, `mcp/pekerja.mjs`, `mcp/alat.mjs`. Perkiraan hemat waktu dihitung dari tabel "Berapa lama
+satu video" di README (video 67,6 dtk ≈ 4,5 menit), belum diukur.
+
+### Perbaikan hasil (selesai, lihat catatan hasil)
+- **P8-01** Stage lebih besar dari viewport terpotong lalu gepeng **[TERBUKTI]** (`render.viewportUntuk`, `cekUkuranFrame`).
+- **P8-02** A/B `check` menimpa `master.wav` tanpa `finally` **[TERBUKTI]** (`mix.rakit` `keluar`/`stem`).
+- **P8-03** Warna MP4 BT.601 tanpa tanda **[TERBUKTI]** (`render.argMux`, `argSampulVideo`).
+
+### P8-04 VO dan SFX paralel
+- **Berkas**: `lib/vo.mjs` (loop `for…await`), `lib/sfx.mjs`, `lib/el.mjs`.
+- **Langkah**: kolam permintaan dengan batas `EL_PARALEL` (bawaan 4; batas konkurensi akun ElevenLabs);
+  konteks tetangga hanya teks, jadi baris saling bebas. Urutan log dan galat tetap per baris; kuota
+  habis membatalkan sisa kolam. `motion all`: SFX berjalan bersamaan dengan VO.
+- **Selesai bila**: tes server tiruan dengan jeda 300 ms per permintaan: 8 baris selesai < 1 dtk, kunci
+  dan berkas identik dengan jalur berurutan. Perkiraan: plan + sfx ±60 dtk → ±15 dtk.
+
+### P8-05 Frame dirender bersamaan dengan musik + mix
+- **Berkas**: `bin/motion.mjs` (`all`), `mcp/pekerja.mjs`, `lib/render.mjs` (pisah capture dan mux).
+- **Langkah**: sesudah `apply` timeline sudah final; capture frame tidak butuh audio. Jalankan capture
+  bersamaan dengan `music` + `mix`, mux sesudah keduanya selesai. Perkiraan hemat ±30 dtk.
+
+### P8-06 Encode berjalan selama capture
+- **Berkas**: `lib/render.mjs`.
+- **Langkah**: tiap tab mengalirkan JPEG ke ffmpeg-nya sendiri (`image2pipe`), segmen digabung `concat -c copy`
+  dengan kalibrasi puncak AAC yang sama. Ukur di rama-tuf dan di VPS 4 vCPU (CPU dipakai bersama Chromium).
+
+### P8-07 Mode draf
+- `motion render --draf` dan parameter MCP `draf: true`: 540p, 15 fps, `-preset veryfast`, tanpa sampul/periksa.
+  Untuk review; ±5–8× lebih cepat. Berkas keluaran terpisah seperti potongan.
+
+### P8-08 MCP: jangan mix ulang bila audio tidak berubah
+- **Berkas**: `mcp/pekerja.mjs`, `lib/pipa.mjs`. `master.wav` diberi `.kunci` (VO, cue, musik, gate, mixer,
+  berkas sumber) seperti aset lain; render ulang sesudah revisi visual, `scene`, atau `frames` melewati mix.
+
+### P8-09 `check` lebih ringan
+- `periksa.hening` membaca PCM sekali (sekarang satu ffmpeg per 20 ms jendela); `lufs` + `puncakSejati`
+  dari satu lintasan ebur128; `ratakan` menerapkan gain di filtergraph, bukan menulis MP3 baru (encode
+  MP3 generasi kedua untuk tiap VO/SFX/musik — juga soal mutu).
+
+### P8-10 Kapsi per kata
+- TTS `with-timestamps` (gratis bersama TTS) dan STT kata untuk unggahan MCP; `VO_TIMING[].kata`
+  di kontrak v2; subtitle memakai batas kata. Membuka kapsi gaya karaoke Reels/TikTok.
+
+### P8-11 MCP: varian rasio dan unggah VO sekaligus
+- `render` menerima `varian` (setara `--semua-varian`). `unggah` menerima daftar `{no, url}` dalam satu
+  panggilan: sekarang 23 baris VO = ±70 panggilan tool (generate, poll, unggah).
+
+### P8-12 Nilai jual (urut nilai/biaya)
+- Stok musik berencana seperti `sfx-stok` (mood/BPM) untuk MCP; varian hook untuk uji A/B Meta (render
+  parsial scene pertama + sambung); brand kit per akun; persen + ETA frame di `status_render`; overlay zona
+  aman Reels/TikTok di `cuplik`; satu video beberapa bahasa; `motion kirim` ke `~/Videos/Ads/<Merek>/<Angle>/`
+  beserta `naskah.md`.
+
 ## Lampiran A: Urutan eksekusi yang disarankan
 
 1. P0-03 → P0-01 → P0-02 (fondasi; perubahan kecil, risiko rendah)
@@ -382,6 +439,9 @@ Urut dari nilai/biaya terbaik. Tiap fitur harus ada tesnya dan satu paragraf di 
 | P6-09 | 5 Nov 2026 | `jalankanPekerja` menerima AbortSignal: jalur yang sama dengan watchdog (`bunuhGrup` grup proses, hapus dir kerja). `antrean.batalkan` (antre dikeluarkan, jalan dihentikan; pemilik saja, admin semua), status terminal `dibatalkan`, webhook ikut. Alat MCP `batalkan_render`. `mcp/admin.mjs`: 404 tanpa `ADMIN_TOKEN` (>= 32, dicek `periksaLingkungan`), Basic, CSRF HMAC per render, escape + CSP tanpa skrip. Tes: proses Node sungguhan + cucunya mati oleh pembatalan; dasbor lewat HTTP (escape `<script>` nama proyek, CSRF render lain ditolak); mutasi (escape, CSRF) tertangkap. | 7b8e942 |
 | P6-05 | 5 Nov 2026 | `templat/{iklan,testimoni,trailer,tutorial}` + `lib/templat.mjs`; pola dari survei 81 proyek lama (590b8ee^) dan IKLAN.md. `motion init --templat`, MCP `daftar_templat`/`pakai_templat` (validasi `simpanConfig` yang sama dengan `simpan_config`; gagal = proyek dihapus). Dockerfile menyalin `templat/`. **Temuan dari cuplikan**: stage 1080x1920 tetap terpotong di viewport < stage (MOTION_VIEWPORT=1400x1600 memotong kapsi), lolos cek teks; kini diskalakan agar muat. Kapsi pertama di frame 0, kapsi di atas zona UI Reels. Tes: mesin identik, CLI = MCP per detik cue, aturan IKLAN di config, `plan --kering` tiap templat, tata letak + render 60 frame tiap templat (Chromium); CI kini memasang Chromium (Node 20). Mutasi (viewport, kapsi frame 0) tertangkap. Desain visualnya sederhana; perlu dinilai mata manusia. | 4b19080 |
 | P6-10 | 5 Nov 2026 | `lib/imporDesain.mjs` + `bin/impor-design.mjs` + `motion init --design=`. Profil Playwright persisten (`--masuk` sekali) atau `--cdp`. Validasi dan skema respons diuji dengan sumber tiruan (suntikan dibuang, traversal/ganda/batas, respons salah bentuk → galat menyebut kunci). **Belum diuji terhadap endpoint hidup**: nama kunci respons (`files`/`path`, `content`) dan format tautan diasumsikan dari prosedur README; jalankan sekali dengan proyek nyata. | 830c778 |
+| P8-01 | 5 Nov 2026 | Dibuktikan dari kode Playwright 1.64 (`trimClipToSize` pada jalur non-fullPage). `viewportUntuk` (murni, diuji) + `muatkanStage` di `bukaStage` (render, cuplik, periksaVisual); `cekUkuranFrame` sebelum encode. Tes ujung-ke-ujung Chromium (`test/viewport.test.mjs`, stage PANDUAN di 1400x1600) **belum dijalankan**: CLAUDE.md melarang render di mesin kerja dan rama-tuf tidak terjangkau dari sini. | |
+| P8-02 | 5 Nov 2026 | `test/periksa-ab.test.mjs`; mutasi (kode `periksa` lama) tertangkap: master.wav ditulis ulang. | |
+| P8-03 | 5 Nov 2026 | `test/warna.test.mjs` (frame JPEG sintetis, didekode sebagai BT.709): pipa lama meleset 25 (hijau) dan tak bertanda; mutasi filter dan mutasi sampul masing-masing tertangkap. Diukur di ffmpeg 6.1.1; rama-tuf memakai 8.1.1, tes yang sama harus lulus di sana. | |
 | P2-04.4 (WebSocket lolos `page.route`?) | | | |
 | P2-04.3 (rebinding bisa direproduksi?) | | | |
 | | | | |

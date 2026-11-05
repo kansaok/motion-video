@@ -126,6 +126,7 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `check` melaporkan bed rata padahal tidak dibaca | ffmpeg gagal membaca stem | `periksa.lubang` (`galat`) |
 | MP4 di atas -1 dBTP | encode AAC final berbeda dari uji | `mix.mjs` (margin 0,3 dB) |
 | gambar gepeng di 4:5 / 1:1 | ukuran dari preset, bukan aspek | `render.render` |
+| bawah video hilang / gepeng di render MCP | stage lebih besar dari viewport, `clip` dipangkas Playwright | `render.viewportUntuk`, `cekUkuranFrame` |
 | warna merek beda di HP/browser | MP4 BT.601 tanpa tanda, dibaca BT.709 | `render.argMux`, `argSampulVideo` |
 | video tanpa SFX sesudah `check` dihentikan | A/B dulu menimpa `master.wav` | `pipa.periksa`, `mix.rakit` (`keluar`) |
 | `Target crashed` / `Unable to capture screenshot` | `/tmp` tmpfs penuh | `render.mjs`, README `TMPDIR`, `MOTION_VIEWPORT` |

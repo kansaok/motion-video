@@ -62,6 +62,11 @@ render bisa bernilai `dibatalkan`.
 - `bin/srt.mjs` memposisikan subtitle di awal scene + `off`, tidak mengikuti `tata`: di mode `alir` dan
   saat jangkar mendorong baris, subtitle muncul sebelum suaranya.
 - Mix video tanpa satu pun cue SFX gagal dengan `amix=inputs=0`.
+- Stage yang lebih besar dari viewport render (contoh minimal `mcp/PANDUAN.md`: stage 1080x1920 tanpa
+  skala, di viewport 1400x1600 bawaan Docker) keluar terpotong lalu gepeng tanpa galat, karena
+  Playwright memangkas `clip` screenshot ke viewport. Viewport kini diperbesar sampai stage muat;
+  stage yang tetap di luar halaman ditolak, dan frame yang aspeknya beda dengan keluaran
+  menggagalkan render sebelum encode (P8-01).
 - `motion check` menimpa `master.wav` dan `stem/` dengan mix tanpa SFX untuk A/B lalu memulihkannya
   tanpa `finally`; check yang dihentikan di tengah meninggalkan master tanpa SFX. A/B kini ditulis
   ke berkas sendiri, sekaligus hemat satu mix penuh (P8-02).

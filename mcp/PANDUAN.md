@@ -64,6 +64,8 @@ Satu berkas `.html` (nama bebas, misal `Video 9x16.dc.html`) di akar `src/`:
   `window.OM_CUES = [{nama, at}, …]` (cue SFX dari config, detik absolut). Pakai untuk kapsi dan
   beat yang harus jatuh tepat di kata atau bunyi. Sediakan perkiraan cadangan agar `cuplik`
   sebelum render tetap tampil. Spesifikasi lengkap: `docs/kontrak-komposisi-v2.md` di repo.
+- Stage lebih besar dari jendela render tidak apa-apa: jendelanya diperbesar sampai stage muat.
+  Stage yang posisinya tetap di luar halaman (misal `top` negatif) ditolak saat render.
 - Font dari Google Fonts boleh. Gambar: `unggah` `{jenis: "gambar", nama: "img/logo.png", url}`
   lalu rujuk relatif (`img/logo.png`).
 
