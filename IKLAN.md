@@ -115,9 +115,11 @@ Trek generator sudah punya arc-nya sendiri. Menumpuk ramp gelap-ke-terang kedua 
 
 ```sh
 for t in 0 5 10 16 23 35 40; do
-  ffmpeg -hide_banner -nostats -ss $t -t 3 -i aset/musik-norm.mp3 -af volumedetect -f null /dev/null 2>&1 | grep mean_volume
+  ffmpeg -hide_banner -nostats -ss $t -t 3 -i aset/musik.mp3 -af volumedetect -f null /dev/null 2>&1 | grep mean_volume
 done
 ```
+
+(Sejak P8-09 tidak ada lagi `musik-norm.mp3`: perataan -6 dBFS dipasang di filtergraph mixer. Perataan itu gain tetap, jadi SELISIH antarjendela yang dibaca di sini sama; angka mutlaknya saja yang bergeser.)
 
 Trek yang sudah rata (dengan `rencana`) butuh amplop yang rata juga.
 

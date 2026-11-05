@@ -6,6 +6,7 @@ import path from 'node:path';
 import {ff, durasi} from '../lib/ff.mjs';
 import {alamatPublik} from '../lib/jaring.mjs';
 import {pangkasVo} from '../lib/vo.mjs';
+import {salinSrc, salinAsetNonVo} from '../lib/salin.mjs';
 import {BATAS_BAWAAN, menitRenderBawaan, SFX, MUSIK} from '../lib/konstanta.mjs';
 import * as K from '../lib/komposisi.mjs';
 import {hitung} from './ekspresi.mjs';
@@ -64,6 +65,20 @@ export function daftar(uid) {
   return readdirSync(d).filter((n) => existsSync(path.join(d, n, 'meta.json')))
     .map((n) => JSON.parse(readFileSync(path.join(d, n, 'meta.json'), 'utf8')))
     .sort((a, b) => String(b.diubah).localeCompare(String(a.diubah)));
+}
+
+/* Salin proyek untuk bahasa/angle lain (P8-12): komposisi asli + SFX + musik, tanpa VO dan config
+   (config diganti pemanggil lewat simpanConfig). Gagal di tengah = proyek baru dihapus.
+   @param {number} uid @param {{src: string, aset: string}} asal @param {string} nama */
+export function salin(uid, asal, nama) {
+  const meta = buat(uid, nama);
+  const p = buka(uid, meta.id);
+  try {
+    salinSrc(asal.src, p.src);
+    salinAsetNonVo(asal.aset, p.aset);
+    periksaKuota(p);
+  } catch (e) { hapus(uid, meta.id); throw e; }
+  return meta;
 }
 
 export function buat(uid, nama) {

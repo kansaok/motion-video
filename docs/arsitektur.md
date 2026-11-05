@@ -26,7 +26,8 @@ flowchart LR
   SFX, dan musik digenerate lewat ElevenLabs (`lib/el.mjs`).
 - **MCP**: config adalah JSON (`config.json`); ekspresi detik berupa string dihitung oleh
   `mcp/ekspresi.mjs`, lalu `Pr.keConfig` mengubahnya menjadi objek config yang sama dengan CLI.
-  Server **tidak** membuat audio; semua audio diunggah (`suara.luar`, `@luar`, `musik.luar`).
+  Render tidak membuat audio; semua audio diunggah (`suara.luar`, `@luar`, `musik.luar`), kecuali VO yang
+  dibuat alat `buat_vo` di proses server dengan kunci ElevenLabs pelanggan (`mcp/rahasia.mjs`, P8-12).
 - Render MCP selalu di proses anak dalam sandbox bubblewrap (`antrean.perintahPekerja`); server
   HTTP sendiri tidak pernah menjalankan Chromium atau ffmpeg berat.
 
@@ -40,7 +41,7 @@ flowchart LR
 | terap | `terap`, `tulisTiming` | `pipa.mjs`, `komposisi.mjs` | `OM_SCENES`, `timing.js`, JSX v1 (dari `.asli`) |
 | SFX | `sfx` | `sfx.mjs`, `stok.mjs` | `aset/sfx/*.mp3` + `.kunci` |
 | musik | `musik` | `musik.mjs` | `aset/<nama>.mp3` + `.kunci` |
-| mix | `mix` → `mix.rakit` | `pipa.mjs`, `mix.mjs` | `aset/master.wav`, `stem/*.wav` |
+| mix | `mix` → `mix.rakit` | `pipa.mjs`, `mix.mjs` | `aset/master.wav` + `.kunci` + `.hasil.json`, `stem/*.wav` |
 | render | `render` → `render.render` | `render.mjs` | `<keluaran>.mp4`, `-sampul.jpg` |
 | periksa | `periksa` | `periksa.mjs` | laporan (tanpa berkas) |
 
@@ -61,6 +62,9 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `lib/templat.mjs`, `templat/` | pustaka templat: daftar, salin ke folder (CLI), berkas + config untuk `pakai_templat` (MCP) |
 | `lib/kering.mjs` | `--kering`: perkiraan durasi VO (kalibrasi proyek / `suara.kps` / bawaan), rencana, cue, biaya tanpa ElevenLabs |
 | `lib/doktor.mjs` | `motion doctor`: cek prasyarat mesin (Node, ffmpeg, Playwright/Chromium, `.env`, disk/tmpfs, ElevenLabs) |
+| `lib/kolam.mjs` | kolam kerja + perintis + semafor untuk generate ElevenLabs bersamaan (P8-04) |
+| `lib/salin.mjs` | proyek untuk bahasa/angle lain: `salinSrc` (dari `.asli`), `salinAsetNonVo`, `salinCli` (CLI `motion salin`, MCP `salin_proyek`) (P8-12) |
+| `lib/kirim.mjs` | `motion kirim`: salin hasil ke `~/Videos/Ads/<Merek>/<Angle>/`, `naskah.md`, gerbang mutu (P8-12) |
 | `lib/cachevo.mjs` | cache VO lintas proyek berkunci `.kunci` VO (termasuk konteks tetangga) |
 | `lib/biaya.mjs` | perkiraan biaya sebelum generate, gerbang `BIAYA_MAKS_USD`/`--ya`, `biaya.json` |
 | `lib/lafal.mjs` | ejaan akronim dan domain untuk TTS |
@@ -82,6 +86,7 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `mcp/pekerja.mjs` | proses anak: menjalankan pipa atau cuplik |
 | `mcp/skema.mjs` | `versiSkema` dan migrasi config lama |
 | `mcp/log.mjs`, `metrik.mjs`, `sehat.mjs` | log JSON, Prometheus, kesiapan |
+| `mcp/rahasia.mjs` | kunci ElevenLabs pelanggan (BYOK) terenkripsi per uid, untuk `kunci_elevenlabs`/`buat_vo` (P8-12) |
 | `mcp/auth.mjs`, `env.mjs` | verifikasi token ke bimp, rahasia wajib produksi |
 
 ## Di mana setiap cek berada
@@ -126,6 +131,9 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `check` melaporkan bed rata padahal tidak dibaca | ffmpeg gagal membaca stem | `periksa.lubang` (`galat`) |
 | MP4 di atas -1 dBTP | encode AAC final berbeda dari uji | `mix.mjs` (margin 0,3 dB) |
 | gambar gepeng di 4:5 / 1:1 | ukuran dari preset, bukan aspek | `render.render` |
+| bawah video hilang / gepeng di render MCP | stage lebih besar dari viewport, `clip` dipangkas Playwright | `render.viewportUntuk`, `cekUkuranFrame` |
+| warna merek beda di HP/browser | MP4 BT.601 tanpa tanda, dibaca BT.709 | `render.argMux`, `argSampulVideo` |
+| video tanpa SFX sesudah `check` dihentikan | A/B dulu menimpa `master.wav` | `pipa.periksa`, `mix.rakit` (`keluar`) |
 | `Target crashed` / `Unable to capture screenshot` | `/tmp` tmpfs penuh | `render.mjs`, README `TMPDIR`, `MOTION_VIEWPORT` |
 | MP4 2 detik padahal "900 frame ✓" | dua render berbagi direktori frame | `render.render` (PID di nama) |
 | render MCP mati OOM di video panjang | frame di tmpfs sandbox | `antrean.perintahPekerja` (`dirKerja`) |

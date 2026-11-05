@@ -10,5 +10,7 @@ export function periksaLingkungan(env = process.env) {
   if (String(env.MCP_DEV_TOKEN || '').trim()) kurang.push('MCP_DEV_TOKEN harus kosong di produksi');
   // Dasbor admin opsional, tapi token pendek di sana = tombol batalkan untuk semua akun yang bisa ditebak.
   if (env.ADMIN_TOKEN && String(env.ADMIN_TOKEN).length < 32) kurang.push('ADMIN_TOKEN (minimal 32 karakter, atau kosongkan)');
+  // BYOK opsional (buat_vo); rahasia pendek = kunci ElevenLabs semua pelanggan dilindungi kata sandi lemah.
+  if (env.KUNCI_ENKRIPSI && String(env.KUNCI_ENKRIPSI).length < 32) kurang.push('KUNCI_ENKRIPSI (minimal 32 karakter, atau kosongkan)');
   if (kurang.length) throw new Error(`konfigurasi produksi tidak aman: ${kurang.join(', ')}`);
 }

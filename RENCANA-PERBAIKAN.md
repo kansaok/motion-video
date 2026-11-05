@@ -30,6 +30,7 @@ Dokumen kerja untuk agent (dan manusia). Sumbernya adalah audit kode pada 4 Nov 
 - Fase 5: Audio, musik, dan pemeriksaan
 - Fase 6: Fitur baru
 - Fase 7: Dokumentasi & kebersihan repo
+- Fase 8: Hasil, kecepatan, dan nilai jual (audit 5 Nov 2026)
 - Lampiran: urutan eksekusi, definisi selesai, catatan hasil
 
 ---
@@ -325,6 +326,62 @@ Urut dari nilai/biaya terbaik. Tiap fitur harus ada tesnya dan satu paragraf di 
 
 ---
 
+## Fase 8: Hasil, kecepatan, dan nilai jual
+
+Sumber: audit 5 Nov 2026 atas `lib/render.mjs`, `lib/pipa.mjs`, `lib/mix.mjs`, `lib/vo.mjs`, `lib/sfx.mjs`,
+`lib/periksa.mjs`, `mcp/pekerja.mjs`, `mcp/alat.mjs`. Perkiraan hemat waktu dihitung dari tabel "Berapa lama
+satu video" di README (video 67,6 dtk ≈ 4,5 menit), belum diukur.
+
+### Perbaikan hasil (selesai, lihat catatan hasil)
+- **P8-01** Stage lebih besar dari viewport terpotong lalu gepeng **[TERBUKTI]** (`render.viewportUntuk`, `cekUkuranFrame`).
+- **P8-02** A/B `check` menimpa `master.wav` tanpa `finally` **[TERBUKTI]** (`mix.rakit` `keluar`/`stem`).
+- **P8-03** Warna MP4 BT.601 tanpa tanda **[TERBUKTI]** (`render.argMux`, `argSampulVideo`).
+
+### P8-04 VO dan SFX paralel
+- **Berkas**: `lib/vo.mjs` (loop `for…await`), `lib/sfx.mjs`, `lib/el.mjs`.
+- **Langkah**: kolam permintaan dengan batas `EL_PARALEL` (bawaan 4; batas konkurensi akun ElevenLabs);
+  konteks tetangga hanya teks, jadi baris saling bebas. Urutan log dan galat tetap per baris; kuota
+  habis membatalkan sisa kolam. `motion all`: SFX berjalan bersamaan dengan VO.
+- **Selesai bila**: tes server tiruan dengan jeda 300 ms per permintaan: 8 baris selesai < 1 dtk, kunci
+  dan berkas identik dengan jalur berurutan. Perkiraan: plan + sfx ±60 dtk → ±15 dtk.
+
+### P8-05 Frame dirender bersamaan dengan musik + mix
+- **Berkas**: `bin/motion.mjs` (`all`), `mcp/pekerja.mjs`, `lib/render.mjs` (pisah capture dan mux).
+- **Langkah**: sesudah `apply` timeline sudah final; capture frame tidak butuh audio. Jalankan capture
+  bersamaan dengan `music` + `mix`, mux sesudah keduanya selesai. Perkiraan hemat ±30 dtk.
+
+### P8-06 Encode berjalan selama capture
+- **Berkas**: `lib/render.mjs`.
+- **Langkah**: tiap tab mengalirkan JPEG ke ffmpeg-nya sendiri (`image2pipe`), segmen digabung `concat -c copy`
+  dengan kalibrasi puncak AAC yang sama. Ukur di rama-tuf dan di VPS 4 vCPU (CPU dipakai bersama Chromium).
+
+### P8-07 Mode draf
+- `motion render --draf` dan parameter MCP `draf: true`: 540p, 15 fps, `-preset veryfast`, tanpa sampul/periksa.
+  Untuk review; ±5–8× lebih cepat. Berkas keluaran terpisah seperti potongan.
+
+### P8-08 MCP: jangan mix ulang bila audio tidak berubah
+- **Berkas**: `mcp/pekerja.mjs`, `lib/pipa.mjs`. `master.wav` diberi `.kunci` (VO, cue, musik, gate, mixer,
+  berkas sumber) seperti aset lain; render ulang sesudah revisi visual, `scene`, atau `frames` melewati mix.
+
+### P8-09 `check` lebih ringan
+- `periksa.hening` membaca PCM sekali (sekarang satu ffmpeg per 20 ms jendela); `lufs` + `puncakSejati`
+  dari satu lintasan ebur128; `ratakan` menerapkan gain di filtergraph, bukan menulis MP3 baru (encode
+  MP3 generasi kedua untuk tiap VO/SFX/musik — juga soal mutu).
+
+### P8-10 Kapsi per kata
+- TTS `with-timestamps` (gratis bersama TTS) dan STT kata untuk unggahan MCP; `VO_TIMING[].kata`
+  di kontrak v2; subtitle memakai batas kata. Membuka kapsi gaya karaoke Reels/TikTok.
+
+### P8-11 MCP: varian rasio dan unggah VO sekaligus
+- `render` menerima `varian` (setara `--semua-varian`). `unggah` menerima daftar `{no, url}` dalam satu
+  panggilan: sekarang 23 baris VO = ±70 panggilan tool (generate, poll, unggah).
+
+### P8-12 Nilai jual (urut nilai/biaya)
+- Stok musik berencana seperti `sfx-stok` (mood/BPM) untuk MCP; varian hook untuk uji A/B Meta (render
+  parsial scene pertama + sambung); brand kit per akun; persen + ETA frame di `status_render`; overlay zona
+  aman Reels/TikTok di `cuplik`; satu video beberapa bahasa; `motion kirim` ke `~/Videos/Ads/<Merek>/<Angle>/`
+  beserta `naskah.md`.
+
 ## Lampiran A: Urutan eksekusi yang disarankan
 
 1. P0-03 → P0-01 → P0-02 (fondasi; perubahan kecil, risiko rendah)
@@ -380,7 +437,25 @@ Urut dari nilai/biaya terbaik. Tiap fitur harus ada tesnya dan satu paragraf di 
 | P6-07 | 5 Nov 2026 | `lib/cachevo.mjs`; kunci = `.kunci` VO yang sama dengan cache proyek, termasuk `sebelum`/`sesudah` (opsi pertama di rencana; konteks mengubah durasi). Isi `.kunci` dibandingkan persis saat dibaca; tulis via rename, `.kunci` terakhir. VO segar lama mengisi cache; `paksa` tidak membaca cache. Perkiraan: baris cache 0 kredit + `hemat`, dicetak dan dicatat di `biaya.json`; `--kering` memakai durasi cache. Tes dengan server TTS tiruan yang menjawab MP3 sungguhan: proyek kedua 0 permintaan, berkas identik; tetangga berbeda = 2 permintaan. Mutasi (lookup dibuang, kunci tanpa konteks) tertangkap. Tes tidak menyentuh `~/.motion`. | 7b8e942 |
 | P6-08 | 5 Nov 2026 | `mcp/webhook.mjs`: URL https publik (penjaga `alamatPublik` yang sama dengan unduhan), dicek saat `render` dipanggil dan saat kirim dengan SATU resolve yang juga dipakai untuk koneksi (SNI/Host nama asli) sehingga rebinding tidak bisa membelokkan POST; tanpa redirect. Rahasia per render = HMAC(UNDUH_RAHASIA, id), tidak disimpan di mana pun; tanda menutup waktu + body. 3 percobaan untuk jaringan/5xx/429; tidak menahan antrean. Tes: server HTTPS lokal dengan sertifikat `webhook.uji` (resolver disuntik), rebinding saat kirim ditolak tanpa satu pun permintaan, alat MCP menolak http/169.254.169.254. **Temuan saat menulis**: `{status: 'terkirim', ...r}` tertimpa kode HTTP; kini `keadaan` + `http`. Mutasi (koneksi ke nama host, tanpa cek publik) tertangkap. Notifikasi push di sisi bimp belum. | 7b8e942 |
 | P6-09 | 5 Nov 2026 | `jalankanPekerja` menerima AbortSignal: jalur yang sama dengan watchdog (`bunuhGrup` grup proses, hapus dir kerja). `antrean.batalkan` (antre dikeluarkan, jalan dihentikan; pemilik saja, admin semua), status terminal `dibatalkan`, webhook ikut. Alat MCP `batalkan_render`. `mcp/admin.mjs`: 404 tanpa `ADMIN_TOKEN` (>= 32, dicek `periksaLingkungan`), Basic, CSRF HMAC per render, escape + CSP tanpa skrip. Tes: proses Node sungguhan + cucunya mati oleh pembatalan; dasbor lewat HTTP (escape `<script>` nama proyek, CSRF render lain ditolak); mutasi (escape, CSRF) tertangkap. | 7b8e942 |
-| P6-05 | 5 Nov 2026 | `templat/{iklan,testimoni,trailer,tutorial}` + `lib/templat.mjs`; pola dari survei 81 proyek lama (590b8ee^) dan IKLAN.md. `motion init --templat`, MCP `daftar_templat`/`pakai_templat` (validasi `simpanConfig` yang sama dengan `simpan_config`; gagal = proyek dihapus). Dockerfile menyalin `templat/`. **Temuan dari cuplikan**: stage 1080x1920 tetap terpotong di viewport < stage (MOTION_VIEWPORT=1400x1600 memotong kapsi), lolos cek teks; kini diskalakan agar muat. Kapsi pertama di frame 0, kapsi di atas zona UI Reels. Tes: mesin identik, CLI = MCP per detik cue, aturan IKLAN di config, `plan --kering` tiap templat, tata letak + render 60 frame tiap templat (Chromium); CI kini memasang Chromium (Node 20). Mutasi (viewport, kapsi frame 0) tertangkap. Desain visualnya sederhana; perlu dinilai mata manusia. | (commit ini) |
+| P6-05 | 5 Nov 2026 | `templat/{iklan,testimoni,trailer,tutorial}` + `lib/templat.mjs`; pola dari survei 81 proyek lama (590b8ee^) dan IKLAN.md. `motion init --templat`, MCP `daftar_templat`/`pakai_templat` (validasi `simpanConfig` yang sama dengan `simpan_config`; gagal = proyek dihapus). Dockerfile menyalin `templat/`. **Temuan dari cuplikan**: stage 1080x1920 tetap terpotong di viewport < stage (MOTION_VIEWPORT=1400x1600 memotong kapsi), lolos cek teks; kini diskalakan agar muat. Kapsi pertama di frame 0, kapsi di atas zona UI Reels. Tes: mesin identik, CLI = MCP per detik cue, aturan IKLAN di config, `plan --kering` tiap templat, tata letak + render 60 frame tiap templat (Chromium); CI kini memasang Chromium (Node 20). Mutasi (viewport, kapsi frame 0) tertangkap. Desain visualnya sederhana; perlu dinilai mata manusia. | 4b19080 |
+| P6-10 | 5 Nov 2026 | `lib/imporDesain.mjs` + `bin/impor-design.mjs` + `motion init --design=`. Profil Playwright persisten (`--masuk` sekali) atau `--cdp`. Validasi dan skema respons diuji dengan sumber tiruan (suntikan dibuang, traversal/ganda/batas, respons salah bentuk → galat menyebut kunci). **Belum diuji terhadap endpoint hidup**: nama kunci respons (`files`/`path`, `content`) dan format tautan diasumsikan dari prosedur README; jalankan sekali dengan proyek nyata. | 830c778 |
+| P8-01 | 5 Nov 2026 | Dibuktikan dari kode Playwright 1.64 (`trimClipToSize` pada jalur non-fullPage). `viewportUntuk` (murni, diuji) + `muatkanStage` di `bukaStage` (render, cuplik, periksaVisual); `cekUkuranFrame` sebelum encode. Tes ujung-ke-ujung Chromium (`test/viewport.test.mjs`, stage PANDUAN di 1400x1600) lulus di mesin kerja (izin Rama, 5 Nov). Mutasi Chromium: kode lama → frame 1080x1600, y=1880 biru (`28,132,227`) bukan pita kapsi merah; tanpa pembesaran viewport → penjaga aspek menggagalkan render ("frame 1080x1600 tidak seaspek"). | |
+| P8-02 | 5 Nov 2026 | `test/periksa-ab.test.mjs`; mutasi (kode `periksa` lama) tertangkap: master.wav ditulis ulang. | |
+| P8-03 | 5 Nov 2026 | `test/warna.test.mjs` (frame JPEG sintetis, didekode sebagai BT.709): pipa lama meleset 25 (hijau) dan tak bertanda; mutasi filter dan mutasi sampul masing-masing tertangkap. Diukur di ffmpeg 6.1.1; rama-tuf memakai 8.1.1, tes yang sama harus lulus di sana. | |
+| P8-04 | 5 Nov 2026 | `lib/kolam.mjs` (kolam + perintis + semafor), dipakai `vo()`/`sfx()`; semafor per percobaan di `el.kirim`; `motion all` menjalankan `sfx` dan `rencana` bersamaan (allSettled). Tes `test/kolam.test.mjs`; tes kuota lama di `test/el.test.mjs` tidak diubah dan tetap lulus. Mutasi: perintis dibuang → 4 tes gagal termasuk tes kuota lama; semafor dibuang → 6 permintaan bersamaan tertangkap. Terukur (server tiruan 1,2 dtk): 62,5 → 22,3 dtk; paralel 5 = 22,8 dtk karena ffmpeg sinkron (`pangkasVo`, `ratakan`) menahan event loop — langkah lanjut: versi async. Belum diukur terhadap ElevenLabs sungguhan. | |
+| P8-08 | 5 Nov 2026 | Cache di `Pipa.mix` (berlaku CLI dan MCP), kunci `mix.kunciMix`: opsi rakit utuh + sidik isi sumber + sidik `mix.mjs`/`ff.mjs`; syarat master + 3 stem + `hasil.json`. A/B tidak menyentuh cache. Tes `test/mix-cache.test.mjs`. Mutasi: sidik jalur saja dan tanpa cek stem tertangkap; hapus kunci/hasil sebelum mix adalah dua lapis, mutasi keduanya tertangkap (satu saja tidak, karena lapis lain menahan). Hemat waktu di VPS belum diukur. | |
+| P8-07 | 5 Nov 2026 | `render.ukuranKeluaran` (murni; ukuran penuh identik dengan rumus lama) + `DRAF`; `Pipa.namaDraf`/`opsiRender` (satu pintu nama, `keluaran` dari opsi varian juga di-draf-kan); CLI `--draf` (juga `--semua-varian`), MCP `draf` (potongan/draf lama dibuang). Tes `test/draf.test.mjs`; mutasi (`...opsi` menimpa nama draf) tertangkap. Render draf sungguhan (Chromium, 540x960 15/1) lulus di mesin kerja (5 Nov); kecepatan nyata belum diukur di rama-tuf/VPS. | |
+| P8-09 | 5 Nov 2026 | `ff.gainRata` (ganti `ratakan`; gain di kepala rantai), `ff.lufs` tanpa `peak=true` + `ff.loudness` satu lintasan, `periksa.hening` satu dekode. Terukur (sintetis 60 dtk, 20 VO, 45 cue): mix 17,7 → 13,2 dtk; hening 7,7 → 0,15 dtk; ringkas 1,9 → 0,7 dtk; LUFS/dBTP master identik, jendela hening bergeser ≤ 0,02 dtk. **Temuan**: `hening` lama meloloskan MP4 tak terbaca (tes gagal di kode lama). Tes `test/audio-ringan.test.mjs`; mutasi (gain perataan dibuang) tertangkap. | |
+| P8-11 | 5 Nov 2026 | `render` `semua_rasio` → pekerja `semuaRasio` (Pipa.renderVarian, varian dari `jugaTulis` yang sudah divalidasi `jalurAman`, nama keluaran dari id proyek; `langkah('render')` per rasio mereset watchdog macet), antrean: batas × `rasio`, tautan per varian. `renderVarian` kini mencatat nama yang benar-benar ditulis (dengan `--draf` dulu menyebut nama MP4 penuh). `unggah_vo` (kolam 3, galat per baris, laju 1 token/5 baris). Tes `test/mcp-rasio.test.mjs` (klien MCP dalam memori, pekerja tiruan); mutasi batas dan galat per baris tertangkap. Render semua rasio sungguhan di container belum diuji. Server-side TTS (kunci ElevenLabs pelanggan) belum: `unggah_vo` hanya memangkas panggilan unggah, bukan generate + poll connector. | |
+| P8-12 (kemajuan) | 5 Nov 2026 | **Temuan**: `kerjakan` tidak meneruskan `onKemajuan`; frame dari pekerja hanya dibaca watchdog. `antrean.hitungKemajuan` (murni) + `t.kemajuan` per rasio, dibuang saat selesai. Selisih satu di hitungan rasio `semua_rasio` (langkah 'render' ganda di rasio pertama) diperbaiki di pekerja. Tes di `test/mcp-rasio.test.mjs`; mutasi (onKemajuan tidak diteruskan) tertangkap. | |
+| P8-12 (kirim) | 5 Nov 2026 | `lib/kirim.mjs` + `motion kirim`; tanpa API (durasi VO dari berkas, penempatan `tata`). Rasio dari piksel MP4, MP4 kandidat hanya utama + `varian` (draf/potongan tidak ikut), gerbang `nilaiVarian`, bentrok isi ditolak tanpa `--timpa`. Tes `test/kirim.test.mjs` (MP4 sintetis); mutasi gerbang dan bentrok tertangkap. CLAUDE.md "Tempat berkas" menunjuk perintah ini. | |
+| P8-13 (temuan) | 5 Nov 2026 | **Regresi 9e0bff6**: jalur TTS CLI memanggil `pangkasVo(..., {tempo: speed})` di atas speed API → VO speed 1,2 = ±1,44x. Ditemukan saat membaca jalur VO untuk P8-10. Perbaikan: tanpa tempo di CLI; kunci `pangkas: VO.versiPangkas`; `segarVo`/`cariCacheVo` menerima kunci lama hanya bila speed 1 atau dibuat < `VO.regresiTempoMs` (mtime `.kunci` / `dibuat` cache); dipakai `vo`, `biaya`, `kering`. Tes `test/vo-tempo.test.mjs`; mutasi (atempo ganda, kunci lama selalu sah) tertangkap. **Belum**: memeriksa proyek dan video di rama-tuf yang VO-nya dibuat sesudah 4 Nov 18:34 WIB; kalibrasi `--kering` kini melewati VO jendela itu (`vo.kenaRegresiTempo`, tes di `test/vo-tempo.test.mjs`). | |
+| P8-10 | 5 Nov 2026 | Bentuk respons dari docs ElevenLabs (context7: api-reference/text-to-speech/convert-with-timestamps). `el.suaraWaktu` (badan sama dengan `suara` lewat `badanSuara`), `lib/kata.mjs` (`petaKata` urut + interpolasi kata lafal-gabungan, berkas bersidik), `pangkasVo` mengembalikan `kepala`, `vo` opt-in `suara.waktuKata`, cache lintas proyek membawa berkas kata, `tulisTiming` `kata` absolut, `subtitel.isyarat` potong di kata. Tes `test/kata.test.mjs` (server tiruan berbentuk docs); mutasi (tanpa geser kepala, tanpa sidik, subtitle proporsional) tertangkap. **Belum**: panggilan sungguhan ke API (lalu jadikan bawaan), templat yang memakai `kata` (butuh Chromium), waktu kata untuk unggahan MCP. | |
+| Fase 8 Chromium | 5 Nov 2026 | `npm test` penuh di mesin kerja (izin Rama): 215 tes, 214 lulus, 1 dilewati (pembanding parser butuh `proyek/*/src`). Termasuk tes Chromium lama (tata letak, potongan, varian, templat 60 frame, kontrak v2) sesudah perubahan `render.mjs` P8-01/P8-03/P8-07. | |
+| P8-06 (dibantah) | 5 Nov 2026 | Dicoba: tiap tab mengalirkan JPEG ke ffmpeg sendiri (image2pipe → segmen, filter BT.709 yang sama, sampul di segmen yang memuat jendelanya, `concat -c copy` + audio di mux akhir; penjaga aspek dari header JPEG, jumlah frame per segmen via ffprobe). Hasil benar (300 frame, BT.709), tetapi di mesin kerja 8 core (300 frame templat iklan, 4 tab) **tidak lebih cepat**: jalur lama 25,8 / 27,0 / 28,3 dtk; segmen dengan `-threads` cpu/tab 31,6 / 31,9; thread otomatis 29,4 / 26,3. Load average 8,3: capture sudah memakan semua core, encode bersamaan hanya merebut CPU Chromium (encode sendiri 6,4 dtk). Tidak di-commit. Layak diukur ulang hanya di mesin dengan core jauh lebih banyak dari tab (rama-tuf 24 core); VPS 4 vCPU hampir pasti lebih buruk. | |
+| P8-05 | 5 Nov 2026 | `render` `tungguAudio` (frame dipotret dulu, audio ditunggu sebelum mux); `motion all` menjalankan musik di proses utama dan `motion mix` di proses anak bersamaan dengan render. **Temuan saat mengukur**: mix di proses yang sama memblokir event loop (`execFileSync`) → Playwright `TimeoutError` di screenshot. Terukur (8 core): 43,2/45,5 dtk berurutan → 30,5/32,0 dtk. Tes `test/tunggu-audio.test.mjs` (Chromium; mutasi tertangkap). Uji asap `motion all` ujung-ke-ujung pada salinan `contoh/kontrak-v2` dengan fetch tiruan: 18 dtk, check lolos. MCP belum (pekerja masih berurutan; mix MCP sering dari cache P8-08). | |
+| P8-12 (BYOK) | 5 Nov 2026 | `mcp/rahasia.mjs` (AES-256-GCM, HKDF dari `KUNCI_ENKRIPSI`, AAD uid, 0600, `DATA/rahasia/`), `EL.denganKunci` (AsyncLocalStorage), alat `kunci_elevenlabs` (diperiksa ke `/v1/user/subscription` sebelum disimpan) + `buat_vo` (vo() yang sama dengan CLI, perkiraan kredit via `segarVo` + `maks_kredit`), `MOTION_CACHE_VO=off` dipaksa di proses MCP. Tes `test/byok.test.mjs`; mutasi (tanpa AAD, tanpa denganKunci, cache tidak dimatikan) tertangkap. Cadangan sengaja tanpa `rahasia/`. **Belum**: deploy (isi `KUNCI_ENKRIPSI` di `.env.mcp` vps2), uji dengan kunci ElevenLabs sungguhan. Catatan produk: kunci yang ditempel di claude.ai tersimpan di riwayat chat pelanggan; formulir web di server akan menghindarinya. | |
+| P8-12 (bahasa) | 5 Nov 2026 | `lib/salin.mjs`; CLI `motion salin` (config baru meng-import config asal, larik `NASKAH`, lafal/dengar/maks dibuang), MCP `salin_proyek` (naskah per nomor, `belumDiganti`, gagal = proyek baru dihapus). Komposisi dari `.asli`, `timing.js` lama dibuang, SFX/musik + `.kunci` ikut, VO tidak. Tes `test/salin.test.mjs`; mutasi (salin versi kerja, bukan `.asli`) tertangkap. Penerjemahnya klien (Claude) atau penulis config; mesin tidak menerjemahkan. | |
 | P2-04.4 (WebSocket lolos `page.route`?) | | | |
 | P2-04.3 (rebinding bisa direproduksi?) | | | |
 | | | | |

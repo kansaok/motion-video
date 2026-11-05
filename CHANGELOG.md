@@ -18,6 +18,31 @@ tautan subtitle di hasil `status_render`, pencarian `cari_sfx` yang terurut (par
 render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
+
+- Satu video, banyak bahasa (P8-12): `motion salin --ke= --bahasa= --suara=` dan alat MCP `salin_proyek`.
+  Komposisi versi `.asli`, SFX, dan musik ikut; VO tidak; naskah diganti per baris, durasi scene
+  menyesuaikan VO baru.
+- MCP BYOK (P8-12): `kunci_elevenlabs` menyimpan kunci ElevenLabs pelanggan terenkripsi (AES-256-GCM,
+  `KUNCI_ENKRIPSI`, terikat uid, di luar folder proyek) dan `buat_vo` membuat VO semua baris di server.
+  Kunci per permintaan (`EL.denganKunci`), tidak pernah masuk sandbox render; cache VO lintas proyek
+  selalu mati di server MCP (dipakai bersama semua akun).
+- Waktu per kata VO (P8-10, opt-in `suara.waktuKata: true`, CLI): TTS `with-timestamps`, waktu kata naskah
+  di `vo-NN.mp3.kata.json` (bersidik MP3), `VO_TIMING[].kata` di `timing.js` untuk kapsi kata-demi-kata,
+  dan subtitle yang dipotong tepat di batas kata. Ikut cache VO lintas proyek.
+- `motion kirim` (P8-12): MP4 tiap rasio, sampul, dan subtitle ke `~/Videos/Ads/<Merek>/<Angle>/` dengan
+  nama `<merek>-<angle>-<rasio>.mp4`, plus `naskah.md` (VO per detik dari penempatan yang sama dengan
+  mixer, musik, SFX, teks layar, angka mutu). Gerbang mutu memakai ambang `check`; berkas tujuan yang
+  sudah ada dan isinya beda tidak ditimpa tanpa `--timpa`.
+- `status_render` memuat `kemajuan` selama render: frame, persen, perkiraan sisa detik, dan rasio
+  ke-berapa untuk `semua_rasio` (P8-12). Pesan frame dari pekerja dulu hanya dibaca watchdog.
+- Alat MCP `render` menerima `semua_rasio` (P8-11): komposisi utama + tiap komposisi di `jugaTulis`
+  dari satu master audio, hasil `varian` dengan tautan dan nilai tiap rasio; batas waktu render
+  dikalikan jumlah rasio. Alat baru `unggah_vo`: banyak baris VO dalam satu panggilan, hasil per baris.
+- Mode draf (P8-07): `motion render --draf` dan `draf: true` di alat MCP `render`. 540p, 15 fps, x264
+  `veryfast` ke `-draf.mp4` terpisah, tanpa sampul, subtitle, dan pemeriksaan; separuh frame yang
+  difoto dengan seperempat pikselnya. Nama draf dipasang di satu pintu (`Pipa.opsiRender`), jadi
+  draf tidak pernah menimpa MP4 penuh, termasuk lewat `--semua-varian`.
+- `motion init --design=<tautan|projectId>` dan `bin/impor-design.mjs` (P6-10): impor proyek Claude Design tanpa zip, hanya CLI.
 - Templat komposisi `templat/` (iklan, testimoni, trailer, tutorial): `motion init --templat=<nama>` dan alat
   MCP `daftar_templat`/`pakai_templat`. Kontrak v2, teks layar di `src/isi.js`, config CLI dan MCP setara.
 - Alat MCP `batalkan_render` dan dasbor admin `/admin` (aktif bila `ADMIN_TOKEN` >= 32 karakter):
@@ -52,14 +77,49 @@ render bisa bernilai `dibatalkan`.
   wadah, kapsi kosong (`periksa: {kapsi: '<selektor>'}`), dan frame hitam.
 
 ### Diubah
+- `motion all` memotret frame selagi musik dibuat dan di-mix (P8-05); mix berjalan sebagai `motion mix` di
+  proses anak. Terukur (300 frame + mix 60 dtk + 15 dtk menunggu jaringan musik): 43-45 → 30-32 dtk.
+- Perataan -6 dBFS tiap sumber kini di filtergraph mixer, bukan di MP3 baru (P8-09): VO, SFX, dan
+  musik tidak lagi di-encode MP3 dua kali sebelum mix, dan `vo/norm/`, `sfx/norm/`, `*-norm.mp3`
+  dibuang. Loop loudness mengukur LUFS tanpa true peak, `check`/laporan MCP mengukur LUFS + dBTP
+  dalam satu lintasan, dan `hening` mendekode rentangnya sekali. Terukur pada video sintetis 60 dtk
+  (20 VO, 45 cue): mix 17,7 → 13,2 dtk, `hening` 7,7 → 0,15 dtk, ringkasan MP4 1,9 → 0,7 dtk.
+- `mix` memakai ulang `master.wav` bila seluruh masukannya sama (P8-08): opsi mixer, posisi VO,
+  cue, amplop, gate, isi tiap berkas sumber, dan kode mixer. Render MCP sesudah revisi visual saja,
+  `scene`, atau `frames` tidak lagi menjalankan mix penuh. `motion mix --paksa` untuk mix ulang.
+- VO dan SFX dibuat bersamaan (P8-04): paling banyak 3 permintaan ElevenLabs sekaligus
+  (`MOTION_EL_PARALEL`), dibatasi bersama di `el.kirim` sehingga `motion all` membuat SFX dan VO
+  serentak. Permintaan pertama tetap berjalan sendirian, jadi kunci salah atau kuota habis
+  berhenti di baris pertama seperti dulu. Terukur dengan server tiruan berlatensi 1,2 dtk:
+  23 VO + 17 SFX dari 62,5 dtk menjadi 22,3 dtk.
 - Galat ElevenLabs digolongkan: 429/5xx/timeout diulang dengan menghormati `Retry-After`; 4xx
   lain tidak; kuota/kredit habis menghentikan rantai. Pesan galat menyebut baris VO, SFX, atau
   trek musiknya.
 
 ### Diperbaiki
+- **VO CLI dipercepat dua kali sejak 4 Nov 2026 18:34 WIB** (commit 9e0bff6, P3-02): pemangkasan TTS
+  ikut memakai `suara.speed` sebagai `atempo`, padahal speed sudah diterapkan API. VO ber-speed 1,2
+  (suara kampanye Cahaya) keluar ±1,44x dan scene memendek mengikutinya. Unggahan MCP tidak terkena
+  (`tempo` di sana memang untuk unggahan). Kunci VO kini membawa `pangkas: 2`; VO lama tanpa penanda
+  tetap dipakai tanpa biaya bila speed 1 atau dibuat sebelum regresi, sisanya (dan entri cache VO
+  lintas proyek dari jendela itu) dibuat ulang pada `plan` berikutnya, lewat gerbang biaya biasa.
+  **Video yang dirender dari VO jendela itu perlu diperiksa ulang** (P8-13).
+- `check` meloloskan jendela hening pada MP4 yang tidak terbaca: tiap jendela 20 ms terbaca tanpa
+  audio, yaitu "senyap ✓". Kini gagal dengan sebabnya (P8-09).
 - `bin/srt.mjs` memposisikan subtitle di awal scene + `off`, tidak mengikuti `tata`: di mode `alir` dan
   saat jangkar mendorong baris, subtitle muncul sebelum suaranya.
 - Mix video tanpa satu pun cue SFX gagal dengan `amix=inputs=0`.
+- Stage yang lebih besar dari viewport render (contoh minimal `mcp/PANDUAN.md`: stage 1080x1920 tanpa
+  skala, di viewport 1400x1600 bawaan Docker) keluar terpotong lalu gepeng tanpa galat, karena
+  Playwright memangkas `clip` screenshot ke viewport. Viewport kini diperbesar sampai stage muat;
+  stage yang tetap di luar halaman ditolak, dan frame yang aspeknya beda dengan keluaran
+  menggagalkan render sebelum encode (P8-01).
+- `motion check` menimpa `master.wav` dan `stem/` dengan mix tanpa SFX untuk A/B lalu memulihkannya
+  tanpa `finally`; check yang dihentikan di tengah meninggalkan master tanpa SFX. A/B kini ditulis
+  ke berkas sendiri, sekaligus hemat satu mix penuh (P8-02).
+- Warna MP4 bergeser di pemutar: frame dikonversi BT.601 tanpa tanda, sementara pemutar membaca
+  video HD tak bertanda sebagai BT.709 (#25D366 tampil 22,186,99). MP4 kini BT.709 bertanda,
+  termasuk gambar sampul yang ditempel dan `-sampul.jpg` (P8-03).
 
 ## [1.1.0] - 2026-11-04
 

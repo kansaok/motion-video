@@ -2,8 +2,8 @@
 
 Server ini merender **komposisi HTML** menjadi MP4 (Chromium per frame + ffmpeg), lengkap dengan
 voice-over, SFX, musik, kapsi yang mengikuti suara, dan mix -14 LUFS / -1 dBTP.
-Server ini **tidak** membuat suara. VO dibuat dengan connector ElevenLabs milik pengguna di Claude,
-lalu URL audionya diunggah ke sini.
+VO dibuat server dengan kunci ElevenLabs milik pengguna (`kunci_elevenlabs` + `buat_vo`), atau dengan
+connector ElevenLabs milik pengguna di Claude lalu URL audionya diunggah ke sini.
 
 ## Alur
 
@@ -13,10 +13,17 @@ lalu URL audionya diunggah ke sini.
    naskah lewat `simpan_config`, lalu lanjut ke langkah 3.
 2. Tulis komposisi dengan `tulis_berkas` (atau `impor_zip` untuk zip Claude Design).
 3. `cuplik` beberapa detik untuk melihat tata letak. Perbaiki dan ulangi sampai rapi.
-4. VO, satu berkas per baris naskah:
+4. VO, satu berkas per baris naskah. Paling ringkas bila pengguna punya kunci API ElevenLabs:
+   `kunci_elevenlabs` `{kunci}` sekali per akun (disimpan terenkripsi, tidak pernah dikembalikan; ingatkan
+   pengguna bahwa kunci yang ditempel di percakapan tersimpan di riwayat chat), lalu `buat_vo`
+   `{proyek, suara: {id, speed?, stability?, similarity?, style?, seed?}, lafal?}` membuat semua baris
+   naskah config di server. Baris yang sudah dibuat dengan permintaan sama dilewati tanpa biaya; ubah
+   `seed` untuk take baru. Tanpa kunci, pakai connector:
    - connector ElevenLabs: `creative_list_voices` → pilih suara → `creative_generate_speech`
      (bahasa `id`) → poll `creative_get_flow_run_status` sampai selesai → ambil URL audionya;
-   - `unggah` `{jenis: "vo", no: <nomor baris>, url}`. Server memotong senyap kepala/ekor.
+   - `unggah_vo` `{baris: [{no, url}, …]}` untuk semua baris sekaligus (maks 60; hasil per baris, ulangi
+     hanya yang `galat`), atau `unggah` `{jenis: "vo", no: <nomor baris>, url}` satu per satu. Server
+     memotong senyap kepala/ekor.
      `tempo` (0,5–2, bawaan 1) mempercepat tanpa mengubah nada; connector tidak punya `speed`.
 5. SFX: `cari_sfx` di stok (±700 bunyi, gratis; hasil terurut, kata Indonesia/Inggris sama-sama dikenali,
    `mirip: "<id>"` untuk bunyi sejenis) → pakai id-nya sebagai `"@stok/<id>"`.
@@ -25,13 +32,17 @@ lalu URL audionya diunggah ke sini.
    bisa membuat musik; pakai trek milik pengguna atau connector ElevenLabs penuh.
 7. `simpan_config` (skema di bawah). Validasi langsung jalan: scene, SFX, dan ekspresi dicek.
 8. `render` dengan `frames: 60` untuk uji cepat, lalu `render` penuh. Poll `status_render`
-   tiap ±20 detik. Hasilnya tautan MP4 + sampul JPG + subtitle (`srt`, `vtt`) + naskah akhir (`naskah`,
+   tiap ±20 detik; selama langkah `render` ada `kemajuan: {frame, totalFrame, persen, sisaDetik}` (sisa tanpa
+   encode; dengan `semua_rasio` juga `rasioKe`/`rasioDari`). Hasilnya tautan MP4 + sampul JPG + subtitle (`srt`, `vtt`) + naskah akhir (`naskah`,
    teks) yang berlaku 7 hari, dan laporan durasi/audio. Subtitle mengikuti posisi suara sebenarnya.
    Untuk memeriksa SATU scene sesudah revisi, `render` dengan `scene: "<nama>"` (atau nomor mulai
    1), atau `dari`/`sampai` dalam detik video sesudah penempatan VO. Hanya frame rentang itu yang
    dirender, audio ikut dipotong, hasilnya berkas `-potong-<dari>-<sampai>.mp4` terpisah (tanpa
    sampul, tanpa pemeriksaan audio MP4; `potongan` di hasil menyebut rentangnya). MP4 penuh tidak
    tertimpa; potongan sebelumnya diganti.
+   Untuk melihat gerak dan timing lebih cepat: `render` dengan `draf: true` (540p, 15 fps, berkas
+   `-draf` terpisah, tanpa sampul/subtitle/pemeriksaan; boleh digabung dengan `scene`). Hasilnya
+   memuat `draf: true`; jangan dipakai untuk iklan, render penuh tetap wajib.
    Pengganti polling: `render` dengan `webhook: "https://…"` (host publik; http, kredensial di URL,
    dan alamat jaringan dalam ditolak). Saat render selesai/gagal server mengirim POST JSON
    `{peristiwa: "render.selesai"|"render.gagal", render, proyek, status, selesai, hasil | galat}`
@@ -40,11 +51,25 @@ lalu URL audionya diunggah ke sini.
    waktu-konstan) dan waktunya ≤ 5 menit. `rahasia` hanya dikembalikan sekali di jawaban `render`;
    simpan. Pengiriman diulang sampai 3 kali untuk galat jaringan/5xx/429, redirect tidak diikuti;
    keadaannya ada di `status_render.webhook` (`keadaan`, `http`, `percobaan`, `galat`).
+   Semua rasio sekaligus (9:16, 4:5, 1:1, 16:9): tulis komposisi rasio lain di src, daftarkan di `jugaTulis`
+   config (durasi scene-nya ikut disesuaikan), lalu `render` dengan `semua_rasio: true`. Satu master audio
+   untuk semua; hasilnya `varian: [{komposisi, rasio, mp4, sampul, mp4_lufs, mp4_dbtp, sampul_kontras,
+   masalah} | {komposisi, galat}]`. Satu rasio yang gagal tidak menghentikan yang lain. Bisa digabung
+   dengan `draf`, tidak dengan `scene`/`dari`/`sampai`.
    Render yang salah config atau macet: `batalkan_render` (`render` atau `proyek`). Yang antre langsung
    keluar; yang jalan dihentikan; statusnya `dibatalkan` dan render baru bisa langsung dikirim.
 
 Yang perlu dicek di laporan: `mp4_lufs` di -14 ±1, `mp4_dbtp` ≤ -1,0, `sampul_kontras` ≥ 75%
 (frame 0 = sampul Reels/TikTok, jadi scene pertama jangan dibuka dengan fade dari hitam).
+
+## Bahasa atau angle lain
+
+`salin_proyek` `{proyek, nama, vo: [{no, text}, …]}` membuat proyek baru dari proyek yang sudah jadi:
+komposisi versi asli (sebelum durasi disesuaikan), config, SFX, dan musik ikut; VO tidak. Terjemahkan
+naskah lewat `vo` (nomor yang tidak disebut tetap teks asal, dan disebut di `belumDiganti`), ganti teks layar
+lewat `tulis_berkas` (`src/isi.js` di templat), buat VO dengan suara bahasa itu (`buat_vo` dengan
+`suara.bahasa`, atau unggah), lalu `render`. Durasi scene menyesuaikan VO baru sendiri, jadi terjemahan yang
+lebih panjang tidak memotong apa pun.
 
 ## Kontrak komposisi
 
@@ -64,6 +89,8 @@ Satu berkas `.html` (nama bebas, misal `Video 9x16.dc.html`) di akar `src/`:
   `window.OM_CUES = [{nama, at}, …]` (cue SFX dari config, detik absolut). Pakai untuk kapsi dan
   beat yang harus jatuh tepat di kata atau bunyi. Sediakan perkiraan cadangan agar `cuplik`
   sebelum render tetap tampil. Spesifikasi lengkap: `docs/kontrak-komposisi-v2.md` di repo.
+- Stage lebih besar dari jendela render tidak apa-apa: jendelanya diperbesar sampai stage muat.
+  Stage yang posisinya tetap di luar halaman (misal `top` negatif) ditolak saat render.
 - Font dari Google Fonts boleh. Gambar: `unggah` `{jenis: "gambar", nama: "img/logo.png", url}`
   lalu rujuk relatif (`img/logo.png`).
 

@@ -1,6 +1,6 @@
 # Handoff pekerjaan motion-engine
 
-Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
+Terakhir diperbarui: 5 November 2026 (Asia/Jakarta).
 
 ## Sudah dikerjakan
 
@@ -52,6 +52,26 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
 - **P7-01..P7-04**: README/CLAUDE/AGENTS/IKLAN/katalog/docs dalam Markdown (`.docx` di
   `.docx` asli dihapus sesudah verifikasi; masih ada di riwayat git), `docs/arsitektur.md`, `proyek/README.md`, `CONTRIBUTING.md`.
 
+## Fase 8 (branch `p8-perbaikan-hasil`, 5 Nov 2026, belum di-push/merge/deploy)
+
+Rincian per tugas: `RENCANA-PERBAIKAN.md` Fase 8 + tabel catatan hasil.
+
+- **P8-13 regresi VO (PENTING)**: sejak 9e0bff6 (4 Nov 18:34 WIB) VO CLI ber-speed ≠ 1 dipercepat dua
+  kali (speed API + atempo), Cahaya 1,2 → ±1,44x. Diperbaiki; VO dari jendela itu dibuat ulang otomatis
+  pada `plan` berikutnya (gerbang biaya biasa). **Periksa proyek dan video kirim di rama-tuf yang VO-nya
+  dibuat sesudah waktu itu.**
+- Selesai: P8-01 viewport, P8-02 A/B check, P8-03 warna BT.709, P8-04 VO/SFX paralel (62,5 → 22,3 dtk,
+  server tiruan), P8-05 `motion all` render selagi musik + mix (43-45 → 30-32 dtk), P8-07 mode draf, P8-08
+  cache master, P8-09 mix/check lebih ringan, P8-10 waktu per kata (opt-in), P8-11 MCP `semua_rasio` +
+  `unggah_vo`, P8-12: kemajuan di `status_render`, `motion kirim`, BYOK (`kunci_elevenlabs` + `buat_vo`),
+  bahasa lain (`motion salin`, `salin_proyek`). P8-06 (encode selama capture) diukur dan dibantah di 8 core.
+- Tes: `npm test` penuh (termasuk Chromium) di mesin kerja dengan izin Rama: 221 lulus, 1 dilewati.
+  rama-tuf (ffmpeg 8.1.1) belum: tes warna P8-03 sebaiknya juga dijalankan di sana.
+- Deploy MCP (vps2) belum: isi `KUNCI_ENKRIPSI` di `.env.mcp` untuk BYOK; alat baru `unggah_vo`,
+  `salin_proyek`, `kunci_elevenlabs`, `buat_vo`, parameter `draf`/`semua_rasio`.
+- Belum: P8-10 dijadikan bawaan sesudah satu panggilan sungguhan ke with-timestamps; templat yang memakai
+  `VO_TIMING[].kata`; brand kit per akun (skema perlu disepakati); stok musik (butuh trek berlisensi).
+
 ## Belum dikerjakan / prioritas berikutnya
 
 1. **Operasional VPS** (butuh izin; skill `vps2`): firewall `DOCKER-USER` + `limit_req` nginx
@@ -66,13 +86,31 @@ Terakhir diperbarui: 4 November 2026 (Asia/Jakarta).
    render, P6-09 batalkan render + dasbor admin, P6-05 templat selesai. Server MCP di vps2
    menjalankan `035ab32` sejak 5 Nov 2026 (render parsial, subtitle, `cari_sfx` terurut; `/siap` 200). Berikutnya
    sesuai kebutuhan produk (P6-10 impor Claude Design: butuh profil login Chrome; perlu keputusan).
-3. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
+3. **P6-10 menunggu uji dengan proyek Design nyata** (`830c778`): `motion init --design=<tautan>`.
+   Nama kunci respons (`files[].path`, `content`) dan format tautan masih asumsi dari README.
+   Login sekali: `node bin/impor-design.mjs --masuk` (sudah dijalankan 5 Nov di mesin ini, belum
+   terbukti sesinya login) atau `--cdp` ke Chrome berport debug.
+4. **vps2 menjalankan `5d71b62` sejak 5 Nov 2026** (P6-05 templat, P6-07 cache VO, P6-08 webhook,
+   P6-09 batalkan render; P6-10 hanya CLI). Cadangan pra-deploy `/root/backup-motionmcp/*-20261105045103.tgz`,
+   image lama `motion-mcp:prev`. Terverifikasi: `/hidup` dan `/siap` 200 (dalam dan publik), `/metrik` dan
+   `/admin` 404 dari publik, 694 MP3 stok utuh, `cari_sfx` dan `templat/` ada di container. **Render lewat sandbox bwrap berjalan** sejak 5 Nov 2026 (`1011727`).
+   Tiga lapis penyebab ditemukan berurutan, semuanya sudah dibenahi: (1) namespace diblokir Docker + Ubuntu
+   (seccomp/AppArmor khusus di `scripts/vps2/`, sysctl host tetap 1; `docs/isolasi-renderer.md`);
+   (2) `--clearenv` membuang `NODE_CHANNEL_FD` sehingga pekerja keluar kode 0 tanpa hasil;
+   (3) `--clearenv` membuang `PLAYWRIGHT_BROWSERS_PATH`. Terverifikasi di container produksi: cuplik 3,1 dtk dan
+   render uji 60 frame (32,5 dtk video, Chromium `chromiumSandbox` di dalam bwrap). **Belum diuji**: render
+   penuh lewat alat MCP dari claude.ai, webhook ke URL nyata, `batalkan_render`. Perhatikan: satu uji
+   Chromium-di-bwrap berakhir dengan assertion libuv (kode 134) SESUDAH selesai; tidak terulang di pekerja
+   asli, tetap dipantau. Tugas baru yang disarankan: renderer sebagai container terpisah tanpa rahasia.
+   `/admin` nonaktif karena `ADMIN_TOKEN`
+   belum diisi di `.env.mcp` (keputusan pemilik).
+5. Kalibrasi `HARGA.sfxKreditPerDetik` (belum terukur) dari `biaya.json` beberapa proyek nyata.
 
 ## Verifikasi terakhir
 
 ```sh
 npm ci                       # node_modules wajib ada; tanpa ini test/laju gagal impor SDK MCP
-npm test                     # 163 tes: 162 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
+npm test                     # 169 tes: 168 lulus, 1 dilewati (tidak ada proyek/*/src lokal)
 npm run periksa:tipe         # tsc --noEmit bersih
 npm run periksa:playwright   # versi 1.64.1 selaras dengan Dockerfile
 git diff --check

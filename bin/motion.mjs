@@ -2,18 +2,22 @@
 // CLI motion-engine. Jalankan `motion` tanpa argumen untuk daftar perintah.
 import path from 'node:path';
 import os from 'node:os';
+import {spawn} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {existsSync, writeFileSync, mkdirSync, readdirSync, statSync} from 'node:fs';
 import * as Pipa from '../lib/pipa.mjs';
 import * as K from '../lib/komposisi.mjs';
 import * as T from '../lib/tata.mjs';
 import * as Stok from '../lib/stok.mjs';
 import * as Biaya from '../lib/biaya.mjs';
+import * as Kirim from '../lib/kirim.mjs';
+import * as Salin from '../lib/salin.mjs';
 import {cuplik} from '../lib/render.mjs';
 import {AKAR} from '../lib/env.mjs';
 
 const [perintah, ...arg] = process.argv.slice(2);
 const bendera = Object.fromEntries(arg.filter((a) => a.startsWith('--'))
-  .map((a) => { const [k, v] = a.slice(2).split('='); return [k, v ?? true]; }));
+  .map((a) => { const i = a.indexOf('='); const [k, v] = i < 0 ? [a.slice(2)] : [a.slice(2, i), a.slice(i + 1)]; return [k, v ?? true]; }));
 const posisi = arg.filter((a) => !a.startsWith('--'));
 // `shot` menyelipkan detik di antara argumen posisi, dan folder tidak pernah berupa angka.
 const dirProyek = path.resolve(posisi.find((a) => !/^[\d.]+$/.test(a)) || process.cwd());
@@ -23,6 +27,7 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
 
   motion doctor                     periksa prasyarat mesin (--luring tanpa ElevenLabs, --cepat tanpa luncur Chromium)
   motion init <file.zip> <folder>   bongkar zip, deteksi komposisi, tulis kerangka config
+  motion init --design=<tautan> <folder>   sama, dari tautan Claude Design (sekali: node bin/impor-design.mjs --masuk)
   motion init --templat[=<nama>] <folder>  daftar templat, atau mulai proyek dari templat
   motion plan   [folder]            generate VO lalu hitung posisi baris + durasi scene
   motion apply  [folder]            tulis durasi & jangkar hasil plan balik ke komposisi
@@ -34,6 +39,10 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
   motion check  [folder]            verifikasi hasil  (--cepat untuk lewati STT + A/B)
   motion shot   [folder] <detik...> cuplik frame dari komposisi hidup
   motion all    [folder]            plan -> apply -> sfx -> music -> mix -> render -> check
+  motion salin  [folder] --ke=<baru> proyek untuk bahasa/angle lain: komposisi asli + SFX + musik, tanpa VO
+                                    (--bahasa=en --suara=<id>; naskah diterjemahkan di config baru)
+  motion kirim  [folder]            salin MP4 + sampul + subtitle + naskah.md ke ~/Videos/Ads/<Merek>/<Angle>/
+                                    (--merek= --angle= atau "kirim" di config; --timpa, --paksa)
   motion cost   [jam]               biaya ElevenLabs beberapa jam terakhir
   motion voices [cari]              daftar suara
   motion speed  <suara...>          ukur kecepatan baca tiap suara SEBELUM menulis naskah
@@ -41,6 +50,8 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
   motion render --komposisi=<html>  render orientasi lain dengan audio yang sama
   motion render --semua-varian      komposisi utama + semua varian di config, satu laporan gabungan
   motion render --scene=<nama|no>   render satu scene saja, audio ikut dipotong (atau --dari=<dtk> --sampai=<dtk>)
+  motion render --draf              review cepat 540p 15 fps ke <keluaran>-draf.mp4
+  motion mix --paksa                mix ulang walau masukannya sama
   motion plan --kering · all --kering  hitung durasi, posisi, cue, dan biaya tanpa ElevenLabs dan tanpa
                                     menulis ke proyek (laporan di <folder>/kerja/kering.json)
 
@@ -87,12 +98,26 @@ async function jalankan() {
         console.log('  ganti naskah VO dan isi src/isi.js (teks layar), lalu: motion plan --kering, motion all');
         break;
       }
-      const zip = path.resolve(posisi[0]);
-      const tujuan = path.resolve(posisi[1] || path.join(process.cwd(), path.basename(zip, '.zip')));
-      if (!existsSync(zip)) throw new Error(`zip tidak ada: ${zip}`);
-      mkdirSync(tujuan, {recursive: true});
-      const {src, html, jsx} = Pipa.bongkar(zip, tujuan);
-      console.log(`  dibongkar ke ${src}`);
+      /* `--design=<tautan|projectId>`: ambil dari Claude Design (P6-10), lalu lanjut sama seperti zip.
+         Bentuk: motion init --design=<tautan> <folder>. */
+      let src, html, jsx, tujuan;
+      if (bendera.design) {
+        if (bendera.design === true) throw new Error('pakai: motion init --design=<tautan|projectId> <folder>');
+        tujuan = path.resolve(posisi[0] || path.join(process.cwd(), 'design-baru'));
+        const {jalankan} = await import('./impor-design.mjs');
+        await jalankan([String(bendera.design), tujuan, ...(bendera.profil ? [`--profil=${bendera.profil}`] : []), ...(bendera.cdp ? [`--cdp=${bendera.cdp}`] : [])]);
+        src = path.join(tujuan, 'src');
+        ({html, jsx} = K.temukan(src));
+        // Galat jelas bila respons endpoint tidak memuat komposisi: tanpa OM_SCENES tidak ada yang bisa dirender.
+        if (!html.length) throw new Error('proyek Design terunduh, tetapi tidak ada .html ber-OM_SCENES — periksa bahwa itu proyek komposisi motion');
+      } else {
+        const zip = path.resolve(posisi[0]);
+        tujuan = path.resolve(posisi[1] || path.join(process.cwd(), path.basename(zip, '.zip')));
+        if (!existsSync(zip)) throw new Error(`zip tidak ada: ${zip}`);
+        mkdirSync(tujuan, {recursive: true});
+        ({src, html, jsx} = Pipa.bongkar(zip, tujuan));
+        console.log(`  dibongkar ke ${src}`);
+      }
       console.log(`  komposisi ber-OM_SCENES: ${html.join(' · ')}`);
       /* Satu zip sering memuat lebih dari satu VIDEO, bukan cuma orientasi lain dari video
          yang sama. Yang membedakan keduanya adalah .jsx utamanya, BUKAN namanya: dua angle
@@ -190,8 +215,9 @@ async function jalankan() {
     }
     case 'mix': {
       const c = await Pipa.muat(dirProyek);
-      const r = await berbiaya(c, ['vo'], () => Pipa.mix(c));
-      console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`);
+      const r = await berbiaya(c, ['vo'], () => Pipa.mix(c, {paksa: Boolean(bendera.paksa)}));
+      console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`
+        + `${r.cache ? ' · dari cache (audio tidak berubah; --paksa untuk mix ulang)' : ''}`);
       break;
     }
     case 'render': {
@@ -199,7 +225,8 @@ async function jalankan() {
       /* Semua rasio dari satu master audio (P6-03): komposisi utama + `varian`, bergiliran, tiap
          MP4 dinilai dengan ambang `check`, satu laporan gabungan. */
       if (bendera['semua-varian']) {
-        const h = await Pipa.renderVarian(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined, tab: bendera.tab && Number(bendera.tab)});
+        const h = await Pipa.renderVarian(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined, tab: bendera.tab && Number(bendera.tab),
+          draf: Boolean(bendera.draf)});
         console.log(Pipa.laporVarian(h));
         cetakSubtitel(c);   // timeline sama untuk semua rasio, jadi satu set subtitle melayani semuanya
         if (h.some((x) => x.galat || x.masalah.length)) process.exitCode = 1;
@@ -223,12 +250,13 @@ async function jalankan() {
       if ('dari' in rentang && !bendera.keluaran) {
         c.keluaran = Pipa.namaPotongan(c.keluaran || `${c.nama}.mp4`, rentang);
       }
+      // `--draf` (P8-07): 540p 15 fps ke `-draf.mp4`, tanpa sampul dan subtitle (lib/render.mjs DRAF).
       const r = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined, tab: bendera.tab && Number(bendera.tab),
-        dari: rentang.dari, sampai: rentang.sampai});
+        dari: rentang.dari, sampai: rentang.sampai, draf: Boolean(bendera.draf)});
       console.log(`  ✓ ${r.keluaran} — ${r.lebar}x${r.tinggi}, ${Number(r.detik).toFixed(2)}s`
         + `${r.dari !== undefined ? ` (detik ${r.dari.toFixed(2)}-${r.sampai.toFixed(2)} video)` : ''}`);
       if (r.sampul) console.log(`  ✓ ${r.sampul} — sampul dari detik ${r.sampulDetik.toFixed(2)}`);
-      if (r.dari === undefined) cetakSubtitel(c);
+      if (r.dari === undefined && !r.draf) cetakSubtitel(c);
       break;
     }
     case 'shot': {
@@ -257,8 +285,13 @@ async function jalankan() {
       const awal = Biaya.perkiraan(c, ['vo', 'sfx', 'musik']);
       const musikAwal = awal.rincian.filter((b) => b.jenis === 'musik').reduce((a, b) => a + b.kredit, 0);
       await berbiaya(c, ['vo', 'sfx', 'musik'], async () => {
-        console.log('sfx…');    await Pipa.sfx(c);
-        console.log('plan…');   const {scenes, asli, total} = await Pipa.rencana(c);
+        /* SFX dan VO saling bebas, jadi dibuat bersamaan (P8-04); batas permintaan bersama ada di
+           `el.kirim`. allSettled, bukan all: galat satu tahap tidak boleh meninggalkan tahap lain
+           masih menulis berkas di belakang galat yang sudah dicetak. */
+        console.log('sfx + plan…');
+        const [hSfx, hRencana] = await Promise.allSettled([Pipa.sfx(c), Pipa.rencana(c)]);
+        for (const h of [hSfx, hRencana]) if (h.status === 'rejected') throw h.reason;
+        const {scenes, asli, total} = /** @type {PromiseFulfilledResult<Awaited<ReturnType<typeof Pipa.rencana>>>} */ (hRencana).value;
         console.log(T.laporan(scenes, asli, c.vo, total));
         console.log('apply…');  const a = await Pipa.terap(c);
         console.log(`  ${a.html} html · ${a.kapsi} kapsi · ${a.jangkar} jangkar`);
@@ -267,12 +300,20 @@ async function jalankan() {
           console.log(`  musik sesudah plan: ${rp(pm.kredit)} kredit (perkiraan awal ${rp(Math.round(musikAwal))})`);
           await Biaya.jaga(pm, {ya: Boolean(bendera.ya)});
         }
-        console.log('musik…');  await Pipa.musik(c);
-        const bed = Pipa.laporBed(Pipa.periksaBed(c));
-        if (bed) console.log(bed);
-        console.log('mix…');    const r = await Pipa.mix(c);
-        console.log(`  master ✓ ${r.durasi.toFixed(2)}s · ${r.cue} cue · ${r.vo} VO · ${r.lufs} LUFS · ${r.dbtp} dBTP`);
-        console.log('render…'); const v = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined});
+        /* Frame dipotret SELAGI musik dibuat dan di-mix (P8-05): frame tidak butuh audio, hanya mux.
+           Terukur (300 frame + mix 60 dtk + 15 dtk tunggu jaringan): 43-45 dtk berurutan, 30-32 dtk
+           bersamaan. Mix di PROSES ANAK (`motion mix`): rakit memakai execFileSync yang memblokir event
+           loop, dan Playwright di proses yang sama habis waktu di tengah screenshot. */
+        console.log('musik + mix (bersamaan dengan render)…');
+        const audio = (async () => {
+          await Pipa.musik(c);
+          const bed = Pipa.laporBed(Pipa.periksaBed(c));
+          if (bed) console.log(bed);
+          await mixAnak(dirProyek);
+        })();
+        audio.catch(() => {});          // galatnya dilempar render yang menunggunya, sesudah capture
+        console.log('render…'); const v = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined,
+          tungguAudio: audio});
         console.log(`  ✓ ${v.keluaran} — ${v.lebar}x${v.tinggi}`);
         if (v.sampul) console.log(`  ✓ ${v.sampul} — sampul dari detik ${v.sampulDetik.toFixed(2)}`);
         cetakSubtitel(c);
@@ -280,6 +321,30 @@ async function jalankan() {
       }, {cetak: true});
       const b = await Pipa.biaya(t0 - 5 * 60 * 1000);
       console.log(`biaya   ${rp(b.total)} kredit ≈ Rp${rp(b.rupiah)} · sisa kuota ${rp(b.kuota.sisa)}`);
+      break;
+    }
+    case 'salin': {
+      /* Proyek untuk bahasa/angle lain (P8-12, lib/salin.mjs): komposisi asli, SFX, musik ikut; VO tidak.
+         Config baru meng-import config asal dan hanya mengganti naskah (larik NASKAH), suara, bahasa. */
+      if (!bendera.ke) throw new Error('butuh --ke=<folder proyek baru>');
+      const c = await Pipa.muat(dirProyek, {kering: true});
+      const r = Salin.salinCli(dirProyek, path.resolve(String(bendera.ke)), {bahasa: bendera.bahasa && String(bendera.bahasa),
+        suara: bendera.suara && String(bendera.suara), vo: c.vo.map((l) => ({no: l.no, text: l.text}))});
+      console.log(`  ✓ ${r.ke}\n  terjemahkan NASKAH di motion.config.mjs dan teks layar di src/, lalu motion plan --kering`);
+      break;
+    }
+    case 'kirim': {
+      /* Hasil akhir ke ~/Videos/Ads/<Merek>/<Angle>/ (P8-12, lib/kirim.mjs): nama baku per rasio,
+         sampul, subtitle, naskah.md. Gerbang mutu = ambang `check`; tidak menimpa tanpa --timpa. */
+      const c = await Pipa.muat(dirProyek, {kering: true});
+      const r = Kirim.kirim(c, {merek: String(bendera.merek || c.kirim?.merek || ''), angle: String(bendera.angle || c.kirim?.angle || ''),
+        timpa: Boolean(bendera.timpa), paksa: Boolean(bendera.paksa)});
+      for (const b of r.berkas) {
+        console.log(`  ${b.masalah.length ? '!' : '✓'} ${b.rasio.padEnd(5)} ${path.basename(b.ke)}${b.sampul ? ' + sampul' : ''}`
+          + ` · ${b.lufs} LUFS · ${b.dbtp} dBTP${b.masalah.length ? ` — ${b.masalah.join('; ')}` : ''}`);
+      }
+      console.log(`  ${r.sub ? `${r.sub} subtitle · ` : ''}naskah.md
+  → ${r.tujuan}`);
       break;
     }
     case 'cost': {
@@ -337,6 +402,17 @@ async function jalankan() {
     }
     default: console.log(BANTUAN);
   }
+}
+
+/* `motion mix` sebagai proses anak (P8-05), dengan stdout/stderr diteruskan. Gerbang biayanya tetap
+   jalan; VO sudah dibuat `plan`, jadi perkiraannya nol. @param {string} dir */
+function mixAnak(dir) {
+  return new Promise((ok, gagal) => {
+    const p = spawn(process.execPath, [fileURLToPath(import.meta.url), 'mix', dir], {stdio: 'inherit', env: process.env});
+    p.once('error', gagal);
+    p.once('exit', (kode, sinyal) => (kode === 0 ? ok(undefined)
+      : gagal(new Error(`mix gagal (${sinyal || `kode ${kode}`}) — lihat log mix di atas`))));
+  });
 }
 
 /* Subtitle + naskah akhir di samping MP4 (P6-04). Video tanpa VO (bumper, logo) tidak punya
@@ -420,7 +496,8 @@ async function periksaDanLapor(c, opsi) {
       : 'rata, tanpa lubang ✓'}`);
   }
   for (const w of h.hening || []) {
-    const d = w.dapat ? `senyap ${w.dapat[0].toFixed(2)}-${w.dapat[1].toFixed(2)}s (${w.lama.toFixed(2)}s)` : 'TIDAK ADA senyap';
+    const d = w.galat ? `tidak terbaca (${w.galat})`
+      : w.dapat ? `senyap ${w.dapat[0].toFixed(2)}-${w.dapat[1].toFixed(2)}s (${w.lama.toFixed(2)}s)` : 'TIDAK ADA senyap';
     console.log(`  hening   minta ${w.minta[0].toFixed(2)}-${w.minta[1].toFixed(2)}s -> ${d} ${w.lolos ? '✓' : '✖'}`);
   }
   /* Visual: tata letak di komposisi hidup. Peringatan, bukan putusan: transisi yang sengaja

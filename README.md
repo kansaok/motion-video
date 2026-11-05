@@ -34,14 +34,17 @@ motion all proyek/video-baru                          # sampai MP4 + verifikasi
 | `motion plan --kering` · `motion all --kering` | hitung durasi baris (VO yang belum ada diperkirakan), durasi scene, cue, musik, dan biaya tanpa ElevenLabs dan tanpa menulis ke proyek; laporan di `kerja/kering.json` |
 | `motion apply` | tulis durasi + jangkar animasi + kapsi balik ke komposisi |
 | `motion sfx` / `motion music` | generate aset yang belum ada (yang sudah ada dilewati); `music` lalu mencetak peta level bed dan lubangnya |
-| `motion mix` | rakit `aset/master.wav` + `stem/` |
+| `motion mix` | rakit `aset/master.wav` + `stem/`; dipakai ulang bila masukannya sama (`--paksa` untuk mix ulang) |
 | `motion render` | MP4 + `<keluaran>-sampul.jpg` + subtitle `<keluaran>.<bahasa>.srt`/`.vtt` + `<keluaran>-naskah.txt` (`--frames=60` untuk uji cepat) |
 | `motion render --scene=<nama\|no>` · `--dari=<dtk> --sampai=<dtk>` | render satu scene/rentang saja, audio ikut dipotong, ke `<keluaran>-potong-<dari>-<sampai>.mp4` (tanpa sampul; MP4 penuh tidak tertimpa) |
+| `motion render --draf` | review cepat: 540p, 15 fps, x264 `veryfast` ke `<keluaran>-draf.mp4`, tanpa sampul dan subtitle; bisa digabung dengan `--scene`/`--dari`/`--sampai` dan `--semua-varian` (MP4 penuh tidak pernah tertimpa) |
 | `motion render --komposisi=<html>` | orientasi lain, audio yang sama, tanpa menyunting config |
 | `motion check` | verifikasi hasil, termasuk frame 0 sebagai sampul dan tata letak di komposisi hidup (`--cepat` melewati STT + A/B) |
 | `motion shot <detik...>` | cuplik frame dari komposisi hidup, tanpa render penuh |
 | `motion all` | seluruh rantai sampai `check`; perkiraan biaya di awal, laporan biaya di akhir |
 | `motion speed <suara...>` | ukur kar/dtk tiap suara **sebelum** menulis naskah |
+| `motion salin --ke=<folder> [--bahasa=en] [--suara=<id>]` | proyek untuk bahasa atau angle lain: komposisi versi `.asli` (sebelum durasi disesuaikan), SFX, dan musik beserta `.kunci` ikut; VO dan `timing.js` tidak. Config baru meng-import config asal (musik/SFX/cue satu sumber) dan hanya mengganti naskah (larik `NASKAH`), suara, bahasa; lafal, `dengar`, `maks` bahasa asal dibuang. Durasi scene menyesuaikan VO baru lewat `tata`. Musik yang `detik`-nya bergantung pada total video dibuat ulang bila durasinya berubah |
+| `motion kirim --merek=<Merek> --angle=<Angle>` | salin MP4 tiap rasio + sampul + subtitle ke `~/Videos/Ads/<Merek>/<Angle>/` (`MOTION_KIRIM`) sebagai `<merek>-<angle>-<rasio>.mp4` dan tulis `naskah.md` (VO per detik, musik, SFX, teks layar, angka mutu). Gerbang mutu = ambang `check` (`--paksa` dicatat di naskah); berkas yang sudah ada dan beda tidak ditimpa tanpa `--timpa`; draf/potongan tidak ikut. `kirim: {merek, angle}` di config menggantikan bendera |
 | `motion cost [jam]` · `motion voices [cari]` | biaya ElevenLabs · katalog suara |
 
 Folder proyek boleh di mana saja; default direktori sekarang.
@@ -122,14 +125,16 @@ Siapa pun yang punya tautan itu bisa melihat dan mengunduh (peran pembaca). Isin
 
 ## Impor dari tautan Claude Design, tanpa zip
 
-`DesignSync` butuh `/design-login`, dan perintah itu tidak jalan di sesi non-interaktif. Jalur yang terbukti (Konektor Promo, 29 Sep 2026): Chrome Rama yang sudah login ke claude.ai.
+```sh
+node bin/impor-design.mjs --masuk                       # sekali: login claude.ai di jendela Chromium, sesi disimpan di ~/.motion/profil-claude
+motion init --design=<tautan|projectId> proyek/<nama>   # unduh ke src/, lalu deteksi + kerangka config seperti dari zip
+```
 
-1. Buka tab `https://claude.ai/robots.txt`. Halaman Design yang berat membuat JavaScript di tab macet.
-2. Dari tab itu, panggil `POST /design/anthropic.omelette.api.v1alpha.OmeletteService/ListFiles` dan `.../GetFile` dengan JSON `{projectId, path}`. Isi berkas kembali sebagai base64.
-3. Gabung semua berkas jadi satu JSON dan unduh sekali. `fetch` ke `127.0.0.1` dari halaman claude.ai menggantung tanpa galat, jadi server penerima lokal tidak bisa dipakai.
-4. Hapus `<style data-omelette-injected>` dan `<script data-omelette-injected>` dari tiap `.html`. `GetFile` mengembalikan versi yang disajikan editor, 21 KB, bukan berkas 1,6 KB aslinya.
+`--cdp=http://127.0.0.1:9222` memakai Chrome yang sudah berjalan dan login (sesi Rama). `DesignSync` butuh `/design-login` yang tidak jalan di sesi non-interaktif; kalau itu berubah, ganti `bukaSumber` di `bin/impor-design.mjs` saja.
 
-Kolom `size` di `ListFiles` bisa basi. Percayai panjang isi `GetFile`.
+Yang dilakukan skrip (jalur terbukti Konektor Promo, 29 Sep 2026): buka `https://claude.ai/robots.txt` (halaman Design yang berat membuat JavaScript macet), lalu dari halaman itu `POST /design/anthropic.omelette.api.v1alpha.OmeletteService/ListFiles` dan `/GetFile` dengan `{projectId, path}`; isi kembali sebagai base64. Server lokal tidak bisa dipakai: `fetch` ke `127.0.0.1` dari claude.ai menggantung tanpa galat.
+
+Validasi (`lib/imporDesain.mjs`): `<style|script data-omelette-injected>` dibuang dari tiap `.html` (`GetFile` mengembalikan versi editor 21 KB, bukan berkas 1,6 KB aslinya); jalur dari server ditolak bila traversal/tersembunyi/ganda; batas 2000 berkas dan 300 MB; hasil harus memuat `.html` ber-`OM_SCENES`. Kolom `size` di `ListFiles` bisa basi, jadi panjang isi `GetFile` yang dipercaya. Respons yang bentuknya berubah menggagalkan impor dengan menyebut kunci yang diterima. Bentuk respons yang diasumsikan ada di kepala `lib/imporDesain.mjs`.
 
 ## Render di `rama-tuf`: `TMPDIR` di disk
 
@@ -274,6 +279,22 @@ Kalau durasi memang tidak boleh berubah: beri `maks` pada TIAP baris VO, lalu ba
 
 **Direktori frame mengandung PID.** Dua rantai render yang tidak sengaja jalan bersamaan pernah melaporkan "900 frame ✓" padahal MP4-nya 2 detik.
 
+**Stage yang tidak muat di viewport diperbesar viewport-nya, bukan dipotong.** Playwright memangkas `clip` screenshot ke viewport. Stage 1080x1920 yang tidak menskalakan dirinya (bentuk contoh minimal `mcp/PANDUAN.md`) di viewport 1400x1600 (bawaan Dockerfile) keluar sebagai frame 1080x1600, lalu `scale` menariknya ke 1920: zona kapsi hilang dan gambarnya gepeng, tanpa satu galat pun. Sekarang tiap tab memperbesar viewport sampai stage muat (tidak pernah mengecilkan, jadi komposisi yang menskalakan dirinya tidak berubah), stage yang tetap di luar halaman ditolak, dan frame yang aspeknya beda dengan keluaran menggagalkan render sebelum encode.
+
+**MP4 ditulis BT.709 dan ditandai.** Frame JPEG Chromium adalah BT.601; dulu dikonversi dengan matriks BT.601 tanpa tanda, sementara Chrome, iOS, Android, dan aplikasi Meta membaca video HD tak bertanda sebagai BT.709. Didekode seperti pemutar (ffmpeg 6.1.1): hijau WhatsApp #25D366 (37,211,102) tampil 22,186,99, merah #E53935 (229,57,53) tampil 244,72,50. Konversi lewat RGB ke BT.709 rentang TV memberi selisih ≤ 3. `-sampul.jpg` yang dicuplik dari MP4 ikut dikonversi balik; tanpa itu #25D366 jadi 50,238,104.
+
+**Master dipakai ulang hanya bila SELURUH masukannya sama.** Render MCP dulu menjalankan mix penuh (ratakan semua sumber, sampai 40 lintasan loudness) di tiap render, termasuk sesudah revisi visual saja. Kuncinya (`mix.kunciMix`) memuat seluruh opsi `rakit` apa adanya, bukan daftar field pilihan (field baru yang lupa ditambahkan akan memberi master basi tanpa peringatan), sidik ISI tiap sumber (rsync dan salinan mempertahankan waktu ubah), dan sidik kode mixer sendiri. Berlaku hanya bila master dan ketiga stem masih ada. Kunci lama dibuang sebelum mix ulang: mix yang gagal di tengah sudah menimpa master, dan kunci lama yang tertinggal akan terbaca segar begitu config dikembalikan.
+
+**Perataan -6 dBFS dipasang di filtergraph, bukan ditulis ke MP3 baru.** Dulu tiap VO, SFX, dan musik ditulis ulang ke `vo/norm/`, `sfx/norm/`, `*-norm.mp3`: satu generasi encode MP3 lagi sebelum mix (TTS sudah MP3 128k), plus berkas antara yang memakan kuota MCP. Gainnya sama (puncak → -6 dBFS), kini `volume=<g>dB` di kepala rantai tiap masukan. Berkas norm lama dibuang saat mix.
+
+**`hening` membaca rentangnya sekali, dan berkas tak terbaca tidak lagi lolos.** Satu proses ffmpeg per jendela 20 ms (±110 proses untuk dua gate, 7,7 dtk) diganti satu dekode (0,15 dtk) dengan jendela dan ambang yang sama. Versi lama menganggap jendela tanpa audio sebagai senyap, jadi MP4 yang gagal dibaca lolos sebagai "senyap ✓".
+
+**Waktu per kata (opt-in `suara.waktuKata: true`).** TTS memakai endpoint `with-timestamps` dengan badan permintaan yang sama, dan waktu tiap kata naskah disimpan di `vo-NN.mp3.kata.json` bersama sidik isi MP3-nya (waktu yang tidak cocok dengan audionya tidak pernah dibaca). Waktu API berlaku untuk teks TERLAFAL (`C T W A`, `konektor dot Ai Di`); tiap kata naskah dilafalkan sendiri dan dicari berurutan di sana, lalu digeser sebanyak senyap kepala yang dipangkas. Dipakai `timing.js` (`VO_TIMING[].kata`, kontrak v2) dan batas potongan subtitle; ikut cache VO lintas proyek. Opt-in karena endpoint ini belum pernah dipanggil sungguhan dari mesin ini: respons yang berbeda bentuk akan menggagalkan semua VO. Kunci VO tidak berubah, jadi menyalakannya tidak membuat ulang VO lama (baris lama tetap memakai waktu per baris; ganti `seed` untuk meminta take baru bila perlu).
+
+**`speed` hanya diterapkan API, tidak lagi ditambah `atempo`.** Penyatuan pemangkasan VO (P3-02, 4 Nov 2026 18:34 WIB) ikut mengirim `suara.speed` sebagai `atempo` di jalur TTS CLI; VO ber-speed 1,2 keluar ±1,44x tanpa satu peringatan, karena kuncinya sama persis dengan kunci versi benar. `tempo` hanya untuk unggahan MCP (connector tidak punya speed). Kunci VO kini membawa versi pangkas; VO lama yang tidak mungkin terkena (speed 1, atau dibuat sebelum commit itu) dipakai tanpa biaya, sisanya dibuat ulang. Aturan "VO ini segar" ada di satu tempat (`vo.segarVo`/`cariCacheVo`), dipakai `vo`, perkiraan biaya, dan `--kering`.
+
+**A/B bus SFX di `check` tidak menyentuh `master.wav`.** Dulu master dan `stem/` ditimpa mix tanpa SFX lalu dipulihkan dengan mix ulang tanpa `finally`; `check` yang dihentikan di tengah meninggalkan master TANPA SFX untuk render berikutnya. Mix A/B kini ditulis ke `.master-tanpa-sfx.wav` dan dihapus sesudahnya.
+
 ## Berapa lama satu video
 
 Diukur pada video 67,6 detik: 7 scene, 23 baris VO, 17 berkas SFX, 51 cue, 1 trek musik. Mesin 24 core, render 6 tab.
@@ -286,10 +307,14 @@ Diukur pada video 67,6 detik: 7 scene, 23 baris VO, 17 berkas SFX, 51 cue, 1 tre
 | `plan` | 29 dtk | 23 baris VO, ± 1,2 dtk masing-masing; hitungannya sendiri < 1 dtk |
 | `apply` | < 1 dtk | tulis durasi + kapsi |
 | `music` | 20 dtk | 1 trek 68 dtk |
-| `mix` | 9 dtk | ratakan semua sumber + 5 putaran loudness |
+| `mix` | 9 dtk | ratakan semua sumber + 5 putaran loudness (sejak P8-09 ±25% lebih cepat: tanpa MP3 antara, LUFS tanpa true peak) |
 | `render` | 1 mnt 50 dtk | 2.030 frame, ± 20 fps, plus encode |
 | `check` | 34 dtk | 2 mix ulang untuk A/B + STT |
 | **Total mesin** | **± 4,5 menit** | orientasi kedua: **+ 1,7 menit** (`render` saja) |
+
+Sejak P8-05 `motion all` memotret frame selagi musik dibuat dan di-mix: musik sebagian besar menunggu jaringan, dan mix berjalan sebagai `motion mix` di proses anak. Mix tidak boleh di proses yang sama dengan render: `rakit` memakai `execFileSync` yang memblokir event loop, dan Playwright habis waktu di tengah screenshot (terjadi saat diukur). Terukur 43-45 → 30-32 dtk pada 300 frame + mix 60 dtk + 15 dtk tunggu jaringan. Encode selama capture (P8-06) diukur dan TIDAK lebih cepat di 8 core: capture sudah memakai semua CPU.
+
+Sejak P8-04 (5 Nov 2026) `sfx` dan `plan` berjalan bersamaan dengan 3 permintaan sekaligus: 23 VO + 17 SFX terukur 22,3 dtk terhadap server tiruan berlatensi 1,2 dtk, dari 62,5 dtk berurutan. Lebih dari 3 tidak lebih cepat (5: 22,8 dtk): sisanya pemangkasan ffmpeg sinkron per berkas, yang menahan event loop.
 
 Biaya ElevenLabs satu video: **± Rp11.500**.
 
@@ -363,4 +388,4 @@ MOTION_PLAYWRIGHT=/path/ke/repo-yang-punya-playwright motion render proyek/video
 
 `.env` masuk `.gitignore`. Jangan di-commit dan jangan diunggah ke Drive. Berkas contoh hanya berisi nama variabel kosong.
 
-Penyetel yang boleh dikosongkan: `MOTION_ENV` (jalur `.env` lain), `WORKERS` (tab render, default 6), `MOTION_VIEWPORT` (default `2200x2400`; turunkan kalau Chromium mati karena memori), `MOTION_ENCODER`, `FFLOG`, `MOTION_CACHE_VO` (jalur cache VO lintas proyek, bawaan `~/.motion/cache-vo`; `off` untuk mematikan).
+Penyetel yang boleh dikosongkan: `MOTION_ENV` (jalur `.env` lain), `WORKERS` (tab render, default 6), `MOTION_VIEWPORT` (default `2200x2400`; turunkan kalau Chromium mati karena memori), `MOTION_ENCODER`, `FFLOG`, `MOTION_CACHE_VO` (jalur cache VO lintas proyek, bawaan `~/.motion/cache-vo`; `off` untuk mematikan), `MOTION_EL_PARALEL` (permintaan ElevenLabs bersamaan, bawaan 3; batas konkurensi akun: Starter 3, Creator 5, Pro 10), `MOTION_KIRIM` (akar `motion kirim`, bawaan `~/Videos/Ads`).

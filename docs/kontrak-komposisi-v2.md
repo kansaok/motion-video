@@ -30,6 +30,10 @@ window.OM_CUES = [{"nama":"pop","at":2.85}];
 
 - `VO_TIMING[i]`: `no` = nomor baris VO di config, `pos` = detik mulai (absolut, dari awal
   video), `dur` = durasi suara sesudah trim. Urutannya mengikuti urutan baris di config.
+- `VO_TIMING[i].kata` (opsional, P8-10): `[{w, a, b}]` tiap kata naskah dengan detik ABSOLUT mulai/akhir,
+  untuk kapsi kata-demi-kata. Ada hanya bila VO dibuat dengan `suara.waktuKata: true` (TTS
+  with-timestamps, CLI). Baris tanpa `kata` (VO lama, unggahan MCP) wajib tetap tampil dengan waktu
+  per baris; jangan menganggap `kata` selalu ada.
 - `OM_CUES[i]`: cue SFX dari config (`cue`) yang sudah dievaluasi ke detik absolut, terurut
   menurut `at`. Pakai untuk beat visual yang harus jatuh bersama bunyi. Cue di luar durasi
   video dibuang, sama seperti di mixer.

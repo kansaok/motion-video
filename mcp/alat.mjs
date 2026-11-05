@@ -17,6 +17,10 @@ import {kesiapan} from './sehat.mjs';
 import {migrasiConfig} from './skema.mjs';
 import * as W from './webhook.mjs';
 import * as Tpl from '../lib/templat.mjs';
+import {kolam} from '../lib/kolam.mjs';
+import * as EL from '../lib/el.mjs';
+import {vo as buatVo, rencanaVo, segarVo} from '../lib/vo.mjs';
+import * as RK from './rahasia.mjs';
 
 // Versi yang diumumkan ke klien MCP mengikuti package.json; lihat CHANGELOG.md.
 const VERSI = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
@@ -25,8 +29,9 @@ const PANDUAN = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.ur
 
 const INSTRUKSI = `Motion MCP merender komposisi HTML menjadi video MP4 dengan voice-over, SFX, musik, dan kapsi.
 Panggil \`panduan\` sekali sebelum membuat video pertama: isinya kontrak komposisi dan skema config.
-Server ini tidak membuat suara. Buat VO per baris naskah dengan connector ElevenLabs (creative_generate_speech, bahasa id),
-lalu kirim URL audionya ke \`unggah\` jenis "vo". Render berjalan di antrean: panggil \`render\`, lalu poll \`status_render\`.`;
+VO: bila pengguna punya kunci API ElevenLabs, simpan sekali dengan \`kunci_elevenlabs\` lalu \`buat_vo\` membuat semua baris
+di server. Tanpa kunci: buat VO per baris dengan connector ElevenLabs (creative_generate_speech, bahasa id), lalu kirim
+URL-nya ke \`unggah_vo\` (banyak baris sekaligus) atau \`unggah\` jenis "vo". Render berjalan di antrean: panggil \`render\`, lalu poll \`status_render\`.`;
 
 const teks = (x) => ({content: [{type: 'text', text: typeof x === 'string' ? x : JSON.stringify(x, null, 1)}]});
 const gagal = (e) => ({isError: true, content: [{type: 'text', text: `✖ ${e.message || e}`}]});
@@ -35,7 +40,14 @@ const aman = (fn) => async (a) => { try { return await fn(a); } catch (e) { retu
 /* Token bucket cukup di memori: tujuan utamanya menahan satu akun yang membanjiri alat mahal,
    bukan menjadi catatan kuota permanen. Entri lama dibuang saat bucket berikutnya dibuat. */
 const bucket = new Map();
-const LAJU = {unggah: [12, 60_000], impor_zip: [2, 60_000], render: [2, 10 * 60_000], cuplik: [6, 60_000]};
+const LAJU = {unggah: [12, 60_000], impor_zip: [2, 60_000], render: [2, 10 * 60_000], cuplik: [6, 60_000],
+  // BYOK (P8-12): tiap simpan memanggil ElevenLabs untuk memeriksa kunci; buat_vo membakar kredit pelanggan.
+  kunci_elevenlabs: [5, 60_000], buat_vo: [4, 10 * 60_000]};
+
+/* Cache VO lintas proyek (~/.motion/cache-vo) dipakai bersama SEMUA akun di proses ini: akun B akan
+   memakai audio yang dibayar dengan kunci akun A, dan bisa menebak teks yang pernah diucapkan suara
+   tertentu. Server MCP selalu mematikannya, apa pun env-nya (P8-12). */
+process.env.MOTION_CACHE_VO = 'off';
 export function batasiLaju(uid, alat, sekarang = Date.now()) {
   const [kapasitas, jendela] = LAJU[alat] || [];
   if (!kapasitas) return;
@@ -218,6 +230,97 @@ export function buatServer(uid) {
     return teks({jenis, ...r});
   });
 
+  /* Unggah banyak baris VO (P8-11). Satu video 23 baris dulu berarti 23 panggilan `unggah` di atas
+     23 generate + poll connector. Tiap baris diproses sama persis dengan `unggah` jenis vo
+     (simpanVo, kuota per berkas); yang gagal dilaporkan per baris dan tidak menggagalkan baris lain,
+     supaya klien cukup mengulang yang gagal. Laju dihitung satu token per 5 baris. */
+  alat('unggah_vo', 'Unggah BANYAK baris VO sekaligus (maks 60) dari URL https atau base64 — sama dengan `unggah` jenis "vo" '
+    + 'per baris (senyap kepala/ekor dipotong, `tempo` opsional), tetapi satu panggilan. Hasil per baris; baris yang gagal '
+    + 'disebut dengan sebabnya tanpa menggagalkan baris lain — ulangi hanya yang gagal.',
+  {proyek: Proyek, baris: z.array(z.object({
+    no: z.number().int().min(1).max(99), url: z.string().url().optional(), base64: z.string().optional(),
+    tempo: z.number().min(0.5).max(2).optional(),
+  }).strict()).min(1).max(60)},
+  async ({proyek, baris}) => {
+    const no = baris.map((b) => b.no);
+    if (new Set(no).size !== no.length) throw new Error('nomor VO ganda di `baris`');
+    const tanpaIsi = baris.filter((b) => !b.url === !b.base64).map((b) => b.no);
+    if (tanpaIsi.length) throw new Error(`tiap baris butuh tepat satu dari url/base64: VO ${tanpaIsi.join(', ')}`);
+    for (let i = 0; i < Math.ceil(baris.length / 5); i++) batasiLaju(uid, 'unggah');
+    const p = Pr.buka(uid, proyek);
+    /** @type {Array<Record<string, any>>} */
+    const hasil = [];
+    // Unduhan bersamaan (3), pemangkasan per baris; galat ditangkap per baris, jadi kolam tidak berhenti.
+    await kolam(baris, 3, async (b, i) => {
+      try {
+        const buf = await Pr.ambilIsi({url: b.url, base64: b.base64});
+        Pr.periksaKuota(p, buf.length);
+        hasil[i] = {no: b.no, ...Pr.simpanVo(p, b.no, buf, b.tempo)};
+      } catch (e) { hasil[i] = {no: b.no, galat: String(e.message || e).slice(0, 300)}; }
+      return true;
+    });
+    Pr.sentuh(p);
+    const gagal = hasil.filter((h) => h.galat);
+    return teks({berhasil: hasil.length - gagal.length, gagal: gagal.length, vo: hasil});
+  });
+
+  /* BYOK (P8-12): mcp/rahasia.mjs. Kunci diperiksa ke ElevenLabs sebelum disimpan, tidak pernah
+     dikembalikan, dan hanya dipakai di proses server (pekerja/Chromium tidak pernah melihatnya). */
+  alat('kunci_elevenlabs', 'Simpan kunci API ElevenLabs akun ini (terenkripsi di server) supaya `buat_vo` bisa membuat VO '
+    + 'langsung. Kunci diperiksa ke ElevenLabs dulu, tidak pernah dikembalikan, dan tidak dicatat. Tanpa argumen: status. '
+    + '`hapus: true`: hapus kunci.',
+  {kunci: z.string().min(20).max(200).optional(), hapus: z.boolean().optional()},
+  async ({kunci, hapus}) => {
+    if (!RK.aktif()) throw new Error('fitur kunci ElevenLabs belum diaktifkan di server ini');
+    if (hapus) { RK.hapus(uid); return teks({kunci: 'dihapus'}); }
+    if (!kunci) return teks({kunci: RK.ada(uid) ? 'tersimpan' : 'belum ada'});
+    batasiLaju(uid, 'kunci_elevenlabs');
+    let q;
+    try { q = await EL.denganKunci(kunci, () => EL.kuota()); } catch (e) {
+      throw new Error(`kunci ditolak ElevenLabs (${String(e.message || e).slice(0, 120)}) — tidak disimpan`);
+    }
+    RK.simpan(uid, kunci);
+    return teks({kunci: 'tersimpan', sisaKredit: q.sisa, batasKredit: q.batas});
+  });
+
+  alat('buat_vo', 'Buat VO semua baris naskah config LANGSUNG di server dengan kunci ElevenLabs akun ini (simpan dulu lewat '
+    + '`kunci_elevenlabs`). Pengganti generate + poll + `unggah` per baris lewat connector. Baris yang sudah dibuat dengan '
+    + 'permintaan sama dilewati tanpa biaya; ubah `suara.seed` untuk meminta take baru. Kredit = jumlah karakter baris yang dibuat.',
+  {proyek: Proyek,
+    suara: z.object({
+      id: z.string().regex(/^[A-Za-z0-9]{8,40}$/), model: z.string().regex(/^[a-z0-9_]{3,60}$/).optional(),
+      speed: z.number().min(0.7).max(1.2).optional(), stability: z.number().min(0).max(1).optional(),
+      similarity: z.number().min(0).max(1).optional(), style: z.number().min(0).max(1).optional(),
+      seed: z.number().int().min(0).max(4294967295).optional(), bahasa: z.string().regex(/^[a-z]{2}$/).optional(),
+    }).strict(),
+    lafal: z.record(z.string().min(1).max(40), z.string().max(80)).optional(),
+    maks_kredit: z.number().int().min(1).max(200_000).optional().describe('tolak bila perkiraan melebihi ini (bawaan 20000)')},
+  async ({proyek, suara, lafal, maks_kredit: maks = 20_000}) => {
+    if (!RK.aktif()) throw new Error('fitur buat_vo belum diaktifkan di server ini');
+    const kunci = RK.baca(uid);
+    if (!kunci) throw new Error('belum ada kunci ElevenLabs — simpan dulu dengan kunci_elevenlabs');
+    batasiLaju(uid, 'buat_vo');
+    const p = Pr.buka(uid, proyek);
+    const j = /** @type {any} */ (Pr.bacaConfig(p));
+    /** @type {any} */
+    const c = {nama: p.meta.id, dir: p.dir, aset: p.aset, suara, lafal: lafal || {},
+      vo: (j.vo || []).map((/** @type {any} */ l) => ({no: l.no, sc: l.sc, off: l.off ?? 0, text: l.text}))};
+    if (!c.vo.length) throw new Error('config belum punya baris vo');
+    mkdirSync(path.join(p.aset, 'vo'), {recursive: true});
+    // Perkiraan dengan aturan "segar" yang sama dengan generate (vo.segarVo), sebelum satu kredit pun.
+    const baru = rencanaVo(c).baris.filter((b) => !segarVo(b.file, b.kunci));
+    const kredit = baru.reduce((a, b) => a + b.kunci.teks.length, 0);
+    if (kredit > maks) throw new Error(`perkiraan ${kredit} kredit (${baru.length} baris) melebihi maks_kredit ${maks}`);
+    Pr.periksaKuota(p, baru.length * 200_000);
+    await EL.denganKunci(kunci, () => buatVo(c));
+    Pr.sentuh(p);
+    const q = await EL.denganKunci(kunci, () => EL.kuota()).catch(() => null);
+    return teks({dibuat: baru.map((b) => b.l.no), dilewati: c.vo.length - baru.length, kredit,
+      vo: c.vo.map((/** @type {any} */ l) => ({no: l.no, detik: +l.dur.toFixed(3)})),
+      ...(q ? {sisaKredit: q.sisa} : {}),
+      catatan: 'render memakai berkas VO ini seperti unggahan; tidak perlu unggah'});
+  });
+
   alat('cari_sfx', 'Cari bunyi di stok SFX (±700 bunyi, gratis). Hasil diurutkan dari yang paling cocok (nama > cocok-untuk > '
     + 'prompt > kategori); kata Indonesia dan Inggris sama-sama dikenali (kasir/cash register, klik/click, pintu/door). '
     + 'Contoh: "whoosh cepat", "klik tombol", "kasir", "notifikasi", "riser". `mirip` = id stok untuk mencari bunyi serupa. '
@@ -288,6 +391,31 @@ export function buatServer(uid) {
     }
   });
 
+  /* Bahasa/angle lain (P8-12): komposisi asli + SFX + musik ikut, VO tidak. Durasi scene menyesuaikan
+     VO baru sendiri saat render (tata), jadi terjemahan yang lebih panjang tidak memotong apa pun. */
+  alat('salin_proyek', 'Salin proyek jadi proyek baru untuk BAHASA lain atau angle lain dari video yang sama. Komposisi (versi '
+    + 'asli sebelum durasi disesuaikan), config, SFX, dan musik ikut; VO TIDAK. `vo`: naskah pengganti per nomor baris '
+    + '(misal terjemahan). Teks layar (src/isi.js atau komposisi) diganti terpisah lewat tulis_berkas. Sesudahnya: buat_vo '
+    + 'atau unggah VO dengan suara bahasa itu, lalu render; durasi scene menyesuaikan VO baru sendiri.',
+  {proyek: Proyek, nama: z.string().min(1).max(80),
+    vo: z.array(z.object({no: z.number().int().min(1).max(99), text: z.string().min(1).max(600)}).strict()).max(60).optional()},
+  async ({proyek, nama, vo}) => {
+    const asal = Pr.buka(uid, proyek);
+    const j = /** @type {any} */ (Pr.bacaConfig(asal));
+    const ganti = new Map((vo || []).map((l) => [l.no, l.text]));
+    const asing = [...ganti.keys()].filter((n) => !(j.vo || []).some((/** @type {any} */ l) => l.no === n));
+    if (asing.length) throw new Error(`nomor VO tidak ada di config asal: ${asing.join(', ')}`);
+    const config = {...j, vo: (j.vo || []).map((/** @type {any} */ l) => (ganti.has(l.no) ? {...l, text: ganti.get(l.no)} : l))};
+    const meta = Pr.salin(uid, asal, nama);
+    const p = Pr.buka(uid, meta.id);
+    try {
+      const h = simpanConfig(p, config);
+      return teks({proyek: meta.id, dari: proyek, ...h, naskahDiganti: ganti.size,
+        belumDiganti: config.vo.filter((/** @type {any} */ l) => !ganti.has(l.no)).map((/** @type {any} */ l) => l.no),
+        catatan: 'VO belum ada: buat_vo atau unggah_vo dengan suara bahasa ini, ganti teks layar, lalu render'});
+    } catch (e) { Pr.hapus(uid, meta.id); throw e; }
+  });
+
   alat('simpan_config', 'Simpan config proyek (naskah VO + posisi, SFX, cue, musik, mixer). Skema lengkap ada di `panduan`. '
     + 'Divalidasi terhadap komposisi saat disimpan.',
   {proyek: Proyek, config: z.record(z.any()).describe('objek config, lihat panduan')},
@@ -319,13 +447,21 @@ export function buatServer(uid) {
     + 'Kembali segera dengan id render; poll status_render. `frames` (misal 60) untuk uji cepat beberapa detik pertama. '
     + '`scene` (nama atau nomor mulai 1) atau `dari`/`sampai` (detik video sesudah penempatan VO) merender potongan saja, '
     + 'audio ikut dipotong, ke berkas terpisah tanpa sampul dan tanpa pemeriksaan; MP4 penuh tidak tertimpa. '
+    + '`semua_rasio: true` merender komposisi utama DAN tiap komposisi di `jugaTulis` config (4:5, 1:1, 16:9) dari satu master '
+    + 'audio; hasilnya `varian` berisi tautan MP4 + sampul + nilai tiap rasio. '
+    + '`draf: true` untuk review cepat: 540p, 15 fps, ke berkas `-draf` terpisah tanpa sampul, subtitle, dan pemeriksaan '
+    + '(boleh digabung dengan `scene`/`dari`/`sampai`); jangan kirim draf ke iklan. '
     + '`webhook` (https publik) dipanggil POST saat render selesai/gagal, ditandatangani dengan rahasia yang dikembalikan di sini.',
   {proyek: Proyek, frames: z.number().int().min(1).max(600).optional(),
     scene: z.union([z.string().min(1).max(120), z.number().int().min(1)]).optional(),
     dari: z.number().min(0).optional(), sampai: z.number().positive().optional(),
+    draf: z.boolean().optional(), semua_rasio: z.boolean().optional(),
     webhook: z.string().max(W.WEBHOOK.maksPanjangUrl).optional()},
-  async ({proyek, frames, scene, dari, sampai, webhook}) => {
+  async ({proyek, frames, scene, dari, sampai, draf, semua_rasio: semuaRasio, webhook}) => {
     if (scene !== undefined && (dari !== undefined || sampai !== undefined)) throw new Error('pakai `scene` ATAU `dari`/`sampai`, bukan keduanya');
+    if (semuaRasio && (scene !== undefined || dari !== undefined || sampai !== undefined)) {
+      throw new Error('`semua_rasio` merender video utuh; potongan (`scene`/`dari`/`sampai`) hanya untuk satu komposisi');
+    }
     if (dari !== undefined && sampai !== undefined && sampai <= dari) throw new Error('`sampai` harus lebih besar dari `dari`');
     // URL privat/http ditolak SEBELUM apa pun, bukan sesudah render beberapa menit.
     if (webhook) await W.periksaWebhook(webhook);
@@ -336,7 +472,14 @@ export function buatServer(uid) {
     // Tolak di pintu masuk: render yang diterima saat disk hampir penuh gagal di tengah encode.
     const k = kesiapan({dir: Pr.DATA});
     if (!k.siap) throw new Error(`server belum siap menerima render: ${k.alasan.join('; ')} — coba lagi nanti`);
-    const t = A.kirim(uid, p, {frames, scene, dari, sampai, webhook});
+    /* Semua rasio (P8-11): komposisi utama + `jugaTulis`, yang memang daftar komposisi berdurasi scene
+       sama (Pipa.terap menulis OM_SCENES-nya). `rasio` = jumlah render, untuk batas waktu total. */
+    let rasio;
+    if (semuaRasio) {
+      rasio = 1 + (/** @type {{jugaTulis?: string[]}} */ (j).jugaTulis || []).length;
+      if (rasio < 2) throw new Error('`semua_rasio` butuh komposisi rasio lain di `jugaTulis` config (misal "Video 4x5.dc.html")');
+    }
+    const t = A.kirim(uid, p, {frames, scene, dari, sampai, draf, webhook, ...(rasio ? {semuaRasio: true, rasio} : {})});
     return teks({render: t.id, status: t.status,
       catatan: webhook ? 'webhook akan dipanggil saat selesai/gagal; status_render tetap bisa dipoll' : 'poll status_render tiap ±20 detik',
       ...(webhook ? {webhook: {rahasia: W.rahasiaWebhook(t.id),

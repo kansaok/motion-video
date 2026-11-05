@@ -81,6 +81,7 @@ Semua rahasia ada di `.env.mcp` (tidak di-commit). Sesudah mengubahnya: `docker 
 | `BIMP_SERVICE_KEY` | verifikasi token gagal sampai kedua sisi sama | ganti bersamaan dengan `MOTION_MCP_SERVICE_KEY` di `.env` API bimp, lalu `php artisan config:cache` di sana |
 | `MCP_DEV_TOKEN` | — | harus kosong di produksi; server menolak start bila terisi |
 | `ADMIN_TOKEN` | sesi dasbor `/admin` harus login ulang; rahasia webhook TIDAK terpengaruh | `openssl rand -hex 32`; kosong = dasbor mati (404); < 32 karakter = server menolak start |
+| `KUNCI_ENKRIPSI` | semua kunci ElevenLabs pelanggan (`DATA/rahasia/<uid>.json`) tidak terbaca; `buat_vo` menolak dengan "simpan ulang dengan kunci_elevenlabs" | `openssl rand -hex 32`; beri tahu pelanggan BYOK untuk menyimpan ulang kuncinya. Kosong = fitur mati; < 32 karakter = server menolak start |
 
 Rahasia webhook render diturunkan dari `UNDUH_RAHASIA` + id render, jadi rotasi `UNDUH_RAHASIA` juga
 membuat penerima webhook render yang sudah diantrekan tidak bisa memverifikasi kiriman berikutnya.
