@@ -1,0 +1,13 @@
+{
+ "judul": "Trailer / teaser",
+ "deskripsi": "Teaser gelap 9:16 ±20 dtk, letterbox, empat kalimat pendek ber-`maks`, satu hentakan di Puncak, kartu judul tanpa CTA.",
+ "cocok": "peluncuran, teaser kampanye, cerita dramatis; scene tidak boleh melar, jadi tiap baris punya `maks`",
+ "scene": [
+  "Sunyi",
+  "Retak",
+  "Bangun",
+  "Puncak",
+  "Judul"
+ ],
+ "detik": 20
+}

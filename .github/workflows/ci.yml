@@ -25,6 +25,13 @@ jobs:
       # isi image runner yang bisa berubah tanpa pemberitahuan.
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: npm ci
+      # Tes Chromium (tata letak, render parsial/varian, render asap 60 frame tiap templat P6-05) dilewati
+      # tanpa browser. Satu versi Node cukup. Runner Ubuntu 24.04 membatasi user namespace tanpa hak
+      # lewat AppArmor, padahal render memakai sandbox Chromium (OPSI_CHROMIUM); dibuka hanya di runner CI.
+      - if: matrix.node == 20
+        run: |
+          npx playwright install --with-deps chromium
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: npm test
       - run: npm run periksa:playwright
       - run: npm run periksa:tipe

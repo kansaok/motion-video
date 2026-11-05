@@ -58,6 +58,7 @@ seluruh permintaannya, bukan sekadar "berkasnya ada".
 | `lib/env.mjs` | memuat `.env`, `wajib()` |
 | `lib/ff.mjs` | pembungkus ffmpeg/ffprobe: `durasi`, `volume`, `lufs`, `puncakSejati` |
 | `lib/el.mjs` | klien ElevenLabs: TTS, SFX, musik, STT, kuota; golongan galat dan percobaan ulang |
+| `lib/templat.mjs`, `templat/` | pustaka templat: daftar, salin ke folder (CLI), berkas + config untuk `pakai_templat` (MCP) |
 | `lib/kering.mjs` | `--kering`: perkiraan durasi VO (kalibrasi proyek / `suara.kps` / bawaan), rencana, cue, biaya tanpa ElevenLabs |
 | `lib/doktor.mjs` | `motion doctor`: cek prasyarat mesin (Node, ffmpeg, Playwright/Chromium, `.env`, disk/tmpfs, ElevenLabs) |
 | `lib/cachevo.mjs` | cache VO lintas proyek berkunci `.kunci` VO (termasuk konteks tetangga) |

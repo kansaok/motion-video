@@ -16,6 +16,8 @@ COPY lib ./lib
 COPY bin ./bin
 COPY mcp ./mcp
 COPY sfx-stok ./sfx-stok
+# Templat komposisi untuk alat MCP daftar_templat/pakai_templat (P6-05).
+COPY templat ./templat
 
 ENV NODE_ENV=production \
     PORT=8420 \

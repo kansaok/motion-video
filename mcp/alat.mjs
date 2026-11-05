@@ -16,6 +16,7 @@ import * as M from './metrik.mjs';
 import {kesiapan} from './sehat.mjs';
 import {migrasiConfig} from './skema.mjs';
 import * as W from './webhook.mjs';
+import * as Tpl from '../lib/templat.mjs';
 
 // Versi yang diumumkan ke klien MCP mengikuti package.json; lihat CHANGELOG.md.
 const VERSI = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
@@ -232,11 +233,9 @@ export function buatServer(uid) {
       + '(stok tidak memuat semua bunyi; kalau memang tidak ada, generate lewat connector ElevenLabs)');
   }, {readOnlyHint: true});
 
-  alat('simpan_config', 'Simpan config proyek (naskah VO + posisi, SFX, cue, musik, mixer). Skema lengkap ada di `panduan`. '
-    + 'Divalidasi terhadap komposisi saat disimpan.',
-  {proyek: Proyek, config: z.record(z.any()).describe('objek config, lihat panduan')},
-  async ({proyek, config}) => {
-    const p = Pr.buka(uid, proyek);
+  /* Validasi + simpan config; dipakai `simpan_config` dan `pakai_templat`, supaya config dari
+     templat tidak pernah melewati jalur yang lebih longgar daripada config tulisan klien. */
+  const simpanConfig = (p, config) => {
     // Config dari klien yang masih memakai skema lama dimigrasikan dulu, baru divalidasi.
     const cek = Config.safeParse(migrasiConfig(config));
     if (!cek.success) throw new Error(cek.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '));
@@ -263,11 +262,36 @@ export function buatServer(uid) {
     const belumSfx = j.sfx.filter(([n, s]) => s === '@luar' && !sfxAda.has(n)).map(([n]) => n);
     const musAda = new Set(Pr.asetAda(p).musik);
     const belumMus = (j.musik || []).filter((m) => !musAda.has(m.nama)).map((m) => m.nama);
-    return teks({
-      ok: true, scene: scenes.length, durasi_komposisi: +total.toFixed(2),
-      belum_diunggah: {vo: belumVo, sfx: belumSfx, musik: belumMus},
-    });
+    return {ok: true, scene: scenes.length, durasi_komposisi: +total.toFixed(2),
+      belum_diunggah: {vo: belumVo, sfx: belumSfx, musik: belumMus}};
+  };
+
+  alat('daftar_templat', 'Templat komposisi siap pakai (kontrak v2): komposisi + config contoh lengkap dengan SFX stok dan '
+    + 'amplop musik. Mulai dengan `pakai_templat`, lalu ganti naskah dan teks layar (src/isi.js).', {},
+  async () => teks(Tpl.daftar()), {readOnlyHint: true});
+
+  alat('pakai_templat', 'Buat proyek baru dari templat: src (komposisi + isi.js) dan config tervalidasi. Sesudahnya: ganti naskah '
+    + 'VO lewat simpan_config dan teks layar lewat tulis_berkas src/isi.js, unggah VO (dan musik), lalu render.',
+  {templat: z.string().max(40), nama: z.string().min(1).max(80)},
+  async ({templat, nama}) => {
+    const src = Tpl.berkasSrc(templat);
+    const config = Tpl.configMcp(templat);
+    const meta = Pr.buat(uid, nama);
+    const p = Pr.buka(uid, meta.id);
+    try {
+      for (const [rel, isi] of src) Pr.tulisSrc(p, rel, isi);
+      return teks({proyek: meta.id, templat, ...simpanConfig(p, config)});
+    } catch (e) {
+      // Templat rusak tidak boleh meninggalkan proyek setengah jadi yang memakan kuota proyek.
+      Pr.hapus(uid, meta.id);
+      throw e;
+    }
   });
+
+  alat('simpan_config', 'Simpan config proyek (naskah VO + posisi, SFX, cue, musik, mixer). Skema lengkap ada di `panduan`. '
+    + 'Divalidasi terhadap komposisi saat disimpan.',
+  {proyek: Proyek, config: z.record(z.any()).describe('objek config, lihat panduan')},
+  async ({proyek, config}) => teks(simpanConfig(Pr.buka(uid, proyek), config)));
 
   alat('cuplik', 'Ambil gambar frame komposisi pada detik tertentu untuk memeriksa tata letak (tanpa audio). Maks 6 detik per panggilan.',
     {proyek: Proyek, detik: z.array(z.number().min(0)).min(1).max(6), komposisi: z.string().max(200).optional()},

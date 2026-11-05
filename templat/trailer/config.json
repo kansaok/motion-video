@@ -1,0 +1,163 @@
+{
+ "komposisi": "Video.html",
+ "vo": [
+  {
+   "no": 1,
+   "sc": "Sunyi",
+   "off": 0.6,
+   "text": "Semua orang bilang, ini cuma rutinitas."
+  },
+  {
+   "no": 2,
+   "sc": "Retak",
+   "off": 0.5,
+   "text": "Sampai satu hari, angkanya tidak masuk akal."
+  },
+  {
+   "no": 3,
+   "sc": "Bangun",
+   "off": 0.6,
+   "text": "Dan kami harus memilih."
+  },
+  {
+   "no": 4,
+   "sc": "Judul",
+   "off": 0.8,
+   "text": "Mulai satu Desember."
+  }
+ ],
+ "tata": {
+  "mode": "jangkar",
+  "jeda": 0.15,
+  "ekorBiasa": 0.05
+ },
+ "sfx": [
+  [
+   "drone",
+   "@stok/drone-gelap"
+  ],
+  [
+   "jantung",
+   "@stok/heartbeat"
+  ],
+  [
+   "boom",
+   "@stok/low-boom"
+  ],
+  [
+   "riser",
+   "@stok/riser-long"
+  ],
+  [
+   "hisap",
+   "@stok/whoosh-rev"
+  ],
+  [
+   "impact",
+   "@stok/impact-hit"
+  ],
+  [
+   "sub",
+   "@stok/sub-drop"
+  ],
+  [
+   "rev",
+   "@stok/reverse-tail"
+  ]
+ ],
+ "cue": [
+  {
+   "at": "0",
+   "nama": "drone",
+   "gain": 0.18
+  },
+  {
+   "at": "C.Retak + 0.2",
+   "nama": "jantung",
+   "gain": 0.3
+  },
+  {
+   "at": "C.Retak + 1.4",
+   "nama": "jantung",
+   "gain": 0.3
+  },
+  {
+   "at": "C.Bangun",
+   "nama": "boom",
+   "gain": 0.3
+  },
+  {
+   "at": "C.Puncak - 1.3",
+   "nama": "riser",
+   "gain": 0.22
+  },
+  {
+   "at": "C.Puncak - 0.2",
+   "nama": "hisap",
+   "gain": 0.22
+  },
+  {
+   "at": "C.Puncak",
+   "nama": "impact",
+   "gain": 0.42
+  },
+  {
+   "at": "C.Puncak + 0.02",
+   "nama": "sub",
+   "gain": 0.34
+  },
+  {
+   "at": "C.Judul - 0.6",
+   "nama": "rev",
+   "gain": 0.2
+  }
+ ],
+ "musik": [
+  {
+   "nama": "bgm",
+   "titik": [
+    [
+     "Sunyi",
+     0,
+     -16
+    ],
+    [
+     "Puncak",
+     -0.45,
+     -16
+    ],
+    [
+     "Puncak",
+     -0.4,
+     -38
+    ],
+    [
+     "Puncak",
+     0.0,
+     -38
+    ],
+    [
+     "Puncak",
+     0.05,
+     -16
+    ],
+    [
+     "Judul",
+     0.5,
+     -18
+    ]
+   ],
+   "fadeOut": [
+    "total - 0.6",
+    0.6
+   ]
+  }
+ ],
+ "mixer": {
+  "gainVO": 1.8,
+  "gainSFX": 0.75
+ },
+ "sampul": {
+  "detik": 0
+ }
+}

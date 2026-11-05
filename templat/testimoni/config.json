@@ -1,0 +1,202 @@
+{
+ "komposisi": "Video.html",
+ "vo": [
+  {
+   "no": 1,
+   "sc": "Hook",
+   "off": 0.0,
+   "text": "Tiga bulan lalu, toko saya hampir tutup."
+  },
+  {
+   "no": 2,
+   "sc": "Cerita",
+   "off": 0.3,
+   "text": "Pesanan cuma datang dari teman sendiri, iklan terasa buang uang."
+  },
+  {
+   "no": 3,
+   "sc": "Bukti",
+   "off": 0.3,
+   "text": "Lalu saya coba Lapakita, dan chat pertama masuk di hari yang sama."
+  },
+  {
+   "no": 4,
+   "sc": "Hasil",
+   "off": 0.3,
+   "text": "Sekarang omzet naik dua kali lipat, tanpa tambah karyawan."
+  },
+  {
+   "no": 5,
+   "sc": "Daftar",
+   "off": 0.2,
+   "text": "Mau hasil yang sama? Klik Mulai Sekarang."
+  }
+ ],
+ "tata": {
+  "mode": "jangkar",
+  "jeda": 0.1,
+  "ekorBiasa": 0.25,
+  "ekor": {
+   "Daftar": 1.0
+  }
+ },
+ "sfx": [
+  [
+   "sapu",
+   "@stok/sapu"
+  ],
+  [
+   "chat",
+   "@stok/chat-pop"
+  ],
+  [
+   "centang",
+   "@stok/janji-ceklis"
+  ],
+  [
+   "riser",
+   "@stok/riser-long"
+  ],
+  [
+   "hisap",
+   "@stok/whoosh-rev"
+  ],
+  [
+   "impact",
+   "@stok/impact-hit"
+  ],
+  [
+   "sub",
+   "@stok/sub-drop"
+  ],
+  [
+   "tombol",
+   "@stok/btn-click"
+  ],
+  [
+   "ding",
+   "@stok/success-chime"
+  ]
+ ],
+ "cue": [
+  {
+   "at": "C.Cerita + 0.1",
+   "nama": "sapu",
+   "gain": 0.16
+  },
+  {
+   "at": "C.Bukti + 0.1",
+   "nama": "sapu",
+   "gain": 0.16
+  },
+  {
+   "at": "C.Daftar + 0.1",
+   "nama": "sapu",
+   "gain": 0.16
+  },
+  {
+   "at": "C.Cerita + 0.35",
+   "nama": "chat",
+   "gain": 0.22
+  },
+  {
+   "at": "C.Bukti + S.Bukti * 0.0 + 0.03",
+   "nama": "centang",
+   "gain": 0.22,
+   "nada": 0,
+   "pan": -0.3
+  },
+  {
+   "at": "C.Bukti + S.Bukti * 0.233 + 0.03",
+   "nama": "centang",
+   "gain": 0.22,
+   "nada": 2,
+   "pan": 0
+  },
+  {
+   "at": "C.Bukti + S.Bukti * 0.467 + 0.03",
+   "nama": "centang",
+   "gain": 0.22,
+   "nada": 4,
+   "pan": 0.3
+  },
+  {
+   "at": "C.Hasil - 1.3",
+   "nama": "riser",
+   "gain": 0.22
+  },
+  {
+   "at": "C.Hasil - 0.2",
+   "nama": "hisap",
+   "gain": 0.22
+  },
+  {
+   "at": "C.Hasil",
+   "nama": "impact",
+   "gain": 0.42
+  },
+  {
+   "at": "C.Hasil + 0.02",
+   "nama": "sub",
+   "gain": 0.34
+  },
+  {
+   "at": "C.Daftar + 0.6",
+   "nama": "tombol",
+   "gain": 0.3
+  },
+  {
+   "at": "C.Daftar + 0.65",
+   "nama": "ding",
+   "gain": 0.22
+  }
+ ],
+ "musik": [
+  {
+   "nama": "bgm",
+   "titik": [
+    [
+     "Hook",
+     0,
+     -15
+    ],
+    [
+     "Hasil",
+     -0.45,
+     -15
+    ],
+    [
+     "Hasil",
+     -0.4,
+     -38
+    ],
+    [
+     "Hasil",
+     0.0,
+     -38
+    ],
+    [
+     "Hasil",
+     0.05,
+     -15
+    ],
+    [
+     "Daftar",
+     0,
+     -16
+    ]
+   ],
+   "fadeOut": [
+    "total - 0.6",
+    0.6
+   ]
+  }
+ ],
+ "mixer": {
+  "gainVO": 1.55,
+  "gainSFX": 0.8
+ },
+ "sampul": {
+  "detik": 0
+ }
+}

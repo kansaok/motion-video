@@ -28,6 +28,7 @@ motion all proyek/video-baru                          # sampai MP4 + verifikasi
 | **Perintah** | **Isi** |
 |---|---|
 | `motion doctor` | periksa prasyarat mesin: Node, ffmpeg (filter + encoder), Playwright + peluncuran Chromium, `.env`, disk dan `/tmp` tmpfs, akses ElevenLabs; kode keluar 1 bila ada ✖ (`--luring`, `--cepat`) |
+| `motion init --templat[=<nama>] <folder>` | daftar templat, atau mulai proyek dari templat (iklan, testimoni, trailer, tutorial) tanpa zip |
 | `motion init <zip> <folder>` | bongkar, cari komposisi ber-`OM_SCENES`, cek scene-relatif, tulis kerangka config |
 | `motion plan` | generate VO, hitung posisi baris dan durasi scene |
 | `motion plan --kering` · `motion all --kering` | hitung durasi baris (VO yang belum ada diperkirakan), durasi scene, cue, musik, dan biaya tanpa ElevenLabs dan tanpa menulis ke proyek; laporan di `kerja/kering.json` |
@@ -91,6 +92,16 @@ export default {
 ```
 
 `C` = detik mulai tiap scene · `P` = awal tiap baris VO · `E` = akhirnya · `S` = durasi scene. Cue yang menempel pada satu baris ditulis dengan `P[no]`, bukan `C[scene] + n` — dengan begitu bunyi, gambar, dan suara tetap jatuh bersama walau naskahnya berubah panjang.
+
+## Templat: mulai dari pola yang sudah terbukti
+
+`motion init --templat` mendaftar templat di `templat/`, dan `motion init --templat=<nama> <folder>` menyalin satu ke folder baru. Ada empat: `iklan` (hook, masalah, solusi, bukti, CTA), `testimoni`, `trailer`, `tutorial`. Isinya diturunkan dari 81 proyek lama di riwayat git (40 iklan, 22 tutorial, 8 testimoni/bukti sosial, 6 trailer) dan aturan `IKLAN.md`: tata `jangkar`, CTA sebagai baris terakhir tersendiri, SFX dari stok, `sapu` lembut di batas scene, hentakan empat lapis sekali, musik `rencana` dipatok ke scene plus `[tail]` yang tidak terdengar, dan amplop yang turun 0,4 detik sebelum hentakan.
+
+- `src/Video.html` adalah komposisi kontrak v2. Mesinnya sama di keempat templat, dan tes menjaganya tetap sama. Frame 0 sudah utuh dengan kapsi pertama, kapsi berada di atas zona UI Reels (±380 px bawah), dan stage diskalakan agar muat di viewport mana pun.
+- `src/isi.js` memuat teks layar per scene (judul, daftar, angka, kutipan, langkah dengan kartu UI, CTA), kapsi per baris VO, merek, dan warna. Yang diganti pengguna ada di sini dan di naskah `vo`.
+- `motion.config.mjs` (CLI) dan `config.json` (MCP, `pakai_templat`) berisi naskah, cue, dan amplop yang sama. Tes menghitung setiap cue di keduanya dan membandingkan hasilnya.
+
+Urutan pakai: ganti naskah dan `isi.js`, `motion plan --kering` (durasi dan biaya tanpa kredit), `motion shot` untuk melihat tata letak, lalu `motion all`. Merek contoh "Lapakita" fiktif.
 
 ## SFX: cek stok dulu, generate belakangan
 

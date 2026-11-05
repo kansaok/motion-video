@@ -66,6 +66,14 @@ dengan cek yang tidak ada; perbaiki atau hapus, jangan diamkan.
 5. Bila aturan itu keputusan yang tidak boleh diulang, tambahkan satu baris ke bagian "Jangan
    diulang" di `CLAUDE.md` **dan** `AGENTS.md`.
 
+## Mengubah templat (`templat/`)
+
+`src/Video.html` adalah mesin yang sama di semua templat. Ubah satu, salin ke yang lain (yang boleh
+berbeda hanya baris `OM_SCENES`); `test/templat.test.mjs` gagal bila mesinnya tidak sama. Naskah, cue,
+dan amplop ada dua kali, di `motion.config.mjs` (CLI) dan `config.json` (MCP); ubah keduanya, karena tes
+membandingkan setiap detik cue. Sesudah mengubah tata letak, lihat hasilnya dengan `motion shot`, bukan
+hanya angka tes: viewport yang terpotong tidak terlihat oleh pemeriksaan teks.
+
 ## Menambah SFX ke stok
 
 1. Selesaikan proyeknya seperti biasa (`motion sfx` menghasilkan `proyek/<nama>/aset/sfx/*.mp3`).

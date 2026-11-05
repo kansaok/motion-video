@@ -1,0 +1,15 @@
+{
+ "judul": "Tutorial fitur",
+ "deskripsi": "Tutorial 9:16 ±36 dtk: nilai inti dulu, tiga langkah dengan kartu UI dan klik, hasil, rujukan panduan.",
+ "cocok": "cara pakai satu fitur; buka dan puncaki dengan nilai intinya (CLAUDE.md), dashboard pihak ketiga harus mirip aslinya",
+ "scene": [
+  "Intro",
+  "Inti",
+  "Langkah1",
+  "Langkah2",
+  "Langkah3",
+  "Hasil",
+  "Outro"
+ ],
+ "detik": 36
+}

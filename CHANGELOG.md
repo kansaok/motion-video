@@ -14,10 +14,12 @@ Aturan versi:
 Hampir semua perubahan di bawah ada di CLI (`motion`). Di server MCP: perbaikan mixer (dipakai
 keduanya), parameter render parsial yang aditif (`scene`, `dari`, `sampai` di alat `render`),
 tautan subtitle di hasil `status_render`, pencarian `cari_sfx` yang terurut (parameter `mirip`), dan
-`webhook` di alat `render`, `batalkan_render`, dan dasbor `/admin`. Semuanya aditif; status
+`webhook` di alat `render`, `batalkan_render`, dasbor `/admin`, dan `daftar_templat`/`pakai_templat`. Semuanya aditif; status
 render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
+- Templat komposisi `templat/` (iklan, testimoni, trailer, tutorial): `motion init --templat=<nama>` dan alat
+  MCP `daftar_templat`/`pakai_templat`. Kontrak v2, teks layar di `src/isi.js`, config CLI dan MCP setara.
 - Alat MCP `batalkan_render` dan dasbor admin `/admin` (aktif bila `ADMIN_TOKEN` >= 32 karakter):
   antrean, render jalan, riwayat, disk per akun, tombol batalkan (CSRF per render). Status render baru
   `dibatalkan`; pembatalan mematikan seluruh grup proses pekerja tanpa restart container.

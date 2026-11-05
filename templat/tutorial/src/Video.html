@@ -1,0 +1,171 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8">
+<!-- Mesin templat motion-engine (kontrak komposisi v2, docs/kontrak-komposisi-v2.md).
+     SAMA di semua templat (test/templat.test.mjs menjaganya); yang berbeda hanya src/isi.js.
+     Ganti teks layar, warna, dan tema di isi.js, bukan di sini.
+     Aturan yang dipasang di sini (IKLAN.md):
+     - frame 0 adalah sampul Reels/TikTok: scene pertama tampil penuh di t=0, tanpa fade;
+     - kapsi dan beat dibaca dari timing.js (VO_TIMING, OM_CUES), tidak ada detik absolut;
+     - frame digambar sinkron dari e.detail.time: tanpa CSS animation/transition, timer, Date.now(). -->
+<script>window.OM_SCENES = '[{"name":"Intro","dur":4},{"name":"Inti","dur":5},{"name":"Langkah1","dur":6},{"name":"Langkah2","dur":6},{"name":"Langkah3","dur":6},{"name":"Hasil","dur":5},{"name":"Outro","dur":4}]';</script>
+<script src="timing.js"></script>
+<script src="isi.js"></script>
+<style>
+  html,body{margin:0;background:#000}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;transform-origin:0 0;font-family:"Inter","Helvetica Neue",Arial,sans-serif;
+    background:var(--latar);color:var(--teks)}
+  .lapis{position:absolute;inset:0}
+  #latar2{position:absolute;width:1400px;height:1400px;border-radius:50%;left:-160px;top:-420px;background:var(--aksen);opacity:.16}
+  #merek{position:absolute;left:80px;top:96px;font-size:40px;font-weight:800;letter-spacing:2px;text-transform:uppercase;opacity:.85}
+  #kemajuan{position:absolute;left:80px;right:80px;top:160px;height:8px;border-radius:4px;background:rgba(127,127,127,.25)}
+  #kemajuan i{display:block;height:100%;border-radius:4px;background:var(--aksen);width:0}
+  #isi{position:absolute;left:80px;right:80px;top:540px}
+  .atas{font-size:44px;font-weight:700;color:var(--aksen);margin-bottom:28px;text-transform:uppercase;letter-spacing:1px}
+  .besar{font-size:104px;font-weight:900;line-height:1.04;overflow-wrap:anywhere}
+  .bawah{font-size:48px;font-weight:500;line-height:1.3;margin-top:36px;opacity:.85;overflow-wrap:anywhere}
+  .daftar{margin-top:48px}
+  .butir{display:flex;gap:28px;align-items:flex-start;font-size:54px;font-weight:700;line-height:1.2;margin-bottom:34px}
+  .butir b{flex:none;width:64px;height:64px;border-radius:50%;background:var(--aksen);color:var(--latar);font-size:40px;
+    display:flex;align-items:center;justify-content:center}
+  .angka{font-size:260px;font-weight:900;line-height:1;color:var(--aksen)}
+  .kartu{background:var(--kartu);border-radius:36px;padding:56px;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+  .kutip{font-size:62px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+  .bintang{font-size:60px;color:#ffc531;letter-spacing:8px;margin-bottom:28px}
+  .orang{display:flex;gap:28px;align-items:center;margin-top:44px;font-size:40px}
+  .orang i{width:96px;height:96px;border-radius:50%;background:var(--aksen);display:flex;align-items:center;justify-content:center;
+    font-style:normal;font-weight:800;color:var(--latar);font-size:44px}
+  .nomor{display:inline-flex;width:120px;height:120px;border-radius:30px;background:var(--aksen);color:var(--latar);
+    font-size:72px;font-weight:900;align-items:center;justify-content:center;margin-bottom:36px}
+  .ui{margin-top:48px;background:var(--kartu);border-radius:28px;padding:44px;font-size:40px}
+  .ui .baris{height:26px;border-radius:13px;background:rgba(127,127,127,.28);margin:18px 0}
+  .ui .tombol{margin-top:36px;display:inline-block;padding:26px 52px;border-radius:20px;background:var(--aksen);color:var(--latar);font-weight:800}
+  .ui .kursor{position:absolute;width:56px;height:56px;border-radius:50%;border:6px solid var(--teks);margin:-28px 0 0 -28px}
+  .cta{margin-top:72px;display:inline-block;padding:40px 72px;border-radius:999px;background:var(--aksen);color:var(--latar);
+    font-size:64px;font-weight:900}
+  /* ±380 px bawah tertutup nama akun + keterangan Reels/TikTok: kapsi di atasnya. */
+  #kapsi{position:absolute;left:70px;right:70px;bottom:470px;text-align:center;font-size:56px;font-weight:800;line-height:1.25;
+    color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.6);overflow-wrap:anywhere}
+  #kapsi span{background:rgba(0,0,0,.55);padding:6px 18px;border-radius:14px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+  #kilat{position:absolute;inset:0;background:#fff;opacity:0}
+  #pita-atas,#pita-bawah{position:absolute;left:0;right:0;height:0;background:#000}
+  #pita-atas{top:0} #pita-bawah{bottom:0}
+  .trailer .besar{text-align:center;font-size:120px;letter-spacing:2px}
+  .trailer #isi{top:800px} .trailer .atas,.trailer .bawah{text-align:center}
+</style></head><body>
+<div id="stage" data-om-kontrak="2" data-om-exportable-video-with-duration-secs="21">
+  <div id="latar2"></div>
+  <div id="merek"></div>
+  <div id="kemajuan"><i></i></div>
+  <div id="isi"></div>
+  <div id="pita-atas"></div><div id="pita-bawah"></div>
+  <div id="kilat"></div>
+  <div id="kapsi" class="kapsi"></div>
+</div>
+<script>
+(() => {
+  const ISI = window.ISI || {scene: {}, kapsi: {}};
+  const SC = JSON.parse(window.OM_SCENES), C = {};
+  let total = 0;
+  for (const s of SC) { C[s.name] = total; total += s.dur; }
+  const stage = document.getElementById('stage');
+  stage.setAttribute('data-om-exportable-video-with-duration-secs', total.toFixed(2));
+  /* Stage selalu muat di jendela, seperti komposisi Claude Design. Mesin render menurunkan
+     deviceScaleFactor dari 1080 / lebar-kotak, jadi keluaran tetap 1080x1920 berapa pun
+     viewport-nya; tanpa ini MOTION_VIEWPORT=1400x1600 (README, mesin render yang sesak memori)
+     memotong 320 px bawah stage, termasuk kapsi. */
+  const pas = () => {
+    const k = Math.min(1, innerWidth / 1080, innerHeight / 1920);
+    stage.style.transform = k < 1 ? `scale(${k})` : '';
+  };
+  pas();
+  addEventListener('resize', pas);
+  const w = ISI.warna || {};
+  for (const [k, v] of Object.entries({latar: w.latar || '#0f1115', teks: w.teks || '#f5f3ee', aksen: w.aksen || '#ffcc33', kartu: w.kartu || '#1c1f26'})) {
+    stage.style.setProperty(`--${k}`, v);
+  }
+  stage.classList.add(ISI.tema || 'iklan');
+  document.getElementById('merek').textContent = ISI.merek || '';
+
+  // Cadangan hanya untuk `cuplik` sebelum VO ada: satu baris per scene. Saat render mesin selalu menulis timing.js.
+  const VO = window.VO_TIMING || SC.map((s, i) => ({no: i + 1, pos: C[s.name] + 0.2, dur: Math.max(0.5, s.dur - 0.6)}));
+  const CUES = window.OM_CUES || [];
+
+  const jelas = (x) => Math.min(1, Math.max(0, x));
+  const halus = (x) => { const k = jelas(x); return k * k * (3 - 2 * k); };
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
+  const sceneDi = (t) => SC.reduce((x, s) => (t >= C[s.name] ? s : x), SC[0]);
+  // Denyut 0..1 yang meluruh 0,35 dtk sesudah cue bernama salah satu `nama`.
+  const denyut = (t, nama) => CUES.filter((c) => nama.includes(c.nama))
+    .reduce((m, c) => Math.max(m, t >= c.at ? Math.max(0, 1 - (t - c.at) / 0.35) : 0), 0);
+
+  let terakhir = null, el = {};
+  function bangun(s) {
+    const d = ISI.scene[s.name] || {jenis: 'judul', besar: s.name};
+    const isi = document.getElementById('isi');
+    const atas = d.atas ? `<div class="atas">${esc(d.atas)}</div>` : '';
+    const bawah = d.bawah ? `<div class="bawah">${esc(d.bawah)}</div>` : '';
+    if (d.jenis === 'daftar') {
+      isi.innerHTML = `${atas}<div class="besar">${esc(d.besar)}</div><div class="daftar">${(d.butir || [])
+        .map((b, i) => `<div class="butir" data-i="${i}"><b>${i + 1}</b><span>${esc(b)}</span></div>`).join('')}</div>`;
+    } else if (d.jenis === 'angka') {
+      isi.innerHTML = `${atas}<div class="angka" id="angka"></div><div class="besar">${esc(d.besar)}</div>${bawah}`;
+    } else if (d.jenis === 'kutipan') {
+      isi.innerHTML = `${atas}<div class="kartu"><div class="bintang">★★★★★</div><div class="kutip">“${esc(d.kutipan)}”</div>`
+        + `<div class="orang"><i>${esc((d.nama || '?')[0])}</i><div><b>${esc(d.nama)}</b><br>${esc(d.peran)}</div></div></div>${bawah}`;
+    } else if (d.jenis === 'langkah') {
+      isi.innerHTML = `<div class="nomor">${esc(d.nomor)}</div><div class="besar">${esc(d.besar)}</div>`
+        + `<div class="ui" id="ui" style="position:relative"><b>${esc(d.layar || '')}</b><div class="baris" style="width:80%"></div>`
+        + `<div class="baris" style="width:60%"></div><div class="tombol" id="tombol">${esc(d.tombol || 'Lanjut')}</div>`
+        + `<div class="kursor" id="kursor"></div></div>`;
+    } else if (d.jenis === 'cta') {
+      isi.innerHTML = `${atas}<div class="besar">${esc(d.besar)}</div><div class="cta" id="cta">${esc(d.tombol)}</div>${bawah}`;
+    } else {
+      isi.innerHTML = `${atas}<div class="besar">${esc(d.besar)}</div>${bawah}`;
+    }
+    el = {isi, d, butir: [...isi.querySelectorAll('.butir')], angka: isi.querySelector('#angka'), tombol: isi.querySelector('#tombol'),
+      kursor: isi.querySelector('#kursor'), ui: isi.querySelector('#ui'), cta: isi.querySelector('#cta')};
+  }
+
+  function frame(t) {
+    const s = sceneDi(t);
+    if (s !== terakhir) { bangun(s); terakhir = s; }
+    const u = (t - C[s.name]) / s.dur, lokal = t - C[s.name];
+    // Masuk 0,4 dtk dari awal scene; scene pertama sudah penuh di t=0 (frame 0 = sampul).
+    const k = s === SC[0] ? 1 : halus(lokal / 0.4);
+    el.isi.style.opacity = k;
+    el.isi.style.transform = `translateY(${(1 - k) * 60}px)`;
+    document.querySelector('#kemajuan i').style.width = `${(t / total) * 100}%`;
+    document.getElementById('latar2').style.transform = `translate(${Math.sin(t * 0.4) * 60}px, ${t * 6}px)`;
+    // Butir daftar muncul merata sepanjang 70% pertama scene.
+    el.butir.forEach((b, i) => {
+      const m = halus((u - (i * 0.7) / Math.max(1, el.butir.length)) / 0.08);
+      b.style.opacity = m; b.style.transform = `translateX(${(1 - m) * -40}px)`;
+    });
+    if (el.angka) {
+      const n = Number(el.d.angka) || 0;
+      el.angka.textContent = `${Math.round(n * halus(u / 0.6)).toLocaleString('id-ID')}${el.d.satuan || ''}`;
+    }
+    if (el.kursor) {
+      // Kursor bergerak ke tombol lalu "mengklik" di 55% scene; cue `klik`/`tombol` boleh jatuh di sana.
+      const g = halus((u - 0.2) / 0.35);
+      el.kursor.style.left = `${80 + g * 260}px`; el.kursor.style.top = `${60 + g * 250}px`;
+      const tekan = u > 0.55 && u < 0.62;
+      el.tombol.style.transform = `scale(${tekan ? 0.94 : 1})`;
+      el.kursor.style.opacity = u < 0.85 ? 1 : 0;
+    }
+    if (el.cta) el.cta.style.transform = `scale(${1 + 0.05 * Math.sin(lokal * 5) + 0.12 * denyut(t, ['tombol', 'klik'])})`;
+    // Beat: kartu/judul berdenyut pada cue `pop`; kilat putih singkat HANYA pada `impact` (hentakan sekali per video).
+    el.isi.style.scale = String(1 + 0.04 * denyut(t, ['pop', 'centang', 'chat']));
+    document.getElementById('kilat').style.opacity = String(0.55 * denyut(t, ['impact']));
+    const pita = ISI.tema === 'trailer' ? 210 : 0;
+    document.getElementById('pita-atas').style.height = `${pita}px`;
+    document.getElementById('pita-bawah').style.height = `${pita}px`;
+    // Kapsi muncul 0,15 dtk sebelum kalimatnya agar sempat terbaca; kapsi pertama sudah tampil di t=0
+    // karena frame 0 adalah sampul (IKLAN.md §5).
+    const l = VO.find((v) => (t >= v.pos - 0.15 || v === VO[0]) && t < v.pos + v.dur + 0.2);
+    const teks = l ? (ISI.kapsi || {})[l.no] || '' : '';
+    document.getElementById('kapsi').innerHTML = teks ? `<span>${esc(teks)}</span>` : '';
+  }
+  stage.addEventListener('data-om-seek-to-time-frame', (e) => frame(Number(e.detail.time) || 0));
+  frame(0);
+})();
+</script></body></html>

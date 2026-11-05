@@ -23,6 +23,7 @@ motion — zip komposisi Claude Design -> MP4 dengan VO, SFX, dan musik
 
   motion doctor                     periksa prasyarat mesin (--luring tanpa ElevenLabs, --cepat tanpa luncur Chromium)
   motion init <file.zip> <folder>   bongkar zip, deteksi komposisi, tulis kerangka config
+  motion init --templat[=<nama>] <folder>  daftar templat, atau mulai proyek dari templat
   motion plan   [folder]            generate VO lalu hitung posisi baris + durasi scene
   motion apply  [folder]            tulis durasi & jangkar hasil plan balik ke komposisi
   motion sfx    [folder]            generate berkas SFX yang belum ada
@@ -73,6 +74,19 @@ async function jalankan() {
   }
   switch (perintah) {
     case 'init': {
+      /* Templat (P6-05): `motion init --templat` mendaftar, `--templat=<nama> <folder>` memulai
+         proyek dari komposisi + config yang sudah teruji, tanpa zip Claude Design. */
+      if (bendera.templat) {
+        const T = await import('../lib/templat.mjs');
+        if (bendera.templat === true) {
+          for (const t of T.daftar()) console.log(`  ${t.nama.padEnd(12)} ${t.judul} · ${t.scene.length} scene, ±${t.detik}s\n    ${t.deskripsi}\n    cocok: ${t.cocok}`);
+          break;
+        }
+        const h = T.pasang(String(bendera.templat), path.resolve(posisi[0] || '.'));
+        console.log(`  templat ${h.templat.judul} → ${h.src}\n  config: ${h.config}`);
+        console.log('  ganti naskah VO dan isi src/isi.js (teks layar), lalu: motion plan --kering, motion all');
+        break;
+      }
       const zip = path.resolve(posisi[0]);
       const tujuan = path.resolve(posisi[1] || path.join(process.cwd(), path.basename(zip, '.zip')));
       if (!existsSync(zip)) throw new Error(`zip tidak ada: ${zip}`);

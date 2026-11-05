@@ -7,7 +7,10 @@ lalu URL audionya diunggah ke sini.
 
 ## Alur
 
-1. `buat_proyek` → dapat `proyek` (id).
+1. `buat_proyek` → dapat `proyek` (id). Atau mulai cepat: `daftar_templat` lalu `pakai_templat`
+   `{templat, nama}` (iklan, testimoni, trailer, tutorial): proyek langsung berisi komposisi v2,
+   `src/isi.js` (teks layar), dan config tervalidasi. Ganti teks layar lewat `tulis_berkas src/isi.js`,
+   naskah lewat `simpan_config`, lalu lanjut ke langkah 3.
 2. Tulis komposisi dengan `tulis_berkas` (atau `impor_zip` untuk zip Claude Design).
 3. `cuplik` beberapa detik untuk melihat tata letak. Perbaiki dan ulangi sampai rapi.
 4. VO, satu berkas per baris naskah:
