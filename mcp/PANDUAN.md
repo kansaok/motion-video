@@ -32,6 +32,9 @@ lalu URL audionya diunggah ke sini.
    dirender, audio ikut dipotong, hasilnya berkas `-potong-<dari>-<sampai>.mp4` terpisah (tanpa
    sampul, tanpa pemeriksaan audio MP4; `potongan` di hasil menyebut rentangnya). MP4 penuh tidak
    tertimpa; potongan sebelumnya diganti.
+   Untuk melihat gerak dan timing lebih cepat: `render` dengan `draf: true` (540p, 15 fps, berkas
+   `-draf` terpisah, tanpa sampul/subtitle/pemeriksaan; boleh digabung dengan `scene`). Hasilnya
+   memuat `draf: true`; jangan dipakai untuk iklan, render penuh tetap wajib.
    Pengganti polling: `render` dengan `webhook: "https://…"` (host publik; http, kredensial di URL,
    dan alamat jaringan dalam ditolak). Saat render selesai/gagal server mengirim POST JSON
    `{peristiwa: "render.selesai"|"render.gagal", render, proyek, status, selesai, hasil | galat}`

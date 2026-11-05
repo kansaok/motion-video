@@ -319,12 +319,15 @@ export function buatServer(uid) {
     + 'Kembali segera dengan id render; poll status_render. `frames` (misal 60) untuk uji cepat beberapa detik pertama. '
     + '`scene` (nama atau nomor mulai 1) atau `dari`/`sampai` (detik video sesudah penempatan VO) merender potongan saja, '
     + 'audio ikut dipotong, ke berkas terpisah tanpa sampul dan tanpa pemeriksaan; MP4 penuh tidak tertimpa. '
+    + '`draf: true` untuk review cepat: 540p, 15 fps, ke berkas `-draf` terpisah tanpa sampul, subtitle, dan pemeriksaan '
+    + '(boleh digabung dengan `scene`/`dari`/`sampai`); jangan kirim draf ke iklan. '
     + '`webhook` (https publik) dipanggil POST saat render selesai/gagal, ditandatangani dengan rahasia yang dikembalikan di sini.',
   {proyek: Proyek, frames: z.number().int().min(1).max(600).optional(),
     scene: z.union([z.string().min(1).max(120), z.number().int().min(1)]).optional(),
     dari: z.number().min(0).optional(), sampai: z.number().positive().optional(),
+    draf: z.boolean().optional(),
     webhook: z.string().max(W.WEBHOOK.maksPanjangUrl).optional()},
-  async ({proyek, frames, scene, dari, sampai, webhook}) => {
+  async ({proyek, frames, scene, dari, sampai, draf, webhook}) => {
     if (scene !== undefined && (dari !== undefined || sampai !== undefined)) throw new Error('pakai `scene` ATAU `dari`/`sampai`, bukan keduanya');
     if (dari !== undefined && sampai !== undefined && sampai <= dari) throw new Error('`sampai` harus lebih besar dari `dari`');
     // URL privat/http ditolak SEBELUM apa pun, bukan sesudah render beberapa menit.
@@ -336,7 +339,7 @@ export function buatServer(uid) {
     // Tolak di pintu masuk: render yang diterima saat disk hampir penuh gagal di tengah encode.
     const k = kesiapan({dir: Pr.DATA});
     if (!k.siap) throw new Error(`server belum siap menerima render: ${k.alasan.join('; ')} — coba lagi nanti`);
-    const t = A.kirim(uid, p, {frames, scene, dari, sampai, webhook});
+    const t = A.kirim(uid, p, {frames, scene, dari, sampai, draf, webhook});
     return teks({render: t.id, status: t.status,
       catatan: webhook ? 'webhook akan dipanggil saat selesai/gagal; status_render tetap bisa dipoll' : 'poll status_render tiap ±20 detik',
       ...(webhook ? {webhook: {rahasia: W.rahasiaWebhook(t.id),

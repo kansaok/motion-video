@@ -19,6 +19,10 @@ render bisa bernilai `dibatalkan`.
 
 ### Ditambahkan
 
+- Mode draf (P8-07): `motion render --draf` dan `draf: true` di alat MCP `render`. 540p, 15 fps, x264
+  `veryfast` ke `-draf.mp4` terpisah, tanpa sampul, subtitle, dan pemeriksaan; separuh frame yang
+  difoto dengan seperempat pikselnya. Nama draf dipasang di satu pintu (`Pipa.opsiRender`), jadi
+  draf tidak pernah menimpa MP4 penuh, termasuk lewat `--semua-varian`.
 - `motion init --design=<tautan|projectId>` dan `bin/impor-design.mjs` (P6-10): impor proyek Claude Design tanpa zip, hanya CLI.
 - Templat komposisi `templat/` (iklan, testimoni, trailer, tutorial): `motion init --templat=<nama>` dan alat
   MCP `daftar_templat`/`pakai_templat`. Kontrak v2, teks layar di `src/isi.js`, config CLI dan MCP setara.

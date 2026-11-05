@@ -215,7 +215,8 @@ async function jalankan() {
       /* Semua rasio dari satu master audio (P6-03): komposisi utama + `varian`, bergiliran, tiap
          MP4 dinilai dengan ambang `check`, satu laporan gabungan. */
       if (bendera['semua-varian']) {
-        const h = await Pipa.renderVarian(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined, tab: bendera.tab && Number(bendera.tab)});
+        const h = await Pipa.renderVarian(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined, tab: bendera.tab && Number(bendera.tab),
+          draf: Boolean(bendera.draf)});
         console.log(Pipa.laporVarian(h));
         cetakSubtitel(c);   // timeline sama untuk semua rasio, jadi satu set subtitle melayani semuanya
         if (h.some((x) => x.galat || x.masalah.length)) process.exitCode = 1;
@@ -239,12 +240,13 @@ async function jalankan() {
       if ('dari' in rentang && !bendera.keluaran) {
         c.keluaran = Pipa.namaPotongan(c.keluaran || `${c.nama}.mp4`, rentang);
       }
+      // `--draf` (P8-07): 540p 15 fps ke `-draf.mp4`, tanpa sampul dan subtitle (lib/render.mjs DRAF).
       const r = await Pipa.render(c, {batasFrame: bendera.frames ? Number(bendera.frames) : undefined, tab: bendera.tab && Number(bendera.tab),
-        dari: rentang.dari, sampai: rentang.sampai});
+        dari: rentang.dari, sampai: rentang.sampai, draf: Boolean(bendera.draf)});
       console.log(`  ✓ ${r.keluaran} — ${r.lebar}x${r.tinggi}, ${Number(r.detik).toFixed(2)}s`
         + `${r.dari !== undefined ? ` (detik ${r.dari.toFixed(2)}-${r.sampai.toFixed(2)} video)` : ''}`);
       if (r.sampul) console.log(`  ✓ ${r.sampul} — sampul dari detik ${r.sampulDetik.toFixed(2)}`);
-      if (r.dari === undefined) cetakSubtitel(c);
+      if (r.dari === undefined && !r.draf) cetakSubtitel(c);
       break;
     }
     case 'shot': {

@@ -33,16 +33,22 @@ async function kerjakan({uid, proyek, opsi}) {
   /* Potongan (P6-02): rentang dihitung dari timeline yang baru saja ditulis `terap`. Berkasnya
      terpisah dari MP4 penuh, dan potongan lama dibuang dulu supaya tidak menumpuk di kuota. */
   const parsial = opsi?.scene !== undefined || opsi?.dari !== undefined || opsi?.sampai !== undefined;
-  if (parsial) {
-    const rentang = opsi.scene !== undefined ? Pipa.rentangScene(c, opsi.scene) : {dari: opsi.dari, sampai: opsi.sampai};
+  /* Draf (P8-07): 540p 15 fps ke `-draf.mp4` (nama dipasang Pipa.render), boleh digabung dengan
+     potongan. Seperti potongan: tanpa sampul, subtitle, dan periksa, dan MP4 penuh tidak tertimpa. */
+  const draf = Boolean(opsi?.draf);
+  if (parsial || draf) {
+    const rentang = !parsial ? {} : opsi.scene !== undefined ? Pipa.rentangScene(c, opsi.scene) : {dari: opsi.dari, sampai: opsi.sampai};
     const dasar = path.basename(c.keluaran, '.mp4');
-    for (const f of readdirSync(c.dir)) if (f.startsWith(`${dasar}-potong-`) && f.endsWith('.mp4')) rmSync(path.join(c.dir, f), {force: true});
-    c.keluaran = Pipa.namaPotongan(c.keluaran, rentang);
-    const r = await Pipa.render(c, {batasFrame: opsi?.frames, dari: rentang.dari, sampai: rentang.sampai,
+    // Potongan/draf lama dibuang dulu supaya tidak menumpuk di kuota.
+    const lama = (/** @type {string} */ f) => (parsial ? f.startsWith(`${dasar}-potong-`) && f.endsWith('.mp4') : f === `${dasar}-draf.mp4`);
+    for (const f of readdirSync(c.dir)) if (lama(f)) rmSync(path.join(c.dir, f), {force: true});
+    if (parsial) c.keluaran = Pipa.namaPotongan(c.keluaran, rentang);
+    const r = await Pipa.render(c, {batasFrame: opsi?.frames, dari: rentang.dari, sampai: rentang.sampai, draf,
       kemajuan: (jadi, totalFrame) => kirim({frame: jadi, totalFrame})});
     Pr.sentuh(p);
     return {
-      potongan: {dari: +r.dari.toFixed(3), sampai: +r.sampai.toFixed(3), ...(rentang.nama ? {scene: rentang.nama} : {})},
+      ...(parsial ? {potongan: {dari: +r.dari.toFixed(3), sampai: +r.sampai.toFixed(3), ...(rentang.nama ? {scene: rentang.nama} : {})}} : {}),
+      ...(draf ? {draf: true} : {}),
       detik: +r.detik.toFixed(3), lebar: r.lebar, tinggi: r.tinggi, mp4: path.basename(r.keluaran), sampul: null,
       laporan, vo, audio: {lufs: m.lufs, dbtp: m.dbtp},
     };
